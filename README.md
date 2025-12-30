@@ -10,13 +10,13 @@ Avoid wasting time looking for a file among a large number of files or directori
 - Open one or more folders in your workspace
 - Open the Just File Explorer
 - Two views are displayed: Files and Just Files
-    - `Files` displays all your files from workspace
-    - `Just Files` displays the files you selected to be displayed
+  - `Files` displays all your files from workspace
+  - `Just Files` displays the files you selected to be displayed
 - Add files to Just Files (review <a href="#addFiles">Add files section</a>):
-    - In your explorer, right click on item and click on 'Add to Just Files'
-    - In Files view, click on show icon for add the file to Just Files view
-    - In tab, right click on item tab and click on 'Add to Just Files'
-    - Use the command `"cmd"+"y"`
+  - In your explorer, right click on item and click on 'Add to Just Files'
+  - In Files view, click on show icon for add the file to Just Files view
+  - In tab, right click on item tab and click on 'Add to Just Files'
+  - Use the command `"cmd"+"y"`
 - In Just Files, you can open the files. If you want to remove from the view click on hide icon
 - ✨ Enjoy your files ✨
 
@@ -45,9 +45,9 @@ Apart of using the icons, you have many options for add or remove files from Jus
 
 - Use commands:
 
-    - Add: `"cmd"+"y"`
+  - Add: `"cmd"+"y"`
 
-    - Remove: `"cmd"+"alt"+"y"`
+  - Remove: `"cmd"+"alt"+"y"`
 
 All changes made in your workspace will be reflected in `Files` and `JustFiles` views in real time 🚀
 ## License
