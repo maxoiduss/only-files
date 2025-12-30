@@ -4,6 +4,14 @@ import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
 
+enum PreviewType {
+  pdf = 'pdf',
+  html = 'html',
+  md = 'md',
+  txt = 'txt',
+  error = 'error'
+}
+
 export function getNonce() {
   let text = "";
   const possible =
@@ -12,14 +20,6 @@ export function getNonce() {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   return text;
-}
-
-enum PreviewType {
-  pdf = 'pdf',
-  html = 'html',
-  md = 'md',
-  txt = 'txt',
-  error = 'error'
 }
 
 export class PreviewProvider implements vscode.WebviewViewProvider {
@@ -80,7 +80,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
 
   showAsWebView(uri: vscode.Uri | string) {
     if (!this.view) { return; }
-
     const pathTo = typeof uri === 'string' ? uri : uri.fsPath;
     const ext = pathTo.split('.').pop()?.toLowerCase();
 
@@ -137,14 +136,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
 
   private getHtmlTemplate(content: string) {
     const nonce = getNonce();
-    const csp = `default-src 'none'; img-src ${this.view?.webview.cspSource} blob:;
-      style-src 'nonce-${nonce}' ${this.view?.webview.cspSource}; script-src 'nonce-${nonce}';`;
 
     return `<!DOCTYPE html>
         <html lang="en">
         <head>
-          <meta http-equiv="Content-Security-Policy" content="${csp}">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="Content-Security-Policy">
           <title>Preview</title>
           <style>
             <style nonce="${nonce}"/>

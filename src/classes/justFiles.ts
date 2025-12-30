@@ -330,6 +330,7 @@ export class JustFiles {
         await vscode.commands.executeCommand('preView.focus');
       }
     );
+
     this.context.subscriptions.push(preview);
   }
 
