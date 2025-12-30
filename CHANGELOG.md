@@ -2,7 +2,17 @@
 
 ## Release Notes
 
-## [1.0.2] Official Release! 🚀
+
+## [1.0.4]
+- Optimized extension package size by excluding documentation images from the package.
+- Updated README to use GitHub URLs for images, reducing package size significantly.
+- Improved drag and drop functionality to work even when the view is empty.
+
+## [1.0.3]
+- Implemented Drag and Drop functionality for Just Files view.
+- General improvements and bug fixes.
+
+## [1.0.2]
 - Fixed error cannot find module for Linux SO.
 
 ## [1.0.0] Official Release! 🚀
