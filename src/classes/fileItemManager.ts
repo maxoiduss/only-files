@@ -5,14 +5,15 @@ import { EmptyFolderItem, FileItem } from "./fileItem";
 import fpath = require("path");
 
 export function getString(fromUriOr: vscode.Uri | string): string {
-  return typeof fromUriOr === 'string' ? fromUriOr : fromUriOr.fsPath;
+  return typeof fromUriOr === "string" ? fromUriOr : fromUriOr.fsPath;
 }
 
 export function getUri(uriOr: vscode.Uri | string): vscode.Uri {
-  if (typeof uriOr === "string") {
-    return vscode.Uri.file(uriOr);
-  }
-  return uriOr;
+  return typeof uriOr === "string" ? vscode.Uri.file(uriOr) : uriOr;
+}
+
+export function getUriFrom(uriOrItem: vscode.Uri | FileItem): vscode.Uri {
+  return uriOrItem instanceof FileItem ? uriOrItem.resourceUri! : uriOrItem;
 }
 
 export function showProgressBar(withMessage: string): CTS {
@@ -227,8 +228,6 @@ export class FileItemManager {
     plainMode?: boolean,
     expanded?: boolean
   ): FileItem {
-    //const fspath = parseUriIfString(uriOr).fsPath;
-    //const uri = this.validateIfWin32Path(fspath);
     const uri = getUri(uriOr);
 
     if (this.isValidUri(uri)) {
