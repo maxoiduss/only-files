@@ -15,9 +15,14 @@ export class FoldersDragController
 
   private readonly commandRegistrator: CommandRegistrator;
   private readonly fileItemManager = new FileItemManager();
+  private readonly openUriAction: (uri: vscode.Uri) => Promise<boolean>;
 
-  constructor(registrator: CommandRegistrator) {
+  constructor(
+    registrator: CommandRegistrator,
+    openUriAction: (uri: vscode.Uri) => Promise<boolean>
+  ) {
     this.commandRegistrator = registrator;
+    this.openUriAction = openUriAction;
   }
 
   async handleDrag?(
@@ -29,7 +34,7 @@ export class FoldersDragController
       return;
     }
     const dataAll = new vscode.DataTransferItem(
-      source.map((f) => f.resourceUri?.path).join(";")
+      source.map((f) => f.resourceUri?.path).join(';')
     );
     const dataFirst = new vscode.DataTransferItem(
       source.length > 0 ? source[0].resourceUri!.path : ''
@@ -46,6 +51,18 @@ export class FoldersDragController
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
   ): Promise<void> {
+    const urisFromDataTransfer = (): vscode.Uri[] => {
+      let uris: vscode.Uri[] = [];
+      const uriList = dataTransfer.get(URLS);
+
+      if (typeof uriList?.value === "string") {
+        uris = uriList.value
+          .split(/[\r\n]+/)
+          .map((path) => vscode.Uri.parse(path));
+      }
+      return uris;
+    };
+
     const where =
       target ??
       this.fileItemManager.createFileItem(
@@ -53,23 +70,28 @@ export class FoldersDragController
       );
     const transferItems = dataTransfer.get(MIME);
     if (transferItems) {
+      const value = transferItems.value as string;
+
+      if (value === '') {
+        const uris = urisFromDataTransfer();
+
+        if (uris.length > 0) {
+          await this.openUriAction(uris[0]);
+        }
+        return;
+      }
       const items: FileItem[] = (transferItems.value as string)
-        .split(";")
+        .split(';')
         .map((f) => this.fileItemManager.createFileItem(f));
       await this.commandRegistrator.pasteItems(where);
       return;
     }
-    const uriList = dataTransfer.get(URLS);
-    if (typeof uriList?.value === "string") {
-      const uris = uriList.value
-        .split(/[\r\n]+/)
-        .map((path) => vscode.Uri.parse(path));
-      const items: FileItem[] = uris.map((u) =>
-        this.fileItemManager.createFileItem(u)
-      );
-      await this.commandRegistrator.copyItems(items);
-      await this.commandRegistrator.pasteItems(where);
-      return;
-    }
+    const uris = urisFromDataTransfer();
+    const items: FileItem[] = uris.map((u) =>
+      this.fileItemManager.createFileItem(u)
+    );
+    await this.commandRegistrator.copyItems(items);
+    await this.commandRegistrator.pasteItems(where);
+    return;
   }
 }

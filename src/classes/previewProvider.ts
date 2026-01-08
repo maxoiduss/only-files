@@ -74,7 +74,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         const copy = "Copy";
         let result: string | undefined;
 
-        if (typeof this.title === 'string') {
+        if (typeof this.title === "string") {
           result = await vscode.window.showInformationMessage(
             `File name: ${path}`, "Ok", copy
           );

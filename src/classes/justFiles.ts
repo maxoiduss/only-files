@@ -4,10 +4,11 @@ import { brand, CommandRegistrator } from "./commandRegistrator";
 import { JustFilesViewProvider } from "./justFilesViewProvider";
 import { FoldersViewProvider } from "./foldersViewProvider";
 import { PreviewProvider } from "./previewProvider";
-import { FileItemManager, isProjectTooLarge } from "./fileItemManager";
+import { FileItemManager, getUriFrom, isProjectTooLarge } from "./fileItemManager";
 import { JustFilesDragController } from "./justFilesDragController";
 import { FoldersDragController } from "./foldersDragController";
 import { FoldersReferenceProvider } from "./foldersReferenceProvider";
+import { fstat, fstatSync } from "fs";
 
 export class JustFiles {
   private context: vscode.ExtensionContext;
@@ -41,7 +42,10 @@ export class JustFiles {
       this.refreshAllViews);
     this.previewProvider = new PreviewProvider(context);
     this.justFilesDragController = new JustFilesDragController();
-    this.filesDragController = new FoldersDragController(this.commandRegistrator);
+    this.filesDragController = new FoldersDragController(
+      this.commandRegistrator,
+      this.openUriIfFilesTreeViewEmpty.bind(this)
+    );
     this.referenceProvider = new FoldersReferenceProvider();
 
     this.justFilesTreeView = vscode.window.createTreeView("justFilesView", {
@@ -98,6 +102,32 @@ export class JustFiles {
     finally {
       this.foldersViewProvider.showItemInExplorerByUriOrTrySelect();
     }
+  }
+
+  private async openUriIfFilesTreeViewEmpty(uri: vscode.Uri): Promise<boolean> {
+    if (this.foldersViewProvider.isEmpty) {
+      try {
+        const itemStat = await vscode.workspace.fs.stat(uri);
+        const isFolder = (itemStat.type & vscode.FileType.Directory) === 
+          vscode.FileType.Directory;
+        const yes = "Ok";
+        const answer = await vscode.window.showInformationMessage(
+          `Open ${uri} as a ${isFolder ? "folder" : "file"}?`,
+          { modal: true },
+          yes, "Cancel"
+        );
+        if (answer === yes) {
+          await vscode.commands.executeCommand(
+            isFolder ? "vscode.openFolder" : "vscode.open",
+            uri
+          );
+        }
+      } catch (error) {
+        console.log(error);
+      }
+      return true;
+    }
+    return false;
   }
 
   private async fillIgnoredFiles(): Promise<void> {
@@ -271,8 +301,13 @@ export class JustFiles {
 
   subscribeRevealInExplorer() {
     var reveal = vscode.commands.registerCommand(`${brand}.revealInSidebar`,
-      (fileItem) => {
-        vscode.commands.executeCommand("revealInExplorer", fileItem.resourceUri);
+      async (fileItem) => {
+        const uri: vscode.Uri = getUriFrom(fileItem);
+        const isViewEmpty = await this.openUriIfFilesTreeViewEmpty(uri);
+
+        if (!isViewEmpty) {
+          vscode.commands.executeCommand("revealInExplorer", uri);
+        }
     });
     this.context.subscriptions.push(reveal);
   }
@@ -322,7 +357,7 @@ export class JustFiles {
     const preview = vscode.commands.registerCommand(
       `${brand}.previewItem`,
       async (uriOr) => {
-        const uri: vscode.Uri = uriOr instanceof FileItem ? uriOr.resourceUri : uriOr;
+        const uri: vscode.Uri = getUriFrom(uriOr);
         this.previewProvider.showAsWebView(uri.fsPath);
 
         await vscode.commands.executeCommand("workbench.view.extension.preView-container");
