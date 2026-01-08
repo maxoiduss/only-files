@@ -27,6 +27,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   private context: vscode.ExtensionContext;
   private view: WebviewView | undefined;
   private title: vscode.Uri | string = '';
+  private lastVisibleValue: boolean = false;
 
   readonly dropAreaMask = 'dropzone';
   readonly fileDropCommand = 'fileDropped';
@@ -49,6 +50,19 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     };
     this.view = webviewView;
     this.updateWebview();
+
+    const visibilityTimeout = 100;
+
+    webviewView.onDidChangeVisibility(() => {
+      setTimeout(async () => {
+        if (this.lastVisibleValue !== webviewView.visible) {
+          this.lastVisibleValue = webviewView.visible;
+          if (this.lastVisibleValue) {
+            this.setTitle(getString(this.title), true);
+          }
+        }
+      }, visibilityTimeout);
+    });
 
     webviewView.webview.onDidReceiveMessage(async (message) => {
       if (message.command === this.fileDropCommand && message.path) {
@@ -187,7 +201,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
                 command: '${this.contextCommand}'
               });
             });
-
             dropZone.addEventListener('dragover', (event) => {
               event.preventDefault();
               dropZone.style.border = '2px dashed var(--vscode-editor-background)';
