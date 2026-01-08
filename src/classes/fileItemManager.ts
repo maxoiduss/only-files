@@ -4,7 +4,11 @@ import { CancellationTokenSource as CTS } from "vscode";
 import { EmptyFolderItem, FileItem } from "./fileItem";
 import fpath = require("path");
 
-function parseUriIfString(uriOr: vscode.Uri | string): vscode.Uri {
+export function getString(fromUriOr: vscode.Uri | string): string {
+  return typeof fromUriOr === 'string' ? fromUriOr : fromUriOr.fsPath;
+}
+
+export function getUri(uriOr: vscode.Uri | string): vscode.Uri {
   if (typeof uriOr === "string") {
     return vscode.Uri.file(uriOr);
   }
@@ -187,27 +191,6 @@ export class FileItemManager {
     const validPath = path.replace(/\\+/g, "/");
     return validPath.startsWith(scheme) ? validPath : `${scheme}${validPath}`;
   }
-
-  /*private validateIfWin32Path(path: string): vscode.Uri {
-    const win32LocalDiskLabels = ['C','D','E','F','G','H','I','J','K','L','M','N'];
-    let fixedPath = path;
-    
-    if (
-      process.platform === "win32" &&
-      !win32LocalDiskLabels.some((v, i, _) => path.startsWith(v))
-    ) {
-      const pathArray = win32LocalDiskLabels
-        .map((v, i, _) => {
-          const realPath = `${v}:${path}`;
-          return fs.existsSync(realPath) ? realPath : undefined;
-        })
-        .filter((v, i, _) => v !== undefined);
-
-      fixedPath = pathArray.length > 0 ? (pathArray[0] as string) : path;
-    }
-
-    return vscode.Uri.file(this.tryValidatePath(fixedPath));
-  }*/
   
   getParentPath(fileItem: FileItem): string | undefined {
     if (fileItem.resourceUri) {
@@ -233,7 +216,7 @@ export class FileItemManager {
     if (uriOr === undefined) {
       return false;
     }
-    const uri = parseUriIfString(uriOr);
+    const uri = getUri(uriOr);
     const filePath = uri.fsPath;
 
     return fs.existsSync(filePath);
@@ -246,7 +229,7 @@ export class FileItemManager {
   ): FileItem {
     //const fspath = parseUriIfString(uriOr).fsPath;
     //const uri = this.validateIfWin32Path(fspath);
-    const uri = parseUriIfString(uriOr);
+    const uri = getUri(uriOr);
 
     if (this.isValidUri(uri)) {
       const label = plainMode ? uri.fsPath : fpath.basename(uri.fsPath);

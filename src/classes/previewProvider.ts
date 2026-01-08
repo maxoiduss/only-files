@@ -3,6 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
+import { getString } from "./fileItemManager";
 
 enum PreviewType {
   pdf = 'pdf',
@@ -23,9 +24,9 @@ export function getNonce() {
 }
 
 export class PreviewProvider implements vscode.WebviewViewProvider {
-  private view: WebviewView | undefined;
-  private title: string | undefined;
   private context: vscode.ExtensionContext;
+  private view: WebviewView | undefined;
+  private title: vscode.Uri | string = '';
 
   readonly dropAreaMask = 'dropzone';
   readonly fileDropCommand = 'fileDropped';
@@ -35,10 +36,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     this.context = context;
     this.view = undefined;
     this.updateWebview();
-  }
-
-  private showError(extensionId: string, err: NodeJS.ErrnoException) {
-    vscode.window.showErrorMessage(`${extensionId} error: ${err}`);
   }
 
   resolveWebviewView(webviewView: WebviewView,
@@ -58,30 +55,30 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         const path = message.path as string;
         this.showAsWebView(vscode.Uri.parse(path).fsPath);
       } else
-      if (message.command === this.contextCommand && message.path) {
-        const path = message.path as string;
+      if (message.command === this.contextCommand) {
+        const path = getString(this.title);
         const copy = "Copy";
         let result: string | undefined;
 
-        if (this.title) {
+        if (typeof this.title === 'string') {
           result = await vscode.window.showInformationMessage(
-            `File name: ${this.title}`, "Ok", copy
+            `File name: ${path}`, "Ok", copy
           );
         }
         if (result === copy) {
-          await vscode.env.clipboard.writeText(this.title ?? path);
+          await vscode.env.clipboard.writeText(path);
         }
         else {
-          this.title = undefined;
+          this.setTitle(vscode.Uri.file(path));
         }
       }
     });
   }
 
-  showAsWebView(uri: vscode.Uri | string) {
+  showAsWebView(uriOr: vscode.Uri | string) {
     if (!this.view) { return; }
-    const pathTo = typeof uri === 'string' ? uri : uri.fsPath;
-    const ext = pathTo.split('.').pop()?.toLowerCase();
+    
+    const ext = getString(uriOr).split('.').pop()?.toLowerCase();
 
     let type = PreviewType.error;
     switch (ext) {
@@ -95,13 +92,17 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         type = PreviewType.html; break;
       default: break;
     }
-    this.updateWebview(uri, type);
+    this.updateWebview(uriOr, type);
+  }
+
+  private setTitle(uriOr: vscode.Uri | string, asString: boolean = false) {
+    this.title = asString ? getString(uriOr) : uriOr;
   }
 
   private async updateWebview(uri: vscode.Uri | string  = '', type: PreviewType = PreviewType.error) {
     if (!this.view) { return; }
 
-    this.title = typeof uri === 'string' ? uri : uri.fsPath;
+    this.setTitle(uri, true);
 
     if (type === PreviewType.error) {
       const emptyFrame = `<div class="container"><h2>Drag-n-Shift Here</h2><div class="placeholder"></div></div>`;
@@ -132,6 +133,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       });
       return;
     }
+  }
+
+  private showError(extensionId: string, err: NodeJS.ErrnoException) {
+    vscode.window.showErrorMessage(`${extensionId} error: ${err}`);
   }
 
   private getHtmlTemplate(content: string) {
@@ -176,12 +181,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             const vscode = acquireVsCodeApi();
             const dropZone = document.getElementById('${this.dropAreaMask}');
             const dropZoneColor = dropZone.style.backgroundColor;
-            let docName = '${this.title}';
 
             dropZone.addEventListener("contextmenu", (e) => {
               vscode.postMessage({
-                command: '${this.contextCommand}',
-                path: docName ?? '${this.title}'
+                command: '${this.contextCommand}'
               });
             });
 
@@ -202,7 +205,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
               const uriList = event.dataTransfer.getData('text/uri-list');
               if (uriList && uriList.length > 0) {
                 const uri = uriList.replace('\\n', ';').split(';')[0];
-                docName = uri;
+
                 vscode.postMessage({
                   command: '${this.fileDropCommand}',
                   path: uri
