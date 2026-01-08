@@ -104,7 +104,7 @@ export class RootFileItem extends FileItem {
       false,
       vscode.workspace.workspaceFolders ?
         vscode.workspace.workspaceFolders[0].uri
-      : vscode.Uri.parse('')
+      : vscode.Uri.file(path.parse(process.cwd()).root)
     );
     this.contextValue = root;
     this.label = ' ';

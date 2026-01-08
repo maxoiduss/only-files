@@ -112,9 +112,9 @@ export class JustFiles {
           vscode.FileType.Directory;
         const yes = "Ok";
         const answer = await vscode.window.showInformationMessage(
-          `Open ${uri} as a ${isFolder ? "folder" : "file"}?`,
+          `Open ${uri.fsPath} as a ${isFolder ? "folder" : "file"}?`,
           { modal: true },
-          yes, "Cancel"
+          yes
         );
         if (answer === yes) {
           await vscode.commands.executeCommand(
