@@ -256,6 +256,10 @@
       {
         "command": "just-files.newFile",
         "title": "New File"
+      },
+      {
+        "command": "just-files.openFolder",
+        "title": "Open Folder"
       }
     ],
     "menus": {
@@ -324,18 +328,23 @@
           "when": "(view == filesView || view == justFilesView) && viewItem != empty && viewItem != root"
         },
         {
+          "command": "just-files.openFolder",
+          "when": "focusedView == filesView && viewItem == vac",
+          "group": "0_navigation"
+        },
+        {
           "command": "just-files.revealFileInOS",
           "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty",
           "group": "1_navigation"
         },
         {
           "command": "just-files.newFile",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty",
+          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != vac",
           "group": "1_navigation"
         },
         {
           "command": "just-files.newFolder",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty",
+          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != vac",
           "group": "1_navigation"
         },
         {
@@ -355,17 +364,17 @@
         },
         {
           "command": "just-files.copy",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root",
+          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root && viewItem != vac",
           "group": "2_cutcopypaste"
         },
         {
           "command": "just-files.cut",
-          "when": "focusedView == filesView && viewItem != root",
+          "when": "focusedView == filesView && viewItem != root && viewItem != vac",
           "group": "2_cutcopypaste"
         },
         {
           "command": "just-files.paste",
-          "when": "focusedView == filesView",
+          "when": "focusedView == filesView && viewItem != vac",
           "group": "2_cutcopypaste"
         },
         {
@@ -375,12 +384,12 @@
         },
         {
           "command": "just-files.rename",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root",
+          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root && viewItem != vac",
           "group": "4_modification"
         },
         {
           "command": "just-files.delete",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root",
+          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root && viewItem != vac",
           "group": "4_modification"
         },
         {

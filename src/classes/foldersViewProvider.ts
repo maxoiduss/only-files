@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import fpath = require("path");
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
-import { asRelative, EmptyFolderItem, FileItem, RootFileItem } from "./fileItem";
+import { asRelative, EmptyFolderItem, emptyRoot, FileItem, root, RootFileItem } from "./fileItem";
 import { FileItemManager, getAllFolders, isInFolder } from "./fileItemManager";
 import { brand } from "./commandRegistrator";
 
@@ -33,8 +33,10 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
   readonly onDidChangeTreeData: vscode.Event<FileItem | undefined | void> =
     this._onDidChangeTreeData.event;
 
-  constructor(context: vscode.ExtensionContext,
-    reveal: (item: FileItem, expand?: boolean) => Promise<void>) {
+  constructor(
+    context: vscode.ExtensionContext,
+    reveal: (item: FileItem, expand?: boolean) => Promise<void>
+  ) {
     this.context = context;
     this.revealItem = reveal;
     this.checkIgnoreItems = this.checkIgnoreItems.bind(this);
@@ -430,11 +432,12 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     {
       clearItemsOfEmptyElements();
       const sorted = this.fileItemManager.sortItems(items);
+      this.isEmpty = sorted.length === 0;
 
       if (this.showingRoot) {
+        this.root.contextValue = this.isEmpty ? emptyRoot : root;
         sorted.push(this.root);
       }
-      this.isEmpty = sorted.length <= 1;
 
       return sorted;
     };

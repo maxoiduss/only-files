@@ -4,6 +4,7 @@ import path = require("path");
 
 export const folder: string = "folder";
 export const root: string = "root";
+export const emptyRoot: string = "vac";
 export const placeholder: string = "empty";
 export const empty: string = placeholder;
 

@@ -88,6 +88,7 @@ export class JustFiles {
     this.subscribeRevealInExplorer();
     this.subscribeCollapseToFolder();
     this.subscribeUncollapseAll();
+    this.subscribeOpenFolder();
     this.subscribeAndRegisterPreviewItem();
   }
 
@@ -299,8 +300,15 @@ export class JustFiles {
     this.context.subscriptions.push(disposableAddFromExplorer);
   }
 
+  subscribeOpenFolder() {
+    const openFolder = vscode.commands.registerCommand(`${brand}.openFolder`,
+      () => vscode.commands.executeCommand("vscode.openFolder")
+    );
+    this.context.subscriptions.push(openFolder);
+  }
+
   subscribeRevealInExplorer() {
-    var reveal = vscode.commands.registerCommand(`${brand}.revealInSidebar`,
+    const reveal = vscode.commands.registerCommand(`${brand}.revealInSidebar`,
       async (fileItem) => {
         const uri: vscode.Uri = getUriFrom(fileItem);
         const isViewEmpty = await this.openUriIfFilesTreeViewEmpty(uri);
