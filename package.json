@@ -495,5 +495,8 @@
   "dependencies": {
     "marked": "^16.4.1",
     "pdfjs-dist": "^5.4.296"
+  },
+  "overrides": {
+    "ajv": "8.17.1"
   }
 }
