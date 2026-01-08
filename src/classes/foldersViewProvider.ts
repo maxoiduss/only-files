@@ -47,6 +47,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     this.plainMode = context.workspaceState.get<boolean>(plainModeOn)
       ?? this.plainMode;
   }
+  public isEmpty: boolean = true;
   public plainMode: boolean = false;
   public readonly root: RootFileItem = this.createFileItem();
 
@@ -433,6 +434,8 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
       if (this.showingRoot) {
         sorted.push(this.root);
       }
+      this.isEmpty = sorted.length <= 1;
+
       return sorted;
     };
     let items: FileItem[] = [];
