@@ -322,12 +322,13 @@ export class JustFiles {
     const preview = vscode.commands.registerCommand(
       `${brand}.previewItem`,
       async (uriOr) => {
-        this.previewProvider.showAsWebView(
-          uriOr instanceof FileItem ?
-            uriOr.resourceUri?.fsPath
-          : uriOr.fsPath);
+        const uri: vscode.Uri = uriOr instanceof FileItem ? uriOr.resourceUri : uriOr;
+        this.previewProvider.showAsWebView(uri.fsPath);
+
         await vscode.commands.executeCommand("workbench.view.extension.preView-container");
-        await vscode.commands.executeCommand('preView.focus');
+        await vscode.commands.executeCommand("preView.focus");
+
+        this.foldersViewProvider.showItemInExplorerByUriOrTrySelect(uri);
       }
     );
 
