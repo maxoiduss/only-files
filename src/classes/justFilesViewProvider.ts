@@ -23,25 +23,19 @@ export class JustFilesViewProvider
   private context: vscode.ExtensionContext;
 
   constructor(context: vscode.ExtensionContext) {
-    this.context = context;
-    const displayedPathsConfig: string[] =
-      this.fileItemManager.getPathConfiguration(this.context, displayed);
-    const hiddenPathsConfig: string[] =
-      this.fileItemManager.getPathConfiguration(this.context, hidden);
-    const subDisplayedPathsConfig: string[] =
-      this.fileItemManager.getPathConfiguration(this.context, subDisplayed);
-    const subHiddenPathsConfig: string[] =
-      this.fileItemManager.getPathConfiguration(this.context, subHidden);
+    const asFileItems = (record: [string, unknown][]) =>
+      record.map(([path, _]) => this.fileItemManager.createFileItem(path));
 
-    this.displayedFileItems =
-      this.fileItemManager.fileItemsFromPaths(displayedPathsConfig);
-    this.hiddenFileItems =
-      this.fileItemManager.fileItemsFromPaths(hiddenPathsConfig);
-    this.subDisplayedFileItems = this.fileItemManager.fileItemsFromPaths(
-      subDisplayedPathsConfig
-    );
-    this.subHiddenFileItems =
-      this.fileItemManager.fileItemsFromPaths(subHiddenPathsConfig);
+    this.context = context;
+    
+    this.displayedFileItems = asFileItems(
+      this.fileItemManager.getConfigurationFor(this.context, displayed));
+    this.hiddenFileItems = asFileItems(
+      this.fileItemManager.getConfigurationFor(this.context, hidden));
+    this.subDisplayedFileItems = asFileItems(
+      this.fileItemManager.getConfigurationFor(this.context, subDisplayed));
+    this.subHiddenFileItems = asFileItems(
+      this.fileItemManager.getConfigurationFor(this.context, subHidden));
   }
 
   private addDisplayFileItem(fileItem: FileItem): void {
@@ -286,36 +280,20 @@ export class JustFilesViewProvider
   }
 
   refresh(element?: FileItem): void {
+    const asPaths = (items: FileItem[]) => items.map(i => i.resourceUri?.fsPath);
     if (element) {
       this.addFileItem(element);
     }
     this._onDidChangeTreeData.fire(element);
 
-    const displayedFileItemsPaths = this.fileItemManager.getPathArray(
-      this.displayedFileItems
-    );
-    const hiddenFileItemsPaths = this.fileItemManager.getPathArray(
-      this.hiddenFileItems
-    );
-    const subDisplayedFileItemsPaths = this.fileItemManager.getPathArray(
-      this.subDisplayedFileItems
-    );
-    const subHiddenFileItemsPaths = this.fileItemManager.getPathArray(
-      this.subHiddenFileItems
-    );
-
-    this.context.workspaceState.update(displayed,
-      JSON.stringify(displayedFileItemsPaths)
-    );
+    this.context.workspaceState.update(displayed, 
+      asPaths(this.displayedFileItems));
     this.context.workspaceState.update(hidden,
-      JSON.stringify(hiddenFileItemsPaths)
-    );
+      asPaths(this.hiddenFileItems));
     this.context.workspaceState.update(subDisplayed,
-      JSON.stringify(subDisplayedFileItemsPaths)
-    );
-    this.context.workspaceState.update(subHidden,
-      JSON.stringify(subHiddenFileItemsPaths)
-    );
+      asPaths(this.subDisplayedFileItems));
+    this.context.workspaceState.update(subHidden, 
+      asPaths(this.subHiddenFileItems));
   }
 
   clean(): void {

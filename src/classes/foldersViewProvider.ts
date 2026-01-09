@@ -43,6 +43,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
 
     const collapsingConfig =
       this.fileItemManager.getConfigurationFor<State>(this.context, collapsinges);
+    
     collapsingConfig.forEach(async ([uri, state]) => await this.updateCollapsings(
       vscode.Uri.file(uri), state.collapses, state.isPlain
     ));

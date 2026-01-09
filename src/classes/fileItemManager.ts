@@ -269,20 +269,22 @@ export class FileItemManager {
     : new FileItem(label, collapsibleState, isFile);
   }
 
-  getConfigurationFor<T>(context: vscode.ExtensionContext,
-    key: string): [string, T][] {
-    const config = context.workspaceState.get<Record<string, T>>(key) || {};
-    return Object.entries(config);
-  }
+  getConfigurationFor<T>(ctx: vscode.ExtensionContext, key: string): [string, T][]
+  {
+    const as = <R>(target: any): R => target as unknown as R;
+    const raw = ctx.workspaceState.get<any>(key);
 
-  getPathConfiguration(context: vscode.ExtensionContext,
-    key: string): string[] {
-    const pathConfig: string = context.workspaceState.get(key) || "[]";
-    return JSON.parse(pathConfig);
-  }
+    if (Array.isArray(raw)) {
+      return as<[string, any][]>(raw.flatMap(
+        (record) => typeof record === "string" ? [[record, as<T>(undefined)]] : []
+      ));
+    }
 
-  fileItemsFromPaths(paths: string[]): FileItem[] {
-    return paths.map((path) => this.createFileItem(path));
+    if (raw && typeof raw === "object") {
+      return Object.entries(raw) as [string, T][];
+    }
+
+    return [];
   }
 
   getPathArray(fileItems: FileItem[]): string[] {
