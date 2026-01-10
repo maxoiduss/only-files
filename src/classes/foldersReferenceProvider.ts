@@ -134,6 +134,9 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     if (!fileItem.resourceUri) { return []; }
 
     const maskDoc = await openTextDocument(fileItem);
+
+    if (maskDoc === "") { return []; }
+    
     const mask = pattern
       ? this.createSearchMatchFromPattern(pattern, maskDoc)
       : null;
