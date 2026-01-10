@@ -181,7 +181,9 @@ export class CommandRegistrator {
 
       const now = Date.now();
       if (now - fileItem.lastClickTime < FileItem.clickTolerance) {
-        await vscode.commands.executeCommand("vscode.open", fileItem.resourceUri);
+        if (fileItem.isFile) {
+          await vscode.commands.executeCommand("vscode.open", fileItem.resourceUri);
+        }
       } else
       if (now - fileItem.lastClickTime < FileItem.renameTolerance) {
         await vscode.commands.executeCommand(COMMANDS.renameFile, fileItem);
