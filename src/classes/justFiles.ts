@@ -4,7 +4,10 @@ import { brand, CommandRegistrator } from "./commandRegistrator";
 import { JustFilesViewProvider } from "./justFilesViewProvider";
 import { FoldersViewProvider } from "./foldersViewProvider";
 import { PreviewProvider } from "./previewProvider";
-import { FileItemManager, getUriFrom, isProjectTooLarge } from "./fileItemManager";
+import {
+  FileItemManager,
+  getUriFrom,
+  isProjectTooLarge } from "./fileItemManager";
 import { JustFilesDragController } from "./justFilesDragController";
 import { FoldersDragController } from "./foldersDragController";
 import { FoldersReferenceProvider } from "./foldersReferenceProvider";
@@ -44,7 +47,7 @@ export class JustFiles {
     this.justFilesDragController = new JustFilesDragController();
     this.filesDragController = new FoldersDragController(
       this.commandRegistrator,
-      this.openUriIfFilesTreeViewEmpty.bind(this)
+      this.openUriIfFolderViewEmpty.bind(this)
     );
     this.referenceProvider = new FoldersReferenceProvider();
 
@@ -89,6 +92,7 @@ export class JustFiles {
     this.subscribeCollapseToFolder();
     this.subscribeUncollapseAll();
     this.subscribeOpenFolder();
+    this.subscribeCloseFolder();
     this.subscribeAndRegisterPreviewItem();
   }
 
@@ -105,7 +109,7 @@ export class JustFiles {
     }
   }
 
-  private async openUriIfFilesTreeViewEmpty(uri: vscode.Uri): Promise<boolean> {
+  private async openUriIfFolderViewEmpty(uri: vscode.Uri): Promise<boolean> {
     if (this.foldersViewProvider.isEmpty) {
       try {
         const itemStat = await vscode.workspace.fs.stat(uri);
@@ -175,60 +179,54 @@ export class JustFiles {
   }
 
   subscribeShow() {
-    const disposableShow = vscode.commands.registerCommand(
+    const show = vscode.commands.registerCommand(
       `${brand}.show`,
       (fileItem) => {
-        const isFileItemInfilesSelectedItems = this.filesSelectedItems.some(
-          (item) => item.resourceUri?.path === fileItem.resourceUri.path
-        );
-        if (
-          this.filesSelectedItems.length > 0 &&
-          isFileItemInfilesSelectedItems
-        ) {
+        const isFileItemContainedInFilesSelectedItems =
+          this.filesSelectedItems.some((item) => item.like(fileItem));
+
+        if (!fileItem || isFileItemContainedInFilesSelectedItems)
+        {
           this.filesSelectedItems.map((item) => {
             this.justFilesViewProvider.addFileItem(item as FileItem);
             this.justFilesViewProvider.refresh();
           });
-
-          return;
+        } else {
+          this.justFilesViewProvider.addFileItem(fileItem);
+          this.justFilesViewProvider.refresh();
         }
-
-        this.justFilesViewProvider.addFileItem(fileItem);
-        this.justFilesViewProvider.refresh();
       }
     );
 
-    this.context.subscriptions.push(disposableShow);
+    this.context.subscriptions.push(show);
   }
 
   subscribeHide() {
-    const disposableHide = vscode.commands.registerCommand(
+    const hide = vscode.commands.registerCommand(
       `${brand}.hide`,
       (fileItem) => {
-        const isFileItemInjustFilesSelectedItems =
+        const isFileItemContainedInJustFilesSelectedItems =
           this.justFilesSelectedItems.some(
-            (item) => item.resourceUri?.path === fileItem.resourceUri.path
+            (item) => item instanceof FileItem && item.like(fileItem)
           );
-        if (
-          this.justFilesSelectedItems.length > 0 &&
-          isFileItemInjustFilesSelectedItems
-        ) {
+
+        if (!fileItem || isFileItemContainedInJustFilesSelectedItems)
+        {
           this.justFilesSelectedItems.map(async (item) => {
-            await this.justFilesViewProvider.addHideFileItem(item as FileItem);
+            this.justFilesViewProvider.addHideFileItem(item as FileItem);
             this.justFilesViewProvider.refresh();
           });
-
-          return;
+        } else {
+          this.justFilesViewProvider.addHideFileItem(fileItem);
+          this.justFilesViewProvider.refresh();
         }
-        this.justFilesViewProvider.addHideFileItem(fileItem);
-        this.justFilesViewProvider.refresh();
       }
     );
-    this.context.subscriptions.push(disposableHide);
+    this.context.subscriptions.push(hide);
   }
 
   subscribeAddFromTab() {
-    const addFromTabDisponsable = vscode.commands.registerCommand(
+    const addFromTab = vscode.commands.registerCommand(
       `${brand}.addItemFromTabMenu`,
       (uri) => {
         const factory = new FileItemManager();
@@ -237,11 +235,11 @@ export class JustFiles {
         this.justFilesViewProvider.refresh();
       }
     );
-    this.context.subscriptions.push(addFromTabDisponsable);
+    this.context.subscriptions.push(addFromTab);
   }
 
   subscribeRemoveFromTab() {
-    const removeFromTabDisponsable = vscode.commands.registerCommand(
+    const removeFromTab = vscode.commands.registerCommand(
       `${brand}.removeItemFromTabMenu`,
       async (uri) => {
         const factory = new FileItemManager();
@@ -250,7 +248,7 @@ export class JustFiles {
         this.justFilesViewProvider.refresh();
       }
     );
-    this.context.subscriptions.push(removeFromTabDisponsable);
+    this.context.subscriptions.push(removeFromTab);
   }
 
   subscribeAddFromCommand() {
@@ -288,7 +286,7 @@ export class JustFiles {
   }
 
   subscribeAddFromExplorer() {
-    const disposableAddFromExplorer = vscode.commands.registerCommand(
+    const addFromExplorer = vscode.commands.registerCommand(
       `${brand}.addItemFromExplorer`,
       (uri) => {
         const factory = new FileItemManager();
@@ -297,7 +295,7 @@ export class JustFiles {
         this.justFilesViewProvider.refresh();
       }
     );
-    this.context.subscriptions.push(disposableAddFromExplorer);
+    this.context.subscriptions.push(addFromExplorer);
   }
 
   subscribeOpenFolder() {
@@ -306,12 +304,19 @@ export class JustFiles {
     );
     this.context.subscriptions.push(openFolder);
   }
+  
+  subscribeCloseFolder() {
+    const closeFolder = vscode.commands.registerCommand(`${brand}.closeFolder`,
+      () => vscode.commands.executeCommand("workbench.action.closeFolder")
+    );
+    this.context.subscriptions.push(closeFolder);
+  }
 
   subscribeRevealInExplorer() {
     const reveal = vscode.commands.registerCommand(`${brand}.revealInSidebar`,
       async (fileItem) => {
         const uri: vscode.Uri = getUriFrom(fileItem);
-        const isViewEmpty = await this.openUriIfFilesTreeViewEmpty(uri);
+        const isViewEmpty = await this.openUriIfFolderViewEmpty(uri);
 
         if (!isViewEmpty) {
           vscode.commands.executeCommand("revealInExplorer", uri);
@@ -368,7 +373,9 @@ export class JustFiles {
         const uri: vscode.Uri = getUriFrom(uriOr);
         this.previewProvider.showAsWebView(uri.fsPath);
 
-        await vscode.commands.executeCommand("workbench.view.extension.preView-container");
+        await vscode.commands.executeCommand(
+          "workbench.view.extension.preView-container"
+        );
         await vscode.commands.executeCommand("preView.focus");
 
         this.foldersViewProvider.showItemInExplorerByUriOrTrySelect(uri);

@@ -93,7 +93,7 @@
     "viewsWelcome": [
       {
         "view": "justFilesView",
-        "contents": "No files added"
+        "contents": "Drag Here"
       },
       {
         "view": "filesView",
@@ -260,6 +260,10 @@
       {
         "command": "just-files.openFolder",
         "title": "Open Folder"
+      },
+      {
+        "command": "just-files.closeFolder",
+        "title": "Close Folder"
       }
     ],
     "menus": {
@@ -325,12 +329,17 @@
         {
           "command": "just-files.revealInSidebar",
           "group": "inline",
-          "when": "(view == filesView || view == justFilesView) && viewItem != empty && viewItem != root"
+          "when": "(view == filesView || view == justFilesView) && viewItem != empty && viewItem != root && viewItem != vac"
         },
         {
           "command": "just-files.openFolder",
           "when": "focusedView == filesView && viewItem == vac",
           "group": "0_navigation"
+        },
+        {
+          "command": "just-files.closeFolder",
+          "when": "focusedView == filesView && viewItem == root",
+          "group": "6_other"
         },
         {
           "command": "just-files.revealFileInOS",
@@ -349,7 +358,7 @@
         },
         {
           "command": "just-files.findRef",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != folder && viewItem != empty && viewItem != root",
+          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != folder && viewItem != empty && viewItem != root && viewItem != vac",
           "group": "1_navigation"
         },
         {
@@ -395,12 +404,12 @@
         {
           "command": "just-files.collapseFolder",
           "group": "inline",
-          "when": "view == filesView && viewItem != fileRoot && viewItem != root"
+          "when": "view == filesView && viewItem != fileRoot && viewItem != root && viewItem != vac"
         },
         {
           "command": "just-files.show",
           "group": "inline",
-          "when": "view == filesView && viewItem != root"
+          "when": "view == filesView && viewItem != root && viewItem != vac"
         },
         {
           "command": "just-files.hide",
@@ -414,7 +423,7 @@
         },
         {
           "command": "just-files.show",
-          "when": "view == filesView && viewItem != empty && viewItem != root",
+          "when": "view == filesView && viewItem != empty && viewItem != root && viewItem != vac",
           "group": "default"
         },
         {
@@ -465,6 +474,18 @@
         "key": "ctrl+shift+c",
         "mac": "cmd+shift+c",
         "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty"
+      },
+      {
+        "command": "just-files.show",
+        "key": "ctrl+y",
+        "mac": "cmd+y",
+        "when": "(focusedView == filesView) && viewItem != root && viewItem != vac"
+      },
+      {
+        "command": "just-files.hide",
+        "key": "ctrl+alt+y",
+        "mac": "cmd+alt+y",
+        "when": "(focusedView == justFilesView) && viewItem != empty"
       },
       {
         "command": "just-files.addTabFromCommand",
