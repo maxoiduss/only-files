@@ -97,11 +97,8 @@ export class JustFiles {
   }
 
   private async revealFilesTreeViewItem(element: FileItem, expand?: boolean) {
-    try {
-      expand ?
-        await this.filesTreeView.reveal(element, { expand: true })
-      : await this.filesTreeView.reveal(element, { focus: true });
-    } catch (error) {
+    try { await this.filesTreeView.reveal(element, { expand: expand }); }
+    catch (error) {
       console.log(error);
     }
     finally {
