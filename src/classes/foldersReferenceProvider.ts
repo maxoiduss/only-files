@@ -6,7 +6,7 @@ import {
   setNothingToExcludeTemporary,
   showProgressBar,
   showQuickInput
-} from "./fileItemManager";
+} from "./utilManager";
 import fpath = require("path");
 
 const EXCLUDES = [

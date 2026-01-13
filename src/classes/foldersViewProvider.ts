@@ -1,9 +1,17 @@
 import * as vscode from "vscode";
-import fpath = require("path");
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
-import { asRelative, EmptyFolderItem, emptyRoot, FileItem, root, RootFileItem } from "./fileItem";
-import { FileItemManager, getAllFolders, isInFolder } from "./fileItemManager";
 import { brand } from "./commandRegistrator";
+import {
+  asRelative,
+  EmptyFolderItem,
+  emptyRoot,
+  FileItem,
+  root,
+  RootFileItem
+} from "./fileItem";
+import { FileItemManager } from "./fileItemManager";
+import { getAllFolders, isInFolder } from "./utilManager";
+import fpath = require("path");
 
 const collapsinges: string = "collapsinges";
 const plainModeOn: string = "plainModeOn";
@@ -33,6 +41,21 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
   readonly onDidChangeTreeData: vscode.Event<FileItem | undefined | void> =
     this._onDidChangeTreeData.event;
 
+  public isEmpty: boolean = true;
+  public plainMode: boolean = false;
+  public readonly root: RootFileItem = this.createFileItem();
+
+  private showingRoot: boolean = true;
+  private showEmptyUncollapsedFolders: boolean = true;
+  private uncollapsedMode: [boolean, boolean] = [false, false];
+  private context: vscode.ExtensionContext;
+  private readonly fileItemManager = new FileItemManager();
+  private readonly collapsingItems: Map<string, State> = new Map();
+  private ignoreItems: Ignore | undefined;
+  private expandedItem: FileItem | undefined;
+  private focusedItem: FileItem | undefined;
+  private selectedItem: (FileItem | string | undefined)[] = [];
+
   constructor(
     context: vscode.ExtensionContext,
     reveal: (item: FileItem, expand?: boolean) => Promise<void>
@@ -50,20 +73,6 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     this.plainMode = context.workspaceState.get<boolean>(plainModeOn)
       ?? this.plainMode;
   }
-  public isEmpty: boolean = true;
-  public plainMode: boolean = false;
-  public readonly root: RootFileItem = this.createFileItem();
-
-  private showingRoot: boolean = true;
-  private showEmptyUncollapsedFolders: boolean = true;
-  private uncollapsedMode: [boolean, boolean] = [false, false];
-  private context: vscode.ExtensionContext;
-  private readonly fileItemManager = new FileItemManager();
-  private readonly collapsingItems: Map<string, State> = new Map();
-  private ignoreItems: Ignore | undefined;
-  private expandedItem: FileItem | undefined;
-  private focusedItem: FileItem | undefined;
-  private selectedItem: (FileItem | string | undefined)[] = [];
 
   private revealItem: (item: FileItem, expand?: boolean) => Promise<void>;
 
@@ -188,7 +197,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
 
   setShowEmptyUncollapsedFolders() {
     const config = vscode.workspace.getConfiguration(`${brand}`);
-    this.showEmptyUncollapsedFolders = config.get("showemptyfolders", true);
+    this.showEmptyUncollapsedFolders = config.get("Show Empty Folders", true);
   }
 
   rootIsShown(forceValue: boolean | undefined = undefined): boolean {

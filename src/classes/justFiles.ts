@@ -1,17 +1,14 @@
 import * as vscode from "vscode";
-import { FileItem, PlaceholderItem, RootFileItem } from "./fileItem";
 import { brand, CommandRegistrator } from "./commandRegistrator";
-import { JustFilesViewProvider } from "./justFilesViewProvider";
-import { FoldersViewProvider } from "./foldersViewProvider";
-import { PreviewProvider } from "./previewProvider";
-import {
-  FileItemManager,
-  getUriFrom,
-  isProjectTooLarge } from "./fileItemManager";
-import { JustFilesDragController } from "./justFilesDragController";
+import { FileItem, PlaceholderItem, RootFileItem } from "./fileItem";
+import { FileItemManager } from "./fileItemManager";
 import { FoldersDragController } from "./foldersDragController";
 import { FoldersReferenceProvider } from "./foldersReferenceProvider";
-import { fstat, fstatSync } from "fs";
+import { FoldersViewProvider } from "./foldersViewProvider";
+import { JustFilesDragController } from "./justFilesDragController";
+import { JustFilesViewProvider } from "./justFilesViewProvider";
+import { PreviewProvider } from "./previewProvider";
+import { getUriFrom, isProjectTooLarge } from "./utilManager";
 
 export class JustFiles {
   private context: vscode.ExtensionContext;
@@ -251,13 +248,13 @@ export class JustFiles {
   subscribeAddFromCommand() {
     const addFromCommand = vscode.commands.registerCommand(
       `${brand}.addTabFromCommand`,
-      async () => {
+      () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
           const itemUri = activeEditor.document.uri;
           const factory = new FileItemManager();
           const item = factory.createFileItem(itemUri);
-          await this.justFilesViewProvider.addFileItem(item);
+          this.justFilesViewProvider.addFileItem(item);
           this.justFilesViewProvider.refresh();
         }
       }
@@ -438,14 +435,21 @@ export class JustFiles {
   }
 
   subscribeRefreshJustFilesView() {
+    const refreshAndSwitchSortedMode = () => {
+      this.justFilesViewProvider.sortedMode =
+        !this.justFilesViewProvider.sortedMode;
+        
+      this.justFilesViewProvider.switchSortedModeTag();
+      this.justFilesViewProvider.refresh();
+    };
     const refreshJustFilesView = vscode.commands.registerCommand(
-      `${brand}.refreshJustFiles`,
-      () => {
-        this.justFilesViewProvider.removeNotFiles();
-        this.justFilesViewProvider.refresh();
-      }
+      `${brand}.refreshJustFiles`, () => refreshAndSwitchSortedMode()
+    );
+    const refreshSortedJustFilesView = vscode.commands.registerCommand(
+      `${brand}.refreshSortedJustFiles`, () => refreshAndSwitchSortedMode()
     );
     this.context.subscriptions.push(refreshJustFilesView);
+    this.context.subscriptions.push(refreshSortedJustFilesView);
   }
 
   subscribeChanges() {

@@ -30,21 +30,21 @@
       {
         "title": "just-files",
         "properties": {
-          "just-files.clicktime": {
+          "just-files.Click Time": {
             "type": "number",
             "default": 500,
             "minimum": 50,
             "maximum": 1000,
             "description": "Tolerance between clicks in millisec to trigger open file."
           },
-          "just-files.renametime": {
+          "just-files.Rename Time": {
             "type": "number",
             "default": 1500,
             "minimum": 1050,
             "maximum": 2500,
             "description": "Tolerance between clicks in millisec to trigger rename file."
           },
-          "just-files.showemptyfolders": {
+          "just-files.Show Empty Folders": {
             "type": "boolean",
             "default": true,
             "description": "Should empty folders be shown when the whole project is uncollapsed to plain mode."
@@ -206,6 +206,14 @@
         }
       },
       {
+        "command": "just-files.refreshSortedJustFiles",
+        "title": "Refresh JustFiles",
+        "icon": {
+          "light": "resources/light/refreshSortedIconLight.svg",
+          "dark": "resources/dark/refreshSortedIconDark.svg"
+        }
+      },
+      {
         "command": "just-files.revealInSidebar",
         "title": "Present file in sidebar",
         "icon": {
@@ -302,7 +310,12 @@
         },
         {
           "command": "just-files.refreshJustFiles",
-          "when": "view == justFilesView",
+          "when": "view == justFilesView && !just-files:isSorted",
+          "group": "navigation"
+        },
+        {
+          "command": "just-files.refreshSortedJustFiles",
+          "when": "view == justFilesView && just-files:isSorted",
           "group": "navigation"
         },
         {
@@ -527,6 +540,8 @@
     "pdfjs-dist": "^5.4.296"
   },
   "overrides": {
-    "ajv": "8.17.1"
+    "ajv": "8.17.1",
+    "uri-js": "4.4.1",
+    "punycode": "2.3.0"
   }
 }

@@ -1,198 +1,10 @@
 import * as vscode from "vscode";
 import * as fs from "fs";
-import { CancellationTokenSource as CTS } from "vscode";
 import { EmptyFolderItem, FileItem } from "./fileItem";
+import { getUri } from "./utilManager";
 import fpath = require("path");
 
-export function getString(fromUriOr: vscode.Uri | string): string {
-  return typeof fromUriOr === "string" ? fromUriOr : fromUriOr.fsPath;
-}
-
-export function getUri(uriOr: vscode.Uri | string): vscode.Uri {
-  return typeof uriOr === "string" ? vscode.Uri.file(uriOr) : uriOr;
-}
-
-export function getUriFrom(uriOrItem: vscode.Uri | FileItem): vscode.Uri {
-  return uriOrItem instanceof FileItem ? uriOrItem.resourceUri! : uriOrItem;
-}
-
-export function showProgressBar(withMessage: string): CTS {
-  const cts = new CTS();
-
-  vscode.window.withProgress({
-    title: withMessage,
-    location: vscode.ProgressLocation.Notification,
-    cancellable: false
-  }, async (progress, _) => {
-    const dots = [".", "..", "...", "...."];
-    let num: number = 0;
-
-    return new Promise<void>((resolve) => {
-        const interval = setInterval(() => {
-          num = num > dots.length - 1 ? 0 : num + 1;
-          progress.report({ message: dots[num], increment: 1 });
-        }, 1000);
-
-        const stop = () => {
-          clearInterval(interval);
-          try { cts.dispose(); } catch {}
-          resolve();
-        };
-        const ctstoken = cts.token.onCancellationRequested(() => {
-          ctstoken.dispose();
-          stop();
-        });
-    });
-  });
-
-  return cts;
-}
-
-export function showQuickInput(withText: string, option: string): Promise<string> {
-  return new Promise((resolve) => {
-    const pick = vscode.window.createQuickPick<vscode.QuickPickItem>();
-    pick.placeholder = pick.title = withText;
-    pick.items = [];
-    pick.value = option;
-    pick.ignoreFocusOut = true;
-    pick.matchOnDetail = false;
-    let secondsRemaining = 4;
-    let isResolved = false;
-
-    const okButton: vscode.QuickInputButton = {
-      iconPath: new vscode.ThemeIcon('check'),
-      tooltip: 'Ok'
-    };
-    pick.buttons = [okButton];
-
-    const runAccept = async (value: string) => {
-      if (isResolved) { return; }
-      isResolved = true;
-
-      clearInterval(timer);
-
-      pick.busy = true;
-      pick.enabled = false as any;
-      try {
-        pick.hide();
-        resolve(value);
-      } catch {
-        resolve("");
-      } finally {
-        pick.busy = false;
-      }
-    };
-    const timer = setInterval(() => {
-      secondsRemaining--;
-      if (secondsRemaining > 0) {
-        pick.placeholder = pick.title = `${withText} (${secondsRemaining})`;
-      } else {
-        runAccept(pick.value);
-      }
-    }, 1000);
-
-    pick.onDidAccept(() => { void runAccept(pick.value); });
-    pick.onDidTriggerButton((button) => {
-      if (button === okButton) { void runAccept(pick.value); }
-    });
-    pick.onDidHide(() => {
-      clearInterval(timer);
-      pick.dispose();
-      if (!isResolved) { resolve("."); } 
-    });
-    pick.show();
-  });
-}
-
-export async function setNothingToExcludeTemporary(): Promise<() => Promise<void>> {
-  async function updateConfig(target: vscode.ConfigurationTarget, empty?: boolean)
-  {
-    try {
-      if (previous[target]) {
-        await config.update(exclude, empty ? {} : previous[target], target);
-      }
-    } catch (error) {
-      console.error(`Failed to update files.${exclude} for ${target}: ${error}`);
-    }
-  }
-  if (!useUnexcludeSystemConfig) { return async () => {}; }
-
-  const exclude = "exclude";
-  const config = vscode.workspace.getConfiguration("files", null);
-  const values = config.inspect<Record<string, boolean>>(exclude);
-  const previous:
-    Record<vscode.ConfigurationTarget, Record<string, boolean> | undefined> = {
-      [vscode.ConfigurationTarget.Global]: values?.globalValue,
-      [vscode.ConfigurationTarget.Workspace]: values?.workspaceValue,
-      [vscode.ConfigurationTarget.WorkspaceFolder]: values?.workspaceFolderValue
-  };
-  await updateConfig(vscode.ConfigurationTarget.WorkspaceFolder, true);
-  await updateConfig(vscode.ConfigurationTarget.Workspace, true);
-  await updateConfig(vscode.ConfigurationTarget.Global, true);
-
-  return async () => {
-    await updateConfig(vscode.ConfigurationTarget.WorkspaceFolder);
-    await updateConfig(vscode.ConfigurationTarget.Workspace);
-    await updateConfig(vscode.ConfigurationTarget.Global);
-  };
-}
-
-export function isInFolder(path: string, folder: string): boolean {
-  if (path === folder) { return true; }
-  
-  const filePath = fpath.resolve(path);
-  const folderPath = fpath.resolve(folder);
-  const parent = fpath.dirname(filePath);
-  return parent === folderPath;
-}
-
-export const largeProjectFilesAmount: number = 5555;
-export const useUnexcludeSystemConfig = true;
-
-export async function isProjectTooLarge(foldersMax: number = 1111):
-  Promise<boolean> {
-  const folders = await getAllFolders(foldersMax);
-  return folders === null || folders.length > foldersMax;
-}
-
-export async function getAllFolders(max?: number): Promise<vscode.Uri[] | null> {
-  const folders = new Set<string>();
-  const roots = vscode.workspace.workspaceFolders?.map(f => f.uri);
-  if (!roots) { return []; }
-  
-  const restoreSetting = await setNothingToExcludeTemporary();
-
-  for (const root of roots) {
-    const files = await vscode.workspace.findFiles('**', null, 55555);
-    if (max && files.length > largeProjectFilesAmount) {
-      await restoreSetting(); return null;
-    }
-
-    for (const file of files) {
-      const relative = fpath.relative(root.fsPath, file.fsPath);
-      const directory = fpath.dirname(relative);
-      const parts = directory.split(fpath.sep).filter(Boolean);
-
-      for (let i = 0; i < parts.length; i++) {
-        const folderPath = fpath.join(root.fsPath, ...parts.slice(0, i + 1));
-        if (folderPath !== root.fsPath) {
-          folders.add(folderPath); }
-        if (max && folders.size > max) {
-          await restoreSetting(); return null; }
-      }
-    }
-  }
-  await restoreSetting();
-
-  return [...folders].map(path => vscode.Uri.file(path));
-}
-
 export class FileItemManager {
-  private tryValidatePath(path: string, scheme = "/"): string {
-    const validPath = path.replace(/\\+/g, "/");
-    return validPath.startsWith(scheme) ? validPath : `${scheme}${validPath}`;
-  }
-  
   getParentPath(fileItem: FileItem): string | undefined {
     if (fileItem.resourceUri) {
       const filePath = fileItem.resourceUri.fsPath;
@@ -431,12 +243,16 @@ export class FileItemManager {
     }
   }
 
-  sortItems(items: FileItem[]) {
+  sortItems(items: FileItem[], byNamesOnly: boolean = false) {
     return items.sort((a, b) => {
-      const labelA = a.resourceUri?.fsPath.toLocaleLowerCase();
-      const labelB = b.resourceUri?.fsPath.toLocaleLowerCase();
-      const aHasSep = (typeof a.label === "string") && /[\/\\]/.test(a.label);
-      const bHasSep = (typeof b.label === "string") && /[\/\\]/.test(b.label);
+      const labelA = (byNamesOnly ?
+        fpath.basename(a.relativePath)
+      :  a.relativePath).toLocaleLowerCase();
+      const labelB = (byNamesOnly ?
+        fpath.basename(b.relativePath)
+      :  b.relativePath).toLocaleLowerCase();
+      const aHasSep = /[\/\\]/.test(a.relativePath);
+      const bHasSep = /[\/\\]/.test(b.relativePath);
       
       if (labelA && labelB) {
         if (a.isFile && !b.isFile) {

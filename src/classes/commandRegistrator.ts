@@ -4,7 +4,13 @@ import {
   FoldersReferenceProvider,
   getPositionSafelyFrom
 } from "./foldersReferenceProvider";
-import path = require("path");
+import {
+  FileSystemHard,
+  getPathASsequence,
+  getSequenceASpath,
+  same
+} from "./utilManager";
+import fpath = require("path");
 
 export const brand: string = "just-files";
 
@@ -35,6 +41,8 @@ export class CommandRegistrator {
   private internals: Set<vscode.Uri> = new Set();
   
   constructor(context?: vscode.ExtensionContext, refresh?: Function) {
+    (vscode.workspace as any).fsh = FileSystemHard;
+    
     this.context = context;
     this.refreshStateAction = refresh;
     this.updateTolerances();
@@ -42,8 +50,8 @@ export class CommandRegistrator {
 
   updateTolerances() {
     const config = vscode.workspace.getConfiguration(`${brand}`);
-    FileItem.clickTolerance = config.get("clicktime", 500);
-    FileItem.renameTolerance = config.get("renametime", 1500);
+    FileItem.clickTolerance = config.get("Click Time", 500);
+    FileItem.renameTolerance = config.get("Rename Time", 1500);
   }
 
   async getAnySelectedIfBad(fileItem?: Object): Promise<FileItem> {
@@ -72,7 +80,7 @@ export class CommandRegistrator {
     });
     if (!newName) { return; }
     
-    const newUri = vscode.Uri.file(path.join(pathTo, newName));
+    const newUri = vscode.Uri.file(fpath.join(pathTo, newName));
     try {
       if(isFile) {
         await vscode.workspace.fs.writeFile(newUri, new Uint8Array());
@@ -90,16 +98,21 @@ export class CommandRegistrator {
     this.refreshStateAction?.();
   }
 
-  private async deleteItem(fileItem: FileItem | vscode.Uri | undefined) {
+  private async deleteItem(
+    fileItem: FileItem | vscode.Uri | undefined,
+    useTrash: boolean = true
+  ) {
     if (fileItem instanceof vscode.Uri) {
-      await vscode.workspace.fs.delete(fileItem, { recursive: true, useTrash: true});
+      await vscode.workspace.fs.delete(fileItem,
+        { recursive: true, useTrash: useTrash}
+      );
     } else
     {
       if (!fileItem?.resourceUri) { return ;}
 
       try {
         await vscode.workspace.fs.delete(fileItem.resourceUri,
-          { recursive: true, useTrash: true}
+          { recursive: true, useTrash: useTrash}
         );
       } catch(e) { }
     }
@@ -131,35 +144,46 @@ export class CommandRegistrator {
   }
 
   async pasteItems(whereItem: Object | undefined) {
-    function getLastSubPath(path: string): string[] {
-      return path.split('/');
-    }
     const where = await this.getAnySelectedIfBad(whereItem);
     if (!where?.resourceUri) { return ;}
 
-    const pathToASarray = getLastSubPath(where.resourceUri.path);
+    const pathToASarray = getPathASsequence(where.resourceUri);
     if (where.isFile) {
       pathToASarray.pop();
     }
-    const newUriTo = vscode.Uri.parse(pathToASarray.join('/'));
+    const newUriTo = vscode.Uri.file(getSequenceASpath(pathToASarray));
     const internalsAScopy = new Set(this.internals);
 
     for (const source of internalsAScopy) {
-      const file = getLastSubPath(source.path).pop();
-      const target = vscode.Uri.joinPath(newUriTo, file ?? '');
+      const placename = getPathASsequence(newUriTo).pop() ?? '';
+      const filename = getPathASsequence(source).pop() ?? '';
+      const target = vscode.Uri.joinPath(newUriTo, filename);
+      const theSameNames = same(filename, placename);
+      const theSameObjects = same(source, target);
       try {
-        if (source.toString() === target.toString()) {
+        if ((this.wasCutted && theSameNames) || theSameObjects) {
           this.internals.delete(source);
           vscode.window.showInformationMessage(
-            "Check what you're trying to cut/copy. Overwrite is disabled.");
+            "Check what and where you're trying to cut/copy. " +
+            "Overwrite is disabled.");
+          continue;
         }
-        await vscode.workspace.fs.copy(source, target, { overwrite: false });
-      } catch(ex) { continue; }
+        if (theSameNames) {
+          await vscode.workspace.fsh.copy(source, target,
+            { useTrash: false });
+        } else {
+          await vscode.workspace.fs.copy(source, target,
+            { overwrite: false });
+        }
+      } catch(ex) {
+        this.internals.delete(source);
+        continue;
+      }
     }
 
     if (this.wasCutted) {
       for (const source of this.internals) {
-        await this.deleteItem(source);
+        await this.deleteItem(source, false);
       }
       this.internals.clear();
       this.wasCutted = false;
@@ -196,14 +220,14 @@ export class CommandRegistrator {
       if (!fileItem?.resourceUri) { return ;}
 
       const oldUri = fileItem.resourceUri;
-      const oldName = path.basename(oldUri.fsPath);
+      const oldName = fpath.basename(oldUri.fsPath);
       const newName = await vscode.window.showInputBox({
         prompt: 'Enter new name',
         value: oldName
       });
       if (!newName || newName === oldName) { return; }
       const newUri = vscode.Uri.joinPath(
-        vscode.Uri.file(path.dirname(oldUri.fsPath)),
+        vscode.Uri.file(fpath.dirname(oldUri.fsPath)),
         newName
       );
       await vscode.workspace.fs.rename(oldUri, newUri, { overwrite: false });
@@ -277,7 +301,7 @@ export class CommandRegistrator {
       if (!fileItem?.resourceUri) { return ;}
       
       const folderPath = fileItem.isFile ?
-        path.dirname(fileItem.resourceUri.fsPath)
+        fpath.dirname(fileItem.resourceUri.fsPath)
       : fileItem.resourceUri.fsPath;
       this.createNewExplorerItem(folderPath, true);
     });
@@ -287,7 +311,7 @@ export class CommandRegistrator {
       if (!fileItem?.resourceUri) { return ;}
 
       const folderPath = fileItem.isFile ?
-        path.dirname(fileItem.resourceUri.fsPath)
+        fpath.dirname(fileItem.resourceUri.fsPath)
       : fileItem.resourceUri.fsPath;
       this.createNewExplorerItem(folderPath, false);
     });

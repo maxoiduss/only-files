@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
-import { getString } from "./fileItemManager";
+import { getString } from "./utilManager";
 
 enum PreviewType {
   pdf = 'pdf',
