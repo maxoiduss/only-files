@@ -9,6 +9,7 @@ import fpath = require("path");
 
 export const postfix = "hard_lock";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export const FileSystemHard = {
   async copy(
     source: vscode.Uri,
@@ -27,7 +28,7 @@ export const FileSystemHard = {
     await vscode.workspace.fs.rename(retarget, target,
       { overwrite: true });
   }
-}
+};
 
 export function getPathASsequence(pathOr: string | vscode.Uri): string[] {
   return typeof pathOr === "string" ?
@@ -106,7 +107,11 @@ export function showQuickInput(withText: string, option: string): Promise<string
       iconPath: new vscode.ThemeIcon('check'),
       tooltip: 'Ok'
     };
-    pick.buttons = [okButton];
+    const cancelButton: vscode.QuickInputButton = {
+      iconPath: new vscode.ThemeIcon('close'),
+      tooltip: 'Cancel'
+    };
+    pick.buttons = [okButton, cancelButton];
 
     const runAccept = async (value: string) => {
       if (isResolved) { return; }
@@ -137,6 +142,7 @@ export function showQuickInput(withText: string, option: string): Promise<string
     pick.onDidAccept(() => { void runAccept(pick.value); });
     pick.onDidTriggerButton((button) => {
       if (button === okButton) { void runAccept(pick.value); }
+      else if (button === cancelButton) { void runAccept(""); }
     });
     pick.onDidHide(() => {
       clearInterval(timer);

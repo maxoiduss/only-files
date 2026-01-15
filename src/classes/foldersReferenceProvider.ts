@@ -236,9 +236,10 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
       await showQuickInput(
         "What file should be used as ignore list?",
         ignoreDefaultFileName
-      ) ?? ""
+      )
     : ignoreDefaultFileName;
-    if (plannedToAsk) {
+
+    if (plannedToAsk && ignorePattern !== "") {
       const restoreSetting = await setNothingToExcludeTemporary();
       const ignoreFiles = await vscode.workspace.findFiles(ignorePattern);
       this.gitignore = ignoreFiles.length > 0 ? ignoreFiles[0] : this.gitignore;
