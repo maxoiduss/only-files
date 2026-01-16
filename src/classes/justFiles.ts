@@ -335,28 +335,26 @@ export class JustFiles {
     const uncollapseAll = vscode.commands.registerCommand(
       `${brand}.uncollapseAll`,
       async () => {
-        if (await isProjectTooLarge()) {
-            const use = "Yes, use ignore file";
-            const answer = await vscode.window.showWarningMessage(
-              `You are switching to mode showing all files in the project.
-              It could be very time-consuming to load.
-              Didn't you forget to turn on skipping files
-              by .gitignore in the project?`,
-              use, "Cancel"
-            );
-            if (answer === use) {
-              await this.fillIgnoredFiles();
-            }
-            this.foldersViewProvider.canUncollapseAll(true);
-        } else {
-          this.foldersViewProvider.canUncollapseAll(true);
+        const projTooLarge = await isProjectTooLarge();
+        if (projTooLarge) {
+          const yes = "Yes, use ignore file";
+          const answer = await vscode.window.showWarningMessage(
+            `You are switching to mode showing all files in the project.
+            It could be very time-consuming to load.
+            Didn't you forget to turn on skipping files
+            by .gitignore in the project?`,
+            yes, "Cancel"
+          );
+          if (answer === yes) {
+            await this.fillIgnoredFiles();
+          }
         }
+        this.foldersViewProvider.canUncollapseAll(true);
         this.foldersViewProvider.switchPlainModeTag();
       }
     );
     this.context.subscriptions.push(uncollapseAll);
   }
-
 
   subscribeAndRegisterPreviewItem() {
     vscode.window.registerWebviewViewProvider("preView", this.previewProvider);
