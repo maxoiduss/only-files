@@ -63,6 +63,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     this.context = context;
     this.revealItem = reveal;
     this.checkIgnoreItems = this.checkIgnoreItems.bind(this);
+    this.setShowEmptyUncollapsedFolders();
 
     const collapsingConfig =
       this.fileItemManager.getConfigurationFor<State>(this.context, collapsinges);
