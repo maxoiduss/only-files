@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
 import { getString } from "./utilManager";
+import { brand } from "./commandRegistrator";
 
 enum PreviewType {
   pdf = 'pdf',
@@ -72,18 +73,30 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       if (message.command === this.contextCommand) {
         const path = getString(this.title);
         const copy = "Copy";
+        const ok = "Ok";
+        const showSettings = path === "";
         let result: string | undefined;
 
         if (typeof this.title === "string") {
-          result = await vscode.window.showInformationMessage(
-            `File name: ${path}`, "Ok", copy
+          result = showSettings ?
+            await vscode.window.showInformationMessage(
+              "Open extension settings?", ok, "No")
+          : await vscode.window.showInformationMessage(
+              `File name: ${path}`, ok, copy
           );
         }
         if (result === copy) {
           await vscode.env.clipboard.writeText(path);
         }
         else {
-          this.setTitle(vscode.Uri.file(path));
+          if (showSettings) {
+            if (result === ok) {
+              await vscode.commands.executeCommand(
+                "workbench.action.openSettings", `_${brand}`
+              );
+            }
+          }
+          else { this.setTitle(vscode.Uri.file(path)); }
         }
       }
     });
