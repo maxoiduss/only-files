@@ -446,7 +446,7 @@
         },
         {
           "command": "just-files.previewItem",
-          "when": "(view == justFilesView && viewItem != empty) && viewItem != empty && viewItem != root && viewItem != folder",
+          "when": "viewItem != empty && viewItem != root && viewItem != folder",
           "group": "default"
         }
       ]
