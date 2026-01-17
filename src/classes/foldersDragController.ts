@@ -72,7 +72,7 @@ export class FoldersDragController
     if (transferItems) {
       const value = transferItems.value as string;
 
-      if (value === '') {
+      if (value === "") {
         const uris = urisFromDataTransfer();
 
         if (uris.length > 0) {

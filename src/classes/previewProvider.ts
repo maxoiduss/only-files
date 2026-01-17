@@ -15,7 +15,7 @@ enum PreviewType {
 }
 
 export function getNonce() {
-  let text = "";
+  let text = '';
   const possible =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   for (let i = 0; i < 32; i++) {
@@ -93,7 +93,8 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         else {
           if (showSettings && result === ok) {
             await vscode.commands.executeCommand(
-              "workbench.action.openSettings", `_${brand}`
+              "workbench.action.openSettings",
+              `@ext:${this.context.extension.id}`
             );
             return;
           }
@@ -109,14 +110,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     const bad = '';
     const extension = getString(uriOr).split('.').pop()?.toLowerCase() ?? bad;    
     const getPreviewBy: Record<string, PreviewType> = {
-      pdf: PreviewType.pdf,
-      htm: PreviewType.html,
+      pdf:  PreviewType.pdf,
+      htm:  PreviewType.html,
       html: PreviewType.html,
-      md: PreviewType.md,
-      md5: PreviewType.md,
-      txt: PreviewType.txt,
-      log: PreviewType.txt,
-      bad: PreviewType.error
+      md:   PreviewType.md,
+      md5:  PreviewType.md,
+      txt:  PreviewType.txt,
+      log:  PreviewType.txt,
+      bad:  PreviewType.error
     };
     const type = getPreviewBy[extension] ?? PreviewType.error;
 
@@ -142,7 +143,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           <div class="placeholder"></div>
         </div>`;
       this.view.webview.html = this.getHtmlTemplate(emptyFrame);
-      this.setTitle("", true);
+      this.setTitle('', true);
       return;
     }
     if (type === PreviewType.md) {
