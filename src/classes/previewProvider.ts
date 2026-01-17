@@ -7,11 +7,11 @@ import { getString } from "./utilManager";
 import { brand } from "./commandRegistrator";
 
 enum PreviewType {
-  pdf = 'pdf',
-  html = 'html',
-  md = 'md',
-  txt = 'txt',
-  error = 'error'
+  pdf   = "pdf",
+  html  = "html",
+  md    = "md",
+  txt   = "txt",
+  error = "error"
 }
 
 export function getNonce() {
@@ -47,7 +47,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       enableScripts: true,
       enableForms: true,
       enableCommandUris: true,
-      localResourceRoots: [vscode.Uri.file(path.join(this.context.extensionPath, 'resources'))]
+      localResourceRoots: [
+        vscode.Uri.file(path.join(this.context.extensionPath, "resources"))
+      ]
     };
     this.view = webviewView;
     this.updateWebview();
@@ -74,7 +76,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         const path = getString(this.title);
         const copy = "Copy";
         const ok = "Ok";
-        const showSettings = path === "";
+        const showSettings = ["", "/", "\\", "\""].includes(path);
         let result: string | undefined;
 
         if (typeof this.title === "string") {
@@ -89,14 +91,13 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           await vscode.env.clipboard.writeText(path);
         }
         else {
-          if (showSettings) {
-            if (result === ok) {
-              await vscode.commands.executeCommand(
-                "workbench.action.openSettings", `_${brand}`
-              );
-            }
+          if (showSettings && result === ok) {
+            await vscode.commands.executeCommand(
+              "workbench.action.openSettings", `_${brand}`
+            );
+            return;
           }
-          else { this.setTitle(vscode.Uri.file(path)); }
+          this.setTitle(vscode.Uri.file(path));
         }
       }
     });
@@ -105,20 +106,20 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   showAsWebView(uriOr: vscode.Uri | string) {
     if (!this.view) { return; }
     
-    const ext = getString(uriOr).split('.').pop()?.toLowerCase();
+    const bad = '';
+    const extension = getString(uriOr).split('.').pop()?.toLowerCase() ?? bad;    
+    const getPreviewBy: Record<string, PreviewType> = {
+      pdf: PreviewType.pdf,
+      htm: PreviewType.html,
+      html: PreviewType.html,
+      md: PreviewType.md,
+      md5: PreviewType.md,
+      txt: PreviewType.txt,
+      log: PreviewType.txt,
+      bad: PreviewType.error
+    };
+    const type = getPreviewBy[extension] ?? PreviewType.error;
 
-    let type = PreviewType.error;
-    switch (ext) {
-      case 'pdf':
-        type = PreviewType.pdf; break;
-      case 'md': case 'md5':
-        type = PreviewType.md; break;
-      case 'txt': case 'log':
-        type = PreviewType.txt; break;
-      case 'html': case 'htm':
-        type = PreviewType.html; break;
-      default: break;
-    }
     this.updateWebview(uriOr, type);
   }
 
@@ -126,14 +127,22 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     this.title = asString ? getString(uriOr) : uriOr;
   }
 
-  private async updateWebview(uri: vscode.Uri | string  = '', type: PreviewType = PreviewType.error) {
+  private async updateWebview(
+    uri: vscode.Uri | string  = '', 
+    type: PreviewType = PreviewType.error
+  ) {
     if (!this.view) { return; }
 
     this.setTitle(uri, true);
 
     if (type === PreviewType.error) {
-      const emptyFrame = `<div class="container"><h2>Drag-n-Shift Here</h2><div class="placeholder"></div></div>`;
+      const emptyFrame =
+        `<div class="container">
+          <h2>Drag-n-Shift Here</h2>
+          <div class="placeholder"></div>
+        </div>`;
       this.view.webview.html = this.getHtmlTemplate(emptyFrame);
+      this.setTitle("", true);
       return;
     }
     if (type === PreviewType.md) {
@@ -146,6 +155,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       fs.readFile(vscode.Uri.file(uri.toString()).fsPath, (err, content) => {
         if (err) { this.showError(this.context.extension.id, err); }
         if (!this.view) { return; }
+
         if (type === PreviewType.pdf) {
           const pdfContent = this.getPdfTemplate(content);
           this.view.webview.html = this.getHtmlTemplate(pdfContent);
@@ -158,7 +168,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         }
         this.view.webview.html = this.getHtmlTemplate(htmlContent);
       });
-      return;
     }
   }
 
@@ -256,10 +265,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
 
   private getPdfTemplate(pdfContent: string | Buffer) {
     if (!this.view) { return ''; }
-    const tempLocalFolder = 'resources';
-    const pdfjsFolder = 'pdfjs';
-    const extensionPath = vscode.Uri.file(this.context.extensionPath);
 
+    const tempLocalFolder = "resources";
+    const pdfjs = {
+      folder: 'pdfjs',
+      min: { mjs: "pdf.min.mjs" },
+      worker: { min: { mjs: "pdf.worker.min.mjs" }}
+    };
+    const extensionPath = vscode.Uri.file(this.context.extensionPath);
     const base64Content = (Buffer.isBuffer(pdfContent) ?
         pdfContent as Buffer
       :   Buffer.from(pdfContent)).toString('base64');
@@ -267,11 +280,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     const dataUri = `data:application/pdf;base64,${base64Content}`;
     const pdfjsUri = this.view.webview.asWebviewUri(
       vscode.Uri.file(
-        path.join(extensionPath.fsPath, tempLocalFolder, pdfjsFolder, 'pdf.min.mjs'))
+        path.join(extensionPath.fsPath, tempLocalFolder, pdfjs.folder, pdfjs.min.mjs))
     );
     const workerUri = this.view.webview.asWebviewUri(
       vscode.Uri.file(
-        path.join(extensionPath.fsPath, tempLocalFolder, pdfjsFolder, 'pdf.worker.min.mjs'))
+        path.join(extensionPath.fsPath, tempLocalFolder, pdfjs.folder, pdfjs.worker.min.mjs))
     );
     const nonce = getNonce();
 
