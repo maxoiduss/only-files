@@ -3,7 +3,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
-import { getString } from "./utilManager";
+import { getString, hasNoName } from "./utilManager";
 
 enum PreviewType {
   pdf   = "pdf",
@@ -82,37 +82,13 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       if (message.command === this.contentLoadedCommand) {
         if (!this.lastWebviewLoaded) {
           this.lastWebviewLoaded = true;
-          this.view?.webview.postMessage({ type: this.resetStateCommand });
+          hasNoName(getString(this.title)) ?
+            this.view?.webview.postMessage({ type: this.disableStateCommand })
+          : this.view?.webview.postMessage({ type: this.resetStateCommand });
         }
       } else
       if (message.command === this.contextCommand) {
-        const path = getString(this.title);
-        const copy = "Copy";
-        const ok = "Ok";
-        const showSettings = ["", "/", "\\", "\""].includes(path);
-        let result: string | undefined;
-
-        if (typeof this.title === "string") {
-          result = showSettings ?
-            await vscode.window.showInformationMessage(
-              "Open extension settings?", ok, "No")
-          : await vscode.window.showInformationMessage(
-              `File name: ${path}\nTip: hold CTRL to zoom`, ok, copy
-          );
-        }
-        if (result === copy) {
-          await vscode.env.clipboard.writeText(path);
-        }
-        else {
-          if (showSettings && result === ok) {
-            await vscode.commands.executeCommand(
-              "workbench.action.openSettings",
-              `@ext:${this.context.extension.id}`
-            );
-            return;
-          }
-          this.setTitle(vscode.Uri.file(path));
-        }
+        await this.handleContextMenu();
       }
     });
     this.resolved();
@@ -137,6 +113,36 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     this.lastWebviewLoaded = false;
 
     await this.updateWebview(uriOr, type);
+  }
+
+  private async handleContextMenu() {
+    const path = getString(this.title);
+    const copy = "Copy";
+    const ok = "Ok";
+    const showSettings = hasNoName(path);
+    let result: string | undefined;
+
+    if (typeof this.title === "string") {
+      result = showSettings ?
+        await vscode.window.showInformationMessage(
+          "Open extension settings?", ok, "No")
+      : await vscode.window.showInformationMessage(
+          `File name: ${path}\nTip: hold CTRL to zoom`, ok, copy
+      );
+    }
+    if (result === copy) {
+      await vscode.env.clipboard.writeText(path);
+    }
+    else {
+      if (showSettings && result === ok) {
+        await vscode.commands.executeCommand(
+          "workbench.action.openSettings",
+          `@ext:${this.context.extension.id}`
+        );
+        return;
+      }
+      this.setTitle(vscode.Uri.file(path));
+    }
   }
 
   private setTitle(uriOr: vscode.Uri | string, asString: boolean = false) {
@@ -268,11 +274,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             let saveTimer;
             const setState = () => vscode.setState({
               scale: scale,
-              center: { x: center.x, y: center.y }
+              center: { x: center?.x, y: center?.y }
             });
-            const resetState = () => {
-              scale = 1.0;
-              center = { x: 0, y: 0 };
+            const resetState = (disable) => {
+              scale = disable ? undefined : 1.0;
+              center = disable ? undefined : { x: 0, y: 0 };
               setState();
             };
             const getContentCenter = () => {
@@ -319,10 +325,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
               if (event.data?.type === '${this.resetStateCommand}') {
                 resetState();
                 transform(true);
+              } else
+              if (event.data?.type === '${this.disableStateCommand}') {
+                resetState();
+                await transform(true);
+                resetState(true);
               }
             });
             window.addEventListener('wheel', (e) => {
-              if (e.ctrlKey) {
+              if (e.ctrlKey && scale) {
                 e.preventDefault();
                 scale += e.deltaY < 0 ? 0.1 : -0.1;
                 scale = Math.max(0.5, Math.min(2.0, scale));

@@ -60,6 +60,10 @@ export function getUriFrom(uriOrItem: vscode.Uri | TreeItem): vscode.Uri {
   return uriOrItem instanceof TreeItem ? uriOrItem.resourceUri! : uriOrItem;
 }
 
+export function hasNoName(path: string): boolean {
+  return ["", "/", "\\", "\""].includes(path);
+}
+
 export function showProgressBar(withMessage: string): CTS {
   const cts = new CTS();
 
