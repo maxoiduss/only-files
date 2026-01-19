@@ -357,10 +357,9 @@ export class JustFiles {
   }
 
   subscribeAndRegisterPreviewItem() {
-    const registeredProvider =
-      vscode.window.registerWebviewViewProvider(
-        "preView", this.previewProvider
-      );
+    const provider = vscode.window.registerWebviewViewProvider(
+      "preView", this.previewProvider
+    );
     const preview = vscode.commands.registerCommand(
       `${brand}.previewItem`,
       async (uriOr) => {
@@ -371,12 +370,12 @@ export class JustFiles {
         );
         await vscode.commands.executeCommand("preView.focus");
         await this.previewProvider.toBeResolved;
+        await this.previewProvider.showAsWebView(uri.fsPath);
 
-        this.previewProvider.showAsWebView(uri.fsPath);
         this.foldersViewProvider.showItemInExplorerByUriOrTrySelect(uri);
       }
     );
-    this.context.subscriptions.push(registeredProvider);
+    this.context.subscriptions.push(provider);
     this.context.subscriptions.push(preview);
   }
 

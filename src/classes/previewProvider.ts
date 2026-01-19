@@ -4,7 +4,6 @@ import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
 import { getString } from "./utilManager";
-import { brand } from "./commandRegistrator";
 
 enum PreviewType {
   pdf   = "pdf",
@@ -28,12 +27,16 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   private context: vscode.ExtensionContext;
   private view: WebviewView | undefined;
   private title: vscode.Uri | string = '';
-  private lastVisibleValue: boolean = false;
+  private lastViewVisibleValue: boolean = false;
+  private lastWebviewLoaded: boolean = false;
   private resolved!: () => void;
 
   readonly dropAreaMask = 'dropzone';
-  readonly fileDropCommand = 'fileDropped';
   readonly contextCommand = 'contextMenu';
+  readonly resetStateCommand = 'resetState';
+  readonly disableStateCommand = 'disableState';
+  readonly contentLoadedCommand = 'contentLoaded';
+  readonly fileDropCommand = 'fileDropped';
   readonly toBeResolved: Promise<void> = new Promise<void>(
     (resolved) => this.resolved = resolved
   );
@@ -62,9 +65,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
 
     webviewView.onDidChangeVisibility(() => {
       setTimeout(async () => {
-        if (this.lastVisibleValue !== webviewView.visible) {
-          this.lastVisibleValue = webviewView.visible;
-          if (this.lastVisibleValue) {
+        if (this.lastViewVisibleValue !== webviewView.visible) {
+          this.lastViewVisibleValue = webviewView.visible;
+          if (this.lastViewVisibleValue) {
             this.setTitle(getString(this.title), true);
           }
         }
@@ -75,6 +78,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       if (message.command === this.fileDropCommand && message.path) {
         const path = message.path as string;
         this.showAsWebView(vscode.Uri.parse(path).fsPath);
+      } else
+      if (message.command === this.contentLoadedCommand) {
+        if (!this.lastWebviewLoaded) {
+          this.lastWebviewLoaded = true;
+          this.view?.webview.postMessage({ type: this.resetStateCommand });
+        }
       } else
       if (message.command === this.contextCommand) {
         const path = getString(this.title);
@@ -88,7 +97,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
             await vscode.window.showInformationMessage(
               "Open extension settings?", ok, "No")
           : await vscode.window.showInformationMessage(
-              `File name: ${path}`, ok, copy
+              `File name: ${path}\nTip: hold CTRL to zoom`, ok, copy
           );
         }
         if (result === copy) {
@@ -109,12 +118,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     this.resolved();
   }
 
-  showAsWebView(uriOr: vscode.Uri | string) {
+  async showAsWebView(uriOr: vscode.Uri | string): Promise<void> {
     if (!this.view) { return; }
     
     const bad = '';
     const extension = getString(uriOr).split('.').pop()?.toLowerCase() ?? bad;    
-    const getPreviewBy: Record<string, PreviewType> = {
+    const getPreviewTypeBy: Record<string, PreviewType> = {
       pdf:  PreviewType.pdf,
       htm:  PreviewType.html,
       html: PreviewType.html,
@@ -124,9 +133,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       log:  PreviewType.txt,
       bad:  PreviewType.error
     };
-    const type = getPreviewBy[extension] ?? PreviewType.error;
+    const type = getPreviewTypeBy[extension] ?? PreviewType.error;
+    this.lastWebviewLoaded = false;
 
-    this.updateWebview(uriOr, type);
+    await this.updateWebview(uriOr, type);
   }
 
   private setTitle(uriOr: vscode.Uri | string, asString: boolean = false) {
@@ -136,7 +146,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   private async updateWebview(
     uri: vscode.Uri | string  = '', 
     type: PreviewType = PreviewType.error
-  ) {
+  ): Promise<void> {
     if (!this.view) { return; }
 
     this.setTitle(uri, true);
@@ -191,7 +201,6 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           <meta http-equiv="Content-Security-Policy">
           <title>Preview</title>
           <style>
-            <style nonce="${nonce}"/>
             body {
               canvas { display: block; }
               color: var(--vscode-foreground);
@@ -246,24 +255,91 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
               const uriList = event.dataTransfer.getData('text/uri-list');
               if (uriList && uriList.length > 0) {
                 const uri = uriList.replace('\\n', ';').split(';')[0];
-
                 vscode.postMessage({
                   command: '${this.fileDropCommand}',
                   path: uri
                 });
               }
             });
-            
-            let scale = 1.0;
+
+            let state = vscode.getState();
+            let scale = state?.scale;
+            let center = state?.center;
+            let saveTimer;
+            const setState = () => vscode.setState({
+              scale: scale,
+              center: { x: center.x, y: center.y }
+            });
+            const resetState = () => {
+              scale = 1.0;
+              center = { x: 0, y: 0 };
+              setState();
+            };
+            const getContentCenter = () => {
+              const centerX = (window.scrollX + window.innerWidth/2) / scale;
+              const centerY = (window.scrollY + window.innerHeight/2) / scale;
+              return { x: centerX, y: centerY };
+            };
+            const scheduleSave = () => {
+              clearTimeout(saveTimer);
+              saveTimer = setTimeout(() => {
+                center = getContentCenter();
+                setState();
+              }, 333);
+            };
+            const waitForLayout = async () => {
+              const imgs = Array.from(document.images || []);
+              await Promise.all(imgs.map(i => i.decode().catch(() => {})));
+              await new Promise(r =>
+                requestAnimationFrame(() => requestAnimationFrame(r))
+              );
+              await new Promise(r => setTimeout(r, 50));
+            }
+            const transform = async (useScroll) => {
+              if (!scale || !center) { return; }
+              if (useScroll) {
+                await waitForLayout();
+                requestAnimationFrame(() => {
+                  const targetX = center.x * scale - window.innerWidth/2;
+                  const targetY = center.y * scale - window.innerHeight/2;
+                  const doc = document.scrollingElement || document.documentElement;
+                  doc.scrollTo({
+                    left: Math.round(targetX),
+                    top: Math.round(targetY),
+                    behavior: 'auto'
+                  });
+                });
+              }
+              document.body.style.transform = "scale(" + scale + ")";
+              document.body.style.transformOrigin = 'top left';
+            };
+
+            window.addEventListener('scroll', scheduleSave, { passive: true });
+            window.addEventListener('message', async (event) => {
+              if (event.data?.type === '${this.resetStateCommand}') {
+                resetState();
+                transform(true);
+              }
+            });
             window.addEventListener('wheel', (e) => {
               if (e.ctrlKey) {
                 e.preventDefault();
                 scale += e.deltaY < 0 ? 0.1 : -0.1;
                 scale = Math.max(0.5, Math.min(2.0, scale));
-                document.body.style.transform = "scale(" + scale + ")";
-                document.body.style.transformOrigin = 'top left';
+                setState();
+                transform();
               }
             }, { passive: false });
+
+            document.addEventListener(
+              'DOMContentLoaded',
+              async () => {
+                await transform(true);
+                vscode.postMessage({
+                  command: '${this.contentLoadedCommand}'
+                });
+              }
+            );
           </script>
         </body>
         </html>`;
