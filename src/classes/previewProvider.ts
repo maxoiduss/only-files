@@ -116,9 +116,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   }
 
   private async handleContextMenu() {
-    const path = getString(this.title);
     const copy = "Copy";
+    const tip = "Tip";
     const ok = "Ok";
+    const path = getString(this.title);
     const showSettings = hasNoName(path);
     let result: string | undefined;
 
@@ -127,7 +128,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         await vscode.window.showInformationMessage(
           "Open extension settings?", ok, "No")
       : await vscode.window.showInformationMessage(
-          `File name: ${path}\nTip: hold CTRL to zoom`, ok, copy
+          `File name: ${path}`, ok, copy, tip, 
       );
     }
     if (result === copy) {
@@ -140,6 +141,12 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           `@ext:${this.context.extension.id}`
         );
         return;
+      }
+      if (result === tip) {
+        await vscode.window.showInformationMessage(
+          "You can hold CTRL to zoom in Preview",
+          { modal: true }
+        );
       }
       this.setTitle(vscode.Uri.file(path));
     }
