@@ -4,6 +4,7 @@ import tsPlugin from "@typescript-eslint/eslint-plugin";
 export default [
   {
     ignores: [
+      'node_modules',
       "out/",
       "dist/",
       "**/*.d.ts"
@@ -31,7 +32,7 @@ export default [
       "curly": "warn",
       "eqeqeq": "warn",
       "no-throw-literal": "warn",
-      "semi": "warn",
-    },
+      "semi": "warn"
+    }
   }
 ];
