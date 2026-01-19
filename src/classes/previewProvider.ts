@@ -29,10 +29,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   private view: WebviewView | undefined;
   private title: vscode.Uri | string = '';
   private lastVisibleValue: boolean = false;
+  private resolved!: () => void;
 
   readonly dropAreaMask = 'dropzone';
   readonly fileDropCommand = 'fileDropped';
   readonly contextCommand = 'contextMenu';
+  readonly toBeResolved: Promise<void> = new Promise<void>(
+    (resolved) => this.resolved = resolved
+  );
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -102,6 +106,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
         }
       }
     });
+    this.resolved();
   }
 
   showAsWebView(uriOr: vscode.Uri | string) {

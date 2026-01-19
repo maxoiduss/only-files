@@ -357,23 +357,26 @@ export class JustFiles {
   }
 
   subscribeAndRegisterPreviewItem() {
-    vscode.window.registerWebviewViewProvider("preView", this.previewProvider);
-
+    const registeredProvider =
+      vscode.window.registerWebviewViewProvider(
+        "preView", this.previewProvider
+      );
     const preview = vscode.commands.registerCommand(
       `${brand}.previewItem`,
       async (uriOr) => {
         const uri: vscode.Uri = getUriFrom(uriOr);
-        this.previewProvider.showAsWebView(uri.fsPath);
-
+        
         await vscode.commands.executeCommand(
           "workbench.view.extension.preView-container"
         );
         await vscode.commands.executeCommand("preView.focus");
+        await this.previewProvider.toBeResolved;
 
+        this.previewProvider.showAsWebView(uri.fsPath);
         this.foldersViewProvider.showItemInExplorerByUriOrTrySelect(uri);
       }
     );
-
+    this.context.subscriptions.push(registeredProvider);
     this.context.subscriptions.push(preview);
   }
 
