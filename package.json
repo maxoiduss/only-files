@@ -93,11 +93,11 @@
     "viewsWelcome": [
       {
         "view": "justFilesView",
-        "contents": "Drag Here"
+        "contents": "Drag files here"
       },
       {
         "view": "filesView",
-        "contents": "No files in the workspace"
+        "contents": "Loading the workspace..."
       }
     ],
     "commands": [
