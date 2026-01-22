@@ -8,7 +8,7 @@ import { FoldersViewProvider } from "./foldersViewProvider";
 import { JustFilesDragController } from "./justFilesDragController";
 import { JustFilesViewProvider } from "./justFilesViewProvider";
 import { PreviewProvider } from "./previewProvider";
-import { getUriFrom, isProjectTooLarge } from "./utilManager";
+import { getUriFrom, initTypes, isProjectTooLarge } from "./utilManager";
 
 export class JustFiles {
   private context: vscode.ExtensionContext;
@@ -28,6 +28,8 @@ export class JustFiles {
 
   justFilesDragController: JustFilesDragController;
   filesDragController: FoldersDragController;
+
+  static { initTypes(); }
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -357,21 +359,15 @@ export class JustFiles {
   }
 
   subscribeAndRegisterPreviewItem() {
-    const provider = vscode.window.registerWebviewViewProvider(
+    const provider = vscode.window.registerWebviewViewProviderWithDefaults(
       "preView", this.previewProvider
     );
     const preview = vscode.commands.registerCommand(
       `${brand}.previewItem`,
       async (uriOr) => {
         const uri: vscode.Uri = getUriFrom(uriOr);
-        
-        await vscode.commands.executeCommand(
-          "workbench.view.extension.preView-container"
-        );
-        await vscode.commands.executeCommand("preView.focus");
-        await this.previewProvider.toBeResolved;
-        await this.previewProvider.showAsWebView(uri.fsPath);
 
+        await this.previewProvider.showAsWebView(uri.fsPath);
         this.foldersViewProvider.showItemInExplorerByUriOrTrySelect(uri);
       }
     );

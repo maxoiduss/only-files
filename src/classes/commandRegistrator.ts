@@ -41,8 +41,6 @@ export class CommandRegistrator {
   private internals: Set<vscode.Uri> = new Set();
   
   constructor(context?: vscode.ExtensionContext, refresh?: Function) {
-    (vscode.workspace as any).fsh = FileSystemHard;
-    
     this.context = context;
     this.refreshStateAction = refresh;
     this.updateTolerances();

@@ -1,13 +1,29 @@
-import * as vscode from "vscode";
 declare module "vscode" {
+  export interface HasDefaults {
+    setDefaults(): Promise<void>;
+  }
   export namespace workspace {
     export const fsh: typeof FileSystemHard;
   }
+  export namespace window {
+    export const registerWebviewViewProviderWithDefaults:
+      typeof WindowHard.registerWebviewViewProvider;
+  }
 }
-import { CancellationTokenSource as CTS, TreeItem } from "vscode";
+import * as vscode from "vscode";
+import {
+  CancellationTokenSource as CTS,
+  TreeItem,
+  WebviewViewProvider } from "vscode";
 import fpath = require("path");
 
 export const postfix = "hard_lock";
+
+export function initTypes() {
+  (vscode.workspace as any).fsh = FileSystemHard;
+  (vscode.window as any).registerWebviewViewProviderWithDefaults =
+    WindowHard.registerWebviewViewProvider;
+}
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export const FileSystemHard = {
@@ -27,6 +43,18 @@ export const FileSystemHard = {
       { recursive: true, useTrash: options?.useTrash });
     await vscode.workspace.fs.rename(retarget, target,
       { overwrite: true });
+  }
+};
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export const WindowHard = {
+  registerWebviewViewProvider(
+    viewId: string,
+    provider: WebviewViewProvider & vscode.HasDefaults
+  ): vscode.Disposable {
+    const registered = vscode.window.registerWebviewViewProvider(viewId, provider);
+    provider.setDefaults();
+    return registered;
   }
 };
 
