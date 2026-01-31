@@ -34,9 +34,9 @@ export class JustFiles {
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
     this.refreshAllViews = () => {
-        this.foldersViewProvider.refresh();
-        this.justFilesViewProvider.refresh();
-      };
+      this.foldersViewProvider.refresh();
+      this.justFilesViewProvider.refresh();
+    };
     this.justFilesViewProvider = new JustFilesViewProvider(context);
     this.foldersViewProvider = new FoldersViewProvider(context,
       this.revealFilesTreeViewItem.bind(this));
