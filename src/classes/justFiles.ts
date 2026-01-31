@@ -87,6 +87,7 @@ export class JustFiles {
     this.subscribeSwitchIgnore();
     this.subscribeRefreshFilesView();
     this.subscribeRefreshJustFilesView();
+    this.subscribeSearchList();
     this.subscribeRevealInExplorer();
     this.subscribeCollapseToFolder();
     this.subscribeUncollapseAll();
@@ -417,6 +418,38 @@ export class JustFiles {
     );
     this.context.subscriptions.push(switchView(`${brand}.switch`));
     this.context.subscriptions.push(switchView(`${brand}.switchback`));
+  }
+    
+  subscribeSearchList() {
+    const searchListFiles = vscode.commands.registerCommand(
+      `${brand}.searchListFiles`,
+      async () => {
+        await vscode.commands.executeCommand("filesView.focus");
+
+        this.foldersViewProvider.onSearch =
+          !this.foldersViewProvider.onSearch;
+        if (this.foldersViewProvider.onSearch) {
+          await vscode.commands.executeCommand("list.closeFind");
+          return;
+        }
+        await vscode.commands.executeCommand("list.find");
+      }
+    );
+    const searchListJustFiles = vscode.commands.registerCommand(
+      `${brand}.searchListJustFiles`,
+      async () => {
+        await vscode.commands.executeCommand("justFilesView.focus");
+
+        this.justFilesViewProvider.onSearch =
+          !this.justFilesViewProvider.onSearch;
+        if (this.justFilesViewProvider.onSearch) {
+          await vscode.commands.executeCommand("list.closeFind");
+          return;
+        }
+        await vscode.commands.executeCommand("list.find");
+      }
+    );
+    this.context.subscriptions.push(searchListFiles, searchListJustFiles);
   }
 
   subscribeRefreshFilesView() {

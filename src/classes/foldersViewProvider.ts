@@ -42,6 +42,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     this._onDidChangeTreeData.event;
 
   public isEmpty: boolean = true;
+  public onSearch: boolean = true;
   public plainMode: boolean = false;
   public readonly root: RootFileItem = this.createFileItem();
 

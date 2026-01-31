@@ -16,6 +16,7 @@ export class JustFilesViewProvider
   readonly onDidChangeTreeData: vscode.Event<FileItem | PlaceholderItem | undefined> =
     this._onDidChangeTreeData.event;
 
+  public onSearch: boolean = true;
   public sortedMode: boolean = false;
 
   private displayedFileItems: FileItem[] = [];

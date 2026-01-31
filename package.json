@@ -158,6 +158,22 @@
         }
       },
       {
+        "command": "just-files.searchListFiles",
+        "title": "Search among shown elements",
+        "icon": {
+          "light": "resources/light/searchListLight.svg",
+          "dark": "resources/dark/searchListDark.svg"
+        }
+      },
+      {
+        "command": "just-files.searchListJustFiles",
+        "title": "Search among shown elements",
+        "icon": {
+          "light": "resources/light/searchListLight.svg",
+          "dark": "resources/dark/searchListDark.svg"
+        }
+      },
+      {
         "command": "just-files.uncollapseAll",
         "title": "Uncollapse All To Plain"
       },
@@ -321,6 +337,16 @@
         {
           "command": "just-files.refreshFiles",
           "when": "view == filesView",
+          "group": "navigation"
+        },
+        {
+          "command": "just-files.searchListFiles",
+          "when": "view == filesView",
+          "group": "navigation"
+        },
+        {
+          "command": "just-files.searchListJustFiles",
+          "when": "view == justFilesView",
           "group": "navigation"
         }
       ],
