@@ -3,8 +3,14 @@ import { ExtensionContext } from "vscode";
 import { CommandRegistrator } from "./commandRegistrator";
 
 const resolver = "just-files";
-const link =
-  "https://github.com/maxoiduss/just-files/tree/main/src/classes";
+const link147 =
+  `https://github.com/maxoiduss/just-files/blob/
+  9a28f735037c7700ab39f95f608b770c60eda785/src/
+  classes/extensionBrandResolver.ts#L147`;
+const link166 =
+  `https://github.com/maxoiduss/just-files/blob/
+  9a28f735037c7700ab39f95f608b770c60eda785/src/
+  classes/extensionBrandResolver.ts#L166`;
 
 type TreeViewX = "Files" | "Just Files";
 type HasType = { type: string | undefined };
@@ -151,7 +157,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if (!validated) {
-      this.showError("validateSetup failed");
+      this.showError("validateSetup failed", link147);
       throw Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
@@ -164,12 +170,12 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...registration], on);
     if (!validated) {
-      this.showError("validateCommandRegistration failed");
+      this.showError("validateCommandRegistration failed", link166);
       throw Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }
 
-  private showError(detail: string) {
+  private showError(detail: string, link: string) {
     const jf: TreeViewX = "Just Files";
     const open: string = "Check on Github";
     const title: string = `Source: ${jf}`;
