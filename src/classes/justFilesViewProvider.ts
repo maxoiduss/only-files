@@ -1,8 +1,9 @@
 import * as vscode from "vscode";
 import { FileItem, PlaceholderItem } from "./fileItem";
 import { FileItemManager } from "./fileItemManager";
-import { brand } from "./commandRegistrator";
+import { brand } from "./extensionBrandResolver";
 
+const empty = '';
 const displayed: string = "displayed";
 const hidden: string = "hidden";
 const subDisplayed: string = "subDisplayed";
@@ -24,14 +25,11 @@ export class JustFilesViewProvider
   private subDisplayedFileItems: FileItem[] = [];
   private subHiddenFileItems: FileItem[] = [];
   private fileItemManager = new FileItemManager();
-  private context: vscode.ExtensionContext;
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(private readonly context: vscode.ExtensionContext) {
     const asFileItems = (record: [string, unknown][]) =>
-      record.map(([path, _]) => this.fileItemManager.createFileItem(path));
+      record.map(([path, ]) => this.fileItemManager.createFileItem(path));
 
-    this.context = context;
-    
     this.displayedFileItems = asFileItems(
       this.fileItemManager.getConfigurationFor(this.context, displayed));
     this.hiddenFileItems = asFileItems(
@@ -103,7 +101,7 @@ export class JustFilesViewProvider
   switchSortedModeTag() {
     vscode.commands.executeCommand(
       'setContext', 
-      `${brand}:isSorted`,
+      brand.isSorted,
       this.sortedMode
     );
   }
@@ -139,8 +137,8 @@ export class JustFilesViewProvider
     );
     if (parent) {
       const route = this.fileItemManager.getDirectoriesUntilParent(
-        fileItem.resourceUri?.fsPath || "",
-        parent.resourceUri?.fsPath || ""
+        fileItem.resourceUri?.fsPath || empty,
+        parent.resourceUri?.fsPath || empty
       );
       route.map((path) => {
         const parentItem = this.fileItemManager.createFileItem(path);

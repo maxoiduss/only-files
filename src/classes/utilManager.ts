@@ -109,7 +109,7 @@ export function showProgressBar(withMessage: string): CTS {
     title: withMessage,
     location: vscode.ProgressLocation.Notification,
     cancellable: false
-  }, async (progress, _) => {
+  }, async (progress, ) => {
     const dots = [".", "..", "...", "...."];
     let num: number = 0;
 

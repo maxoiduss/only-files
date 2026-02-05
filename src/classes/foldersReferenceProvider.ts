@@ -30,6 +30,7 @@ const EXCLUDES = [
   "vsix"
 ];
 const ignoreDefaultFileName = ".gitignore";
+const empty = '';
 
 type TextDocumentOr = vscode.TextDocument | undefined;
 
@@ -52,12 +53,12 @@ async function openTextDocument(resourceUri: vscode.Uri): Promise<TextDocumentOr
 async function openTextDocument(doc: vscode.Uri | FileItem)
 : Promise<TextDocumentOr | string> {
   if (doc instanceof FileItem) {
-    if (!doc.resourceUri) { return ""; }
+    if (!doc.resourceUri) { return empty; }
     try {
       return (await vscode.workspace.openTextDocument(doc.resourceUri)).getText();
     } catch (error) {
       await vscode.window.showWarningMessage(String(error ?? `Failed to open file: ${doc}`));
-      return "";
+      return empty;
     }
   } else {
     try {
@@ -135,7 +136,7 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
 
     const maskDoc = await openTextDocument(fileItem);
 
-    if (maskDoc === "") { return []; }
+    if (maskDoc === empty) { return []; }
     
     const mask = pattern
       ? this.createSearchMatchFromPattern(pattern, maskDoc)
@@ -147,7 +148,7 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     const gitignore = await this.readIgnoreFile({ showDialog: false });
     const antipatternList = await this.createAntipattern(gitignore);
     const antipattern = antipatternList.length > 0 ?
-      antipatternList.join(',') : "";
+      antipatternList.join(',') : empty;
     const exclude = EXCLUDES.join(this.patternSeparator);
     const restoreSetting = await setNothingToExcludeTemporary();
     const uris = await vscode.workspace.findFiles(
@@ -177,12 +178,12 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
   }
 
   private skipEmptyOrNegationAndLineIsComment(line: string): boolean {
-    return line.trim() !== '' && !line.startsWith('!') && !line.startsWith('#'); 
+    return line.trim() !== empty && !line.startsWith('!') && !line.startsWith('#'); 
   }
   
   private async createAntipattern(gitignore: vscode.Uri | undefined): Promise<string[]> {
     return gitignore ? ((await openTextDocument(gitignore))
-      ?.getText() ?? "")
+      ?.getText() ?? empty)
       .split(/[\r\n]+/)
       .filter(line => this.skipEmptyOrNegationAndLineIsComment(line))
       .map(str => {
@@ -213,7 +214,7 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     if (pattern.endsWith('/') || pattern.endsWith('/**')) {
       /// if pattern ended with '/**' we already translated it to '/.*'
       /// remove any trailing '/.*' so we can append a single '(\/.*)?$'
-      regexStr = regexStr.replace(/\/\.\*$/, '');
+      regexStr = regexStr.replace(/\/\.\*$/, empty);
       regexStr += '(\/.*)?$'; /// match folder itself and everything under it
       isFileRule = false;
     } else {
@@ -239,7 +240,7 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
       )
     : ignoreDefaultFileName;
 
-    if (plannedToAsk && ignorePattern !== "") {
+    if (plannedToAsk && ignorePattern !== empty) {
       const restoreSetting = await setNothingToExcludeTemporary();
       const ignoreFiles = await vscode.workspace.findFiles(ignorePattern);
       this.gitignore = ignoreFiles.length > 0 ? ignoreFiles[0] : this.gitignore;

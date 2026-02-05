@@ -1,38 +1,44 @@
 import * as vscode from "vscode";
-import { FileItem } from "./fileItem";
+import { command, FileItem } from "./fileItem";
 import {
   FoldersReferenceProvider,
   getPositionSafelyFrom
 } from "./foldersReferenceProvider";
 import {
-  FileSystemHard,
   getPathASsequence,
   getSequenceASpath,
   same
 } from "./utilManager";
 import fpath = require("path");
+import {
+  brand as brand,
+  ExtensionBrandResolver
+} from "./extensionBrandResolver";
 
-export const brand: string = "just-files";
+const name = () => ExtensionBrandResolver.brand;
+const configuration = () => ExtensionBrandResolver.configuration;
+const number1Property = () => ExtensionBrandResolver.number1Property;
+const number2Property = () => ExtensionBrandResolver.number2Property;
 
-const COMMANDS = {
-  renameFile: `${brand}.rename`,
-  deleteFile: `${brand}.delete`,
-  copy: `${brand}.copy`,
-  cut: `${brand}.cut`,
-  paste: `${brand}.paste`,
-  copyFilePath: `${brand}.copyFilePath`,
-  copyRelative: `${brand}.copyRelativeFilePath`,
-  reveal: `${brand}.revealFileInOS`,
-  find: `${brand}.findRef`,
-  newFolder: `${brand}.newFolder`,
-  newFile: `${brand}.newFile`,
-  referenceBuiltin: "editor.action.showReferences",
-  revealBuiltin: "revealFileInOS"
+const empty = '';
+
+const commands = {
+  get renameFile() { return `${name()}.rename`; },
+  get deleteFile() { return `${name()}.delete`; },
+  get copy() { return `${name()}.copy`; },
+  get cut() { return `${name()}.cut`; },
+  get paste() { return `${name()}.paste`; },
+  get copyFilePath() { return `${name()}.copyFilePath`; },
+  get copyRelative() { return `${name()}.copyRelativeFilePath`; },
+  get reveal() { return `${name()}.revealFileInOS`; },
+  get find() { return `${name()}.findRef`; },
+  get newFolder() { return `${name()}.newFolder`; },
+  get newFile() { return `${name()}.newFile`; },
+      referenceBuiltin: "editor.action.showReferences",
+      revealBuiltin: "revealFileInOS"
 } as const;
 
 export class CommandRegistrator {
-  private readonly context: vscode.ExtensionContext | undefined;
-  private readonly refreshStateAction: Function | undefined;
   private readonly referenceProvider: FoldersReferenceProvider = 
     new FoldersReferenceProvider();
 
@@ -40,21 +46,26 @@ export class CommandRegistrator {
   private selected: Object | undefined;
   private internals: Set<vscode.Uri> = new Set();
   
-  constructor(context?: vscode.ExtensionContext, refresh?: Function) {
-    this.context = context;
-    this.refreshStateAction = refresh;
+  constructor(
+    private readonly context?: vscode.ExtensionContext,
+    private readonly refreshStateAction?: Function
+  ) {
     this.updateTolerances();
   }
 
+  static getCommands(): string[] {
+    return Object.values(commands).sort();
+  }
+
   updateTolerances() {
-    const config = vscode.workspace.getConfiguration(`${brand}`);
-    FileItem.clickTolerance = config.get("Click Time", 500);
-    FileItem.renameTolerance = config.get("Rename Time", 1500);
+    const config = vscode.workspace.getConfiguration(configuration());
+    FileItem.clickTolerance = config.get(number1Property(), 500);
+    FileItem.renameTolerance = config.get(number2Property(), 1500);
   }
 
   async getAnySelectedIfBad(fileItem?: Object): Promise<FileItem> {
     if (!fileItem) {
-      await vscode.commands.executeCommand(`${brand}.getSelected`);
+      await vscode.commands.executeCommand(brand.getSelected);
 
       const item = Array.isArray(this.selected) ?
         (this.selected as FileItem[])[0] as FileItem
@@ -74,7 +85,7 @@ export class CommandRegistrator {
   private async createNewExplorerItem(pathTo: string, isFile: boolean) {
     const newName = await vscode.window.showInputBox({
       prompt: `Enter new ${isFile ? 'file' : 'folder'} name`,
-      value: ''
+      value: empty
     });
     if (!newName) { return; }
     
@@ -116,6 +127,11 @@ export class CommandRegistrator {
     }
     await this.refreshViewsState();
   }
+  
+  private uncutAllItems() {
+    this.internals.clear();
+    this.wasCutted = false;
+  }
 
   private async copyItem(fileItem: FileItem | undefined) {
     if (!fileItem?.resourceUri) { return ;}
@@ -153,8 +169,8 @@ export class CommandRegistrator {
     const internalsAScopy = new Set(this.internals);
 
     for (const source of internalsAScopy) {
-      const placename = getPathASsequence(newUriTo).pop() ?? '';
-      const filename = getPathASsequence(source).pop() ?? '';
+      const placename = getPathASsequence(newUriTo).pop() ?? empty;
+      const filename = getPathASsequence(source).pop() ?? empty;
       const target = vscode.Uri.joinPath(newUriTo, filename);
       const theSameNames = same(filename, placename);
       const theSameObjects = same(source, target);
@@ -189,14 +205,26 @@ export class CommandRegistrator {
     await this.refreshViewsState();
   }
 
+  registerEditor() {
+    const did = vscode.workspace.onDidOpenTextDocument((e) => {
+      const fspath = e.uri.fsPath;
+      for (const uri of this.internals) {
+        if (uri.fsPath === fspath) {
+          this.uncutAllItems();
+        }
+      }
+    });
+    this.context?.subscriptions?.push(did);
+  }
+
   registerCommands()
   {
     const _set = vscode.commands.registerCommand(
-      `${brand}.setSelected`,
+      brand.setSelected,
       (item: Object | undefined) => {
         this.selected = item;
     });
-    const _click = vscode.commands.registerCommand(`${brand}.tryOpen`,
+    const _click = vscode.commands.registerCommand(command.tryOpen,
     async (item: FileItem)=> {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem) { return; }
@@ -204,15 +232,18 @@ export class CommandRegistrator {
       const now = Date.now();
       if (now - fileItem.lastClickTime < FileItem.clickTolerance) {
         if (fileItem.isFile) {
-          await vscode.commands.executeCommand("vscode.open", fileItem.resourceUri);
+          await vscode.commands.executeCommand(
+            brand.vscode.open,
+            fileItem.resourceUri
+          );
         }
       } else
       if (now - fileItem.lastClickTime < FileItem.renameTolerance) {
-        await vscode.commands.executeCommand(COMMANDS.renameFile, fileItem);
+        await vscode.commands.executeCommand(commands.renameFile, fileItem);
       }
       fileItem.lastClickTime = now;
     });
-    const _rename = vscode.commands.registerCommand(COMMANDS.renameFile,
+    const _rename = vscode.commands.registerCommand(commands.renameFile,
     async (item: FileItem)=> {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
@@ -220,7 +251,7 @@ export class CommandRegistrator {
       const oldUri = fileItem.resourceUri;
       const oldName = fpath.basename(oldUri.fsPath);
       const newName = await vscode.window.showInputBox({
-        prompt: 'Enter new name',
+        prompt: "Enter new name",
         value: oldName
       });
       if (!newName || newName === oldName) { return; }
@@ -233,33 +264,33 @@ export class CommandRegistrator {
 
       await this.refreshViewsState();
     });
-    const _delete = vscode.commands.registerCommand(COMMANDS.deleteFile,
+    const _delete = vscode.commands.registerCommand(commands.deleteFile,
     async (item: Object)=> {
       const items = await this.getAllSelectedIfBad(item);
       await Promise.all(items.map(i => this.deleteItem(i)));
     });
-    const _copy = vscode.commands.registerCommand(COMMANDS.copy,
+    const _copy = vscode.commands.registerCommand(commands.copy,
     async (item: Object) => {
       this.wasCutted = false;
       await this.copyItems(item);
     });
-    const _cut = vscode.commands.registerCommand(COMMANDS.cut,
+    const _cut = vscode.commands.registerCommand(commands.cut,
     async (item: Object) => {
       const items = await this.getAllSelectedIfBad(item);
       await this.cutItems(items);
     });
-    const _paste = vscode.commands.registerCommand(COMMANDS.paste,
+    const _paste = vscode.commands.registerCommand(commands.paste,
     async (item: Object) => {
       await this.pasteItems(item);
     });
-    const _copyfp = vscode.commands.registerCommand(COMMANDS.copyFilePath,
+    const _copyfp = vscode.commands.registerCommand(commands.copyFilePath,
     async (item: FileItem)=> {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
 
       await vscode.env.clipboard.writeText(fileItem.resourceUri.fsPath);
     });
-    const _copyrfp = vscode.commands.registerCommand(COMMANDS.copyRelative, 
+    const _copyrfp = vscode.commands.registerCommand(commands.copyRelative, 
     async (item: FileItem)=> {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
@@ -267,7 +298,7 @@ export class CommandRegistrator {
       const relativePath = vscode.workspace.asRelativePath(fileItem.resourceUri);
       await vscode.env.clipboard.writeText(relativePath);
     });
-    const _find = vscode.commands.registerCommand(COMMANDS.find,
+    const _find = vscode.commands.registerCommand(commands.find,
     async (item: FileItem) => {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
@@ -278,22 +309,22 @@ export class CommandRegistrator {
       const position = await getPositionSafelyFrom(fileItem.resourceUri);
 
       await vscode.commands.executeCommand(
-        COMMANDS.referenceBuiltin,
+        commands.referenceBuiltin,
         fileItem.resourceUri,
         position,
         locations
       );
     });
-    const _reveal = vscode.commands.registerCommand(COMMANDS.reveal,
+    const _reveal = vscode.commands.registerCommand(commands.reveal,
     async (item: FileItem) => {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
       
       await vscode.commands.executeCommand(
-        COMMANDS.revealBuiltin,
+        commands.revealBuiltin,
         fileItem.resourceUri);
     });
-    const _new = vscode.commands.registerCommand(COMMANDS.newFile,
+    const _new = vscode.commands.registerCommand(commands.newFile,
     async (item: FileItem) => {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
@@ -303,7 +334,7 @@ export class CommandRegistrator {
       : fileItem.resourceUri.fsPath;
       this.createNewExplorerItem(folderPath, true);
     });
-    const _newfld = vscode.commands.registerCommand(COMMANDS.newFolder, 
+    const _newfld = vscode.commands.registerCommand(commands.newFolder, 
     async (item: FileItem) => {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}

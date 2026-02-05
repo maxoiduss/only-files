@@ -1,45 +1,56 @@
 import * as vscode from "vscode";
 import { TreeDragAndDropController } from "vscode";
 import { FileItemManager } from "./fileItemManager";
-import { brand, CommandRegistrator } from "./commandRegistrator";
-import { empty, root, FileItem } from "./fileItem";
+import { CommandRegistrator } from "./commandRegistrator";
+import { emptyItem, root, FileItem } from "./fileItem";
+import { ExtensionBrandResolver } from "./extensionBrandResolver";
 
 const URLS = "text/uri-list";
-const MIME = `application/vnd.${brand}.fileitem`;
+const _ = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+    get MIME () {
+      return `application/${ExtensionBrandResolver.brand}.fileitem`;
+  }
+};
+const empty = '';
 
 export class FoldersDragController
   implements TreeDragAndDropController<FileItem>
 {
-  readonly dropMimeTypes: string[] = [MIME, URLS];
-  readonly dragMimeTypes: string[] = [MIME, URLS];
+  readonly dropMimeTypes: string[] = [_.MIME, URLS];
+  readonly dragMimeTypes: string[] = [_.MIME, URLS];
 
-  private readonly commandRegistrator: CommandRegistrator;
   private readonly fileItemManager = new FileItemManager();
-  private readonly openUriAction: (uri: vscode.Uri) => Promise<boolean>;
 
   constructor(
-    registrator: CommandRegistrator,
-    openUriAction: (uri: vscode.Uri) => Promise<boolean>
-  ) {
-    this.commandRegistrator = registrator;
-    this.openUriAction = openUriAction;
-  }
+    private readonly commandRegistrator: CommandRegistrator,
+    private readonly draggedFromJustFilesAction:
+    (uri: vscode.Uri) => Promise<void>
+  ) { }
 
   async handleDrag?(
     source: readonly FileItem[],
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
   ): Promise<void> {
-    if (source.some((i) => i.contextValue === empty || i.contextValue === root)) {
+    if (token.isCancellationRequested) { return; }
+    if (source.some((i) =>
+         i.contextValue === emptyItem
+      || i.contextValue === root))
+    {
       return;
     }
+
     const dataAll = new vscode.DataTransferItem(
       source.map((f) => f.resourceUri?.path).join(';')
     );
     const dataFirst = new vscode.DataTransferItem(
-      source.length > 0 ? source[0].resourceUri!.path : ''
+      source.length > 0 ?
+        source[0].resourceUri ? 
+          source[0].resourceUri.path
+        : empty : empty
     );
-    dataTransfer.set(MIME, dataAll);
+    dataTransfer.set(_.MIME, dataAll);
     dataTransfer.set(URLS, dataFirst);
 
     const items: FileItem[] = [...source];
@@ -51,6 +62,8 @@ export class FoldersDragController
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
   ): Promise<void> {
+    if (token.isCancellationRequested) { return; }
+
     const urisFromDataTransfer = (): vscode.Uri[] => {
       let uris: vscode.Uri[] = [];
       const uriList = dataTransfer.get(URLS);
@@ -63,26 +76,23 @@ export class FoldersDragController
       return uris;
     };
 
-    const where =
-      target ??
-      this.fileItemManager.createFileItem(
-        vscode.workspace.workspaceFolders![0].uri
-      );
-    const transferItems = dataTransfer.get(MIME);
+    const wsf = vscode.workspace.workspaceFolders?.[0];
+    const where = target ?? 
+      (wsf !== undefined ?
+        this.fileItemManager.createFileItem(wsf.uri)
+      : undefined);
+    const transferItems = dataTransfer.get(_.MIME);
     if (transferItems) {
       const value = transferItems.value as string;
 
-      if (value === "") {
+      if (value === empty) {
         const uris = urisFromDataTransfer();
 
         if (uris.length > 0) {
-          await this.openUriAction(uris[0]);
+          await this.draggedFromJustFilesAction(uris[0]);
         }
         return;
       }
-      const items: FileItem[] = (transferItems.value as string)
-        .split(';')
-        .map((f) => this.fileItemManager.createFileItem(f));
       await this.commandRegistrator.pasteItems(where);
       return;
     }

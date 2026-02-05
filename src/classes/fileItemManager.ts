@@ -4,6 +4,8 @@ import { EmptyFolderItem, FileItem } from "./fileItem";
 import { getUri } from "./utilManager";
 import fpath = require("path");
 
+const empty = '';
+
 export class FileItemManager {
   getParentPath(fileItem: FileItem): string | undefined {
     if (fileItem.resourceUri) {
@@ -164,8 +166,8 @@ export class FileItemManager {
     childFileItem: FileItem,
     parentFileItem: FileItem
   ): boolean {
-    const childFileItemPath = childFileItem.resourceUri?.fsPath || "";
-    const parentFileItemPath = parentFileItem.resourceUri?.fsPath || "";
+    const childFileItemPath = childFileItem.resourceUri?.fsPath || empty;
+    const parentFileItemPath = parentFileItem.resourceUri?.fsPath || empty;
 
     if (childFileItemPath === parentFileItemPath) {
       return false;

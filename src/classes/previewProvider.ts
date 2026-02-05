@@ -253,6 +253,7 @@ const resetStateCommand = 'resetState';
 const disableStateCommand = 'disableState';
 const contentLoadedCommand = 'contentLoaded';
 const fileDropCommand = 'fileDropped';
+const empty = '';
 
 enum PreviewType {
   pdf   = "pdf",
@@ -264,7 +265,7 @@ enum PreviewType {
 
 export class PreviewProvider implements vscode.WebviewViewProvider {
   private view: WebviewView | undefined;
-  private title: vscode.Uri | string = '';
+  private title: vscode.Uri | string = empty;
   private cspSourceDefault!: string;
   private lastViewVisibleValue: boolean = false;
   private lastWebviewLoaded: boolean = false;
@@ -273,13 +274,15 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   );
   private resolved!: () => void;
 
-  constructor(private readonly context: vscode.ExtensionContext) {}
+  constructor(private readonly context: vscode.ExtensionContext) { }
 
   resolveWebviewView(
     webviewView: WebviewView,
-    _context: vscode.WebviewViewResolveContext<unknown>, 
-    _token: vscode.CancellationToken): Thenable<void> | void
+    context: vscode.WebviewViewResolveContext<unknown>, 
+    token: vscode.CancellationToken): Thenable<void> | void
   {
+    if (token.isCancellationRequested) { return; }
+
     const view = webviewView;
     this.view = view;
     this.cspSourceDefault = view.webview.cspSource;
@@ -314,12 +317,13 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       }
     });
     this.resolved();
+    console.log(context.state);
   }
 
   async showAsWebView(uriOr: vscode.Uri | string): Promise<void> {
     await this.toBeResolved;
 
-    const bad = '';
+    const bad = empty;
     const ext = getString(uriOr).split('.').pop()?.toLowerCase() ?? bad;    
     const getPreviewTypeBy: Record<string, PreviewType> = {
       pdf:  PreviewType.pdf,
@@ -395,7 +399,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   }
 
   private async updateWebview(
-    uri: vscode.Uri | string  = '', 
+    uri: vscode.Uri | string  = empty, 
     type: PreviewType = PreviewType.error
   ): Promise<void> {
     if (!this.view) { return; }
@@ -412,7 +416,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           <div class="placeholder"></div>
         </div>`;
       this.view.webview.html = getHtmlTemplate(emptyFrame, non, csps);
-      this.setTitle('', true);
+      this.setTitle(empty, true);
       return;
     }
     if (type === PreviewType.md) {

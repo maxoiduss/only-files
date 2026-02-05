@@ -28,23 +28,23 @@
     ],
     "configuration": [
       {
-        "title": "just-files",
+        "title": "Just Files",
         "properties": {
-          "just-files.Click Time": {
+          "justFiles.clickTime": {
             "type": "number",
             "default": 500,
             "minimum": 50,
             "maximum": 1000,
             "description": "Tolerance between clicks in millisec to trigger open file."
           },
-          "just-files.Rename Time": {
+          "justFiles.renameTime": {
             "type": "number",
             "default": 1500,
             "minimum": 1050,
             "maximum": 2500,
             "description": "Tolerance between clicks in millisec to trigger rename file."
           },
-          "just-files.Show Empty Folders": {
+          "justFiles.showEmptyFolders": {
             "type": "boolean",
             "default": true,
             "description": "Should empty folders be shown when the whole project is uncollapsed to plain mode."
@@ -73,11 +73,13 @@
         {
           "id": "justFilesView",
           "name": "Just Files",
+          "type": "tree",
           "icon": "resources/justFolder.svg"
         },
         {
           "id": "filesView",
           "name": "Files",
+          "type": "tree",
           "icon": "resources/folder.svg"
         }
       ],
@@ -186,11 +188,11 @@
         "title": "Remove from Just Files"
       },
       {
-        "command": "just-files.addTabFromCommand",
+        "command": "just-files.addItemFromCommand",
         "title": "Send tab to Just Files"
       },
       {
-        "command": "just-files.removeTabFromCommand",
+        "command": "just-files.removeItemFromCommand",
         "title": "Remove tab from to Just Files"
       },
       {
@@ -527,13 +529,13 @@
         "when": "(focusedView == justFilesView) && viewItem != empty"
       },
       {
-        "command": "just-files.addTabFromCommand",
+        "command": "just-files.addItemFromCommand",
         "key": "ctrl+y",
         "mac": "cmd+y",
         "when": "editorTextFocus"
       },
       {
-        "command": "just-files.removeTabFromCommand",
+        "command": "just-files.removeItemFromCommand",
         "key": "ctrl+alt+y",
         "mac": "cmd+alt+y",
         "when": "editorTextFocus"

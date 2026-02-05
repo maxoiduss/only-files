@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
-import { brand } from "./commandRegistrator";
 import {
   asRelative,
   EmptyFolderItem,
@@ -12,9 +11,13 @@ import {
 import { FileItemManager } from "./fileItemManager";
 import { getAllFolders, isInFolder } from "./utilManager";
 import fpath = require("path");
+import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 
 const collapsinges: string = "collapsinges";
 const plainModeOn: string = "plainModeOn";
+
+const configuration = () => ExtensionBrandResolver.configuration;
+const booleanProperty = () => ExtensionBrandResolver.booleanProperty;
 
 function isExpanded(state: State | TreeItemCollapsibleState | undefined): boolean
 {
@@ -49,7 +52,6 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
   private showingRoot: boolean = true;
   private showEmptyUncollapsedFolders: boolean = true;
   private uncollapsedMode: [boolean, boolean] = [false, false];
-  private context: vscode.ExtensionContext;
   private readonly fileItemManager = new FileItemManager();
   private readonly collapsingItems: Map<string, State> = new Map();
   private ignoreItems: Ignore | undefined;
@@ -58,11 +60,11 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
   private selectedItem: (FileItem | string | undefined)[] = [];
 
   constructor(
-    context: vscode.ExtensionContext,
-    reveal: (item: FileItem, expand?: boolean) => Promise<void>
+    private readonly context: vscode.ExtensionContext,
+    private readonly revealItem: (
+      item: FileItem, expand?: boolean
+    ) => Promise<void>
   ) {
-    this.context = context;
-    this.revealItem = reveal;
     this.checkIgnoreItems = this.checkIgnoreItems.bind(this);
     this.setShowEmptyUncollapsedFolders();
 
@@ -75,8 +77,6 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     this.plainMode = context.workspaceState.get<boolean>(plainModeOn)
       ?? this.plainMode;
   }
-
-  private revealItem: (item: FileItem, expand?: boolean) => Promise<void>;
 
   private createFileItem(
       uriOr?: vscode.Uri | string | FileItem | undefined,
@@ -114,7 +114,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
           && !this.ignoreItems.fileRules.some(expr => expr.test(rel));
     }
     
-    for (const [path, _] of this.collapsingItems) {
+    for (const [path, ] of this.collapsingItems) {
       const folder = vscode.workspace.asRelativePath(path).replace(/\\/g, '/');
       if (this.ignoreItems.folderRules.some(expr => expr.test(folder))) {
         this.popFromCollapsings(path);
@@ -159,9 +159,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
 
   switchPlainModeTag() {
     vscode.commands.executeCommand(
-      'setContext', 
-      `${brand}:isPlain`,
-      this.plainMode
+      brand.setContext, brand.isPlain, this.plainMode
     );
   }
 
@@ -198,8 +196,8 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
   }
 
   setShowEmptyUncollapsedFolders() {
-    const config = vscode.workspace.getConfiguration(`${brand}`);
-    this.showEmptyUncollapsedFolders = config.get("Show Empty Folders", true);
+    const config = vscode.workspace.getConfiguration(configuration());
+    this.showEmptyUncollapsedFolders = config.get(booleanProperty(), true);
   }
 
   rootIsShown(forceValue: boolean | undefined = undefined): boolean {
@@ -253,6 +251,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
     return element;
   }
 
+  // eslint-disable-next-line no-unused-vars
   getParent?(element: FileItem): ProviderResult<FileItem> {
     return;
   }
@@ -406,7 +405,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem> {
             this.popFromCollapsings(path);
             files = [];
           }
-          return files.flatMap(([file, _]) => { /// exclude plain folders
+          return files.flatMap(([file, ]) => { /// exclude plain folders
             const uri = vscode.Uri.joinPath(collapsingUri, file); /// create uri
             let expanded: boolean | undefined; /// state to pass to a new item
             return collapsings.some(([nestedPath, nestedState]) => {

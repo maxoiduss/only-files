@@ -32,7 +32,8 @@ export default [
       "curly": "warn",
       "eqeqeq": "warn",
       "no-throw-literal": "warn",
-      "semi": "warn"
+      "semi": "warn",
+      "no-unused-vars": "warn"
     }
   }
 ];

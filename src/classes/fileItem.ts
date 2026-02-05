@@ -1,12 +1,22 @@
 import * as vscode from "vscode";
-import { brand } from "./commandRegistrator";
 import path = require("path");
+import {
+  ExtensionBrandResolver
+} from "./extensionBrandResolver";
 
 export const folder: string = "folder";
 export const root: string = "root";
 export const emptyRoot: string = "vac";
 export const placeholder: string = "empty";
-export const empty: string = placeholder;
+export const emptyItem: string = "empty";
+
+const empty = '';
+
+const name = () => ExtensionBrandResolver.brand;
+
+export const command = {
+    get tryOpen() { return `${name()}.tryOpen`; }
+};
 
 export const asRelative = (uri: vscode.Uri | string) =>
   vscode.workspace.asRelativePath(uri).replace(/\\/g, '/');
@@ -49,7 +59,7 @@ export class FileItem extends vscode.TreeItem {
     this.relativePath = asRelative(this.resourceUri);
     this.contextValue = this.getContextType();
     this.command = {
-      command: `${brand}.tryOpen`,
+      command: command.tryOpen,
       title: "Open Custom",
       arguments: [this]
     };
@@ -141,7 +151,7 @@ export class EmptyFolderItem extends FileItem {
 
 export class PlaceholderItem extends vscode.TreeItem {
   constructor() {
-      super('');
+      super(empty);
       this.contextValue = placeholder;
   }
 }
