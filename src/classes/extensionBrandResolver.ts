@@ -4,13 +4,13 @@ import { CommandRegistrator } from "./commandRegistrator";
 
 const resolver = "just-files";
 const link147 =
-  `https://github.com/maxoiduss/just-files/blob/
-  9a28f735037c7700ab39f95f608b770c60eda785/src/
-  classes/extensionBrandResolver.ts#L147`;
+  "https://github.com/maxoiduss/just-files/"   +
+  "blob/mergeFromMaxoiduss-fixes/src/classes/" +
+  "extensionBrandResolver.ts#L147";
 const link166 =
-  `https://github.com/maxoiduss/just-files/blob/
-  9a28f735037c7700ab39f95f608b770c60eda785/src/
-  classes/extensionBrandResolver.ts#L166`;
+  "https://github.com/maxoiduss/just-files/"   +
+  "blob/mergeFromMaxoiduss-fixes/src/classes/" +
+  "extensionBrandResolver.ts#L166";
 
 type TreeViewX = "Files" | "Just Files";
 type HasType = { type: string | undefined };
