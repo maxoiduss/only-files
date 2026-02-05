@@ -74,6 +74,7 @@ export class ExtensionBrandResolver {
   public static readonly treeview1: string;
   public static readonly treeview2: string;
   public static readonly configuration: string;
+  public static readonly stringProperty: string;
   public static readonly number1Property: string;
   public static readonly number2Property: string;
   public static readonly booleanProperty: string;
@@ -207,6 +208,7 @@ export class ExtensionBrandResolver {
     const isTreeview = (it: HasType) => it.type ?? "tree" === "tree";
     const isWebview = (it: HasType) => it.type === "webview";
     const isBoolean = (it: HasType) => it.type === "boolean";
+    const isString = (it: HasType) => it.type === "string";
     const isNumber = (it: HasType) => it.type === "number";
     const hasClick = (s: string) => s.toLowerCase().includes("click");
     const afterDot = (s?: string) => s?.split(dot)?.slice(1)?.join(dot);
@@ -239,6 +241,10 @@ export class ExtensionBrandResolver {
       Object.entries<HasType>(properties).flatMap(
         ([name, property]) => isBoolean(property) ? [name]: []
       ) : [];
+    const stringProps = properties ?
+      Object.entries<HasType>(properties).flatMap(
+        ([name, property]) => isString(property) ? [name]: []
+      ) : [];
     
     let number1Prop = numberProps.length > 1 ?
       numberProps[0] : undefined;
@@ -249,6 +255,9 @@ export class ExtensionBrandResolver {
       number1Prop = number2Prop;
       number2Prop = temp;
     }
+
+    const stringProp = stringProps.length > 0 ?
+      stringProps[0] : undefined;
 
     const booleanProp = booleanProps.length > 0 ?
       booleanProps[0] : undefined;
@@ -284,6 +293,7 @@ export class ExtensionBrandResolver {
     self.treeview1 = treeview1;
     self.treeview2 = treeview2;
     self.configuration = config;
+    self.stringProperty = afterDot(stringProp);
     self.number1Property = afterDot(number1Prop);
     self.number2Property = afterDot(number2Prop);
     self.booleanProperty = afterDot(booleanProp);

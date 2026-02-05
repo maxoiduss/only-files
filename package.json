@@ -48,6 +48,11 @@
             "type": "boolean",
             "default": true,
             "description": "Should empty folders be shown when the whole project is uncollapsed to plain mode."
+          },
+          "justFiles.aDuplicatePostfix": {
+            "type": "string",
+            "default": "duplicate",
+            "description": "A postfix used for names of duplicated files and folders."
           }
         }
       }
@@ -248,6 +253,10 @@
         "title": "Delete"
       },
       {
+        "command": "just-files.duplicate",
+        "title": "Duplicate"
+      },
+      {
         "command": "just-files.copy",
         "title": "Copy"
       },
@@ -440,6 +449,11 @@
         {
           "command": "just-files.delete",
           "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root && viewItem != vac",
+          "group": "4_modification"
+        },
+        {
+          "command": "just-files.duplicate",
+          "when": "focusedView == filesView && viewItem != root && viewItem != vac",
           "group": "4_modification"
         },
         {

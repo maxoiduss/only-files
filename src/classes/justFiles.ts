@@ -162,7 +162,7 @@ export class JustFiles {
   subscribeConfigurationChanges() {
     const did = vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration(ExtensionBrandResolver.configuration)) {
-        this.commandRegistrator.updateTolerances();
+        CommandRegistrator.updateTolerances();
         this.foldersViewProvider.setShowEmptyUncollapsedFolders();
       }
     });

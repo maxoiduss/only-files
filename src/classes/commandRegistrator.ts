@@ -19,11 +19,13 @@ const name = () => ExtensionBrandResolver.brand;
 const configuration = () => ExtensionBrandResolver.configuration;
 const number1Property = () => ExtensionBrandResolver.number1Property;
 const number2Property = () => ExtensionBrandResolver.number2Property;
+const string1Property = () => ExtensionBrandResolver.stringProperty;
 
 const empty = '';
 
 const commands = {
   get renameFile() { return `${name()}.rename`; },
+  get duplicateFile() {return `${name()}.duplicate`; }, 
   get deleteFile() { return `${name()}.delete`; },
   get copy() { return `${name()}.copy`; },
   get cut() { return `${name()}.cut`; },
@@ -50,29 +52,17 @@ export class CommandRegistrator {
     private readonly context?: vscode.ExtensionContext,
     private readonly refreshStateAction?: Function
   ) {
-    this.updateTolerances();
+    CommandRegistrator.updateTolerances();
   }
 
   static getCommands(): string[] {
     return Object.values(commands).sort();
   }
 
-  updateTolerances() {
+  static updateTolerances() {
     const config = vscode.workspace.getConfiguration(configuration());
     FileItem.clickTolerance = config.get(number1Property(), 500);
     FileItem.renameTolerance = config.get(number2Property(), 1500);
-  }
-
-  async getAnySelectedIfBad(fileItem?: Object): Promise<FileItem> {
-    if (!fileItem) {
-      await vscode.commands.executeCommand(brand.getSelected);
-
-      const item = Array.isArray(this.selected) ?
-        (this.selected as FileItem[])[0] as FileItem
-      : this.selected as FileItem;
-      return item;
-    }
-    return fileItem as FileItem;
   }
 
   private async getAllSelectedIfBad(fileItem?: Object): Promise<FileItem[]> {
@@ -105,6 +95,21 @@ export class CommandRegistrator {
 
   private async refreshViewsState() {
     this.refreshStateAction?.();
+  }
+
+  private async duplicateItem(fileItem: FileItem | vscode.Uri) {
+    const config = vscode.workspace.getConfiguration(configuration());
+    const postfix = config.get(string1Property(), (1).toString());
+    const uri = fileItem instanceof FileItem ?
+      fileItem.resourceUri : fileItem;
+    if (uri && postfix.length > 0) {
+      const path = uri.fsPath;
+      const extn = fpath.extname(path);
+      const name = fpath.basename(path, extn) + `_${postfix}`;
+      const duplicate = fpath.join(fpath.dirname(path), name + extn);
+      await vscode.workspace.fs.copy(uri, vscode.Uri.file(duplicate));
+      await this.refreshViewsState();
+    }
   }
 
   private async deleteItem(
@@ -143,6 +148,18 @@ export class CommandRegistrator {
       const content = Buffer.from(array).toString('utf8');
       await vscode.env.clipboard.writeText(content);
     }
+  }
+
+  async getAnySelectedIfBad(fileItem?: Object): Promise<FileItem> {
+    if (!fileItem) {
+      await vscode.commands.executeCommand(brand.getSelected);
+
+      const item = Array.isArray(this.selected) ?
+        (this.selected as FileItem[])[0] as FileItem
+      : this.selected as FileItem;
+      return item;
+    }
+    return fileItem as FileItem;
   }
 
   async copyItems(items: Object) {
@@ -264,8 +281,11 @@ export class CommandRegistrator {
 
       await this.refreshViewsState();
     });
+    const _duplicate = vscode.commands.registerCommand(commands.duplicateFile,
+    async (item: FileItem | vscode.Uri) => await this.duplicateItem(item)
+    );
     const _delete = vscode.commands.registerCommand(commands.deleteFile,
-    async (item: Object)=> {
+    async (item: Object) => {
       const items = await this.getAllSelectedIfBad(item);
       await Promise.all(items.map(i => this.deleteItem(i)));
     });
@@ -284,14 +304,14 @@ export class CommandRegistrator {
       await this.pasteItems(item);
     });
     const _copyfp = vscode.commands.registerCommand(commands.copyFilePath,
-    async (item: FileItem)=> {
+    async (item: FileItem) => {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
 
       await vscode.env.clipboard.writeText(fileItem.resourceUri.fsPath);
     });
     const _copyrfp = vscode.commands.registerCommand(commands.copyRelative, 
-    async (item: FileItem)=> {
+    async (item: FileItem) => {
       const fileItem = await this.getAnySelectedIfBad(item);
       if (!fileItem?.resourceUri) { return ;}
       
@@ -347,7 +367,7 @@ export class CommandRegistrator {
 
     this.context?.subscriptions.push(
       _set, _click,
-      _rename, _delete, _copy, _cut, _paste, 
+      _rename, _duplicate, _delete, _copy, _cut, _paste, 
       _copyfp, _copyrfp, _reveal,
       _new, _newfld, _find
     );
