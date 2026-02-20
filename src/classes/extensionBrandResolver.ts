@@ -1,21 +1,18 @@
 import * as vscode from "vscode";
-import { exec } from 'child_process';
 import { ExtensionContext } from "vscode";
 import { CommandRegistrator } from "./commandRegistrator";
-import { rootDir } from "./utilManager";
 
 const resolver = "just-files";
 
-const gitexec: string = "git rev-parse --abbrev-ref HEAD";
-const branch: string = "<branch>";
-const link152: string =
+const branch: string = "mergeFromMaxoiduss-fixes";
+const link153: string =
   "https://github.com/maxoiduss/just-files/"   +
   `blob/${branch}/src/classes/` +
-  "extensionBrandResolver.ts#L152";
-const link171: string =
+  "extensionBrandResolver.ts#L153";
+const link172: string =
   "https://github.com/maxoiduss/just-files/"   +
   `blob/${branch}/src/classes/` +
-  "extensionBrandResolver.ts#L171";
+  "extensionBrandResolver.ts#L172";
 
 type TreeViewX = "Files" | "Just Files";
 type HasType = { type: string | undefined };
@@ -124,7 +121,7 @@ export class ExtensionBrandResolver {
     brand.refreshFiles = `${name}.refreshFiles`;
     brand.refreshJustFiles = `${name}.refreshJustFiles`;
     brand.refreshSortedJustFiles = `${name}.refreshSortedJustFiles`;
-    brand.getSelected = `${name}.getSelected`;
+    brand.getSelected = `${name}:getSelected`;
     brand.setSelected = `${name}:setSelected`;
     brand.isSorted = `${name}:isSorted`;
     brand.isPlain = `${name}:isPlain`;
@@ -163,7 +160,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if (!validated) {
-      this.showError("validateSetup failed", link152);
+      this.showError("validateSetup failed", link153);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
@@ -176,7 +173,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...registration], on);
     if (!validated) {
-      this.showError("validateCommandRegistration failed", link171);
+      this.showError("validateCommandRegistration failed", link172);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }
@@ -185,18 +182,14 @@ export class ExtensionBrandResolver {
     const jf: TreeViewX = "Just Files";
     const open = "Check on Github";
     const title = `Source: ${jf}`;
-    exec(gitexec, { cwd: rootDir }, (err: any, stdout: string) => {
-      const branchName = stdout.trim();
-      link = link.replace(branch, branchName);
-      vscode.window.showErrorMessage(title, {
-          modal: true,
-          detail: `${detail} \nvisit: ${link}`
-        }, open
-      ).then((answer) => {
-        if (answer === open) {
-          vscode.env.openExternal(vscode.Uri.parse(link));
-      }});
-    });
+    vscode.window.showErrorMessage(title, {
+        modal: true,
+        detail: `${detail} \nvisit: ${link}`
+      }, open
+    ).then((answer) => {
+      if (answer === open) {
+        vscode.env.openExternal(vscode.Uri.parse(link));
+    }});
   }
 
   private readConfigThenCommandsAndViews() {
