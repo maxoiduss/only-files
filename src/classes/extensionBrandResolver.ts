@@ -1,16 +1,21 @@
 import * as vscode from "vscode";
+import { exec } from 'child_process';
 import { ExtensionContext } from "vscode";
 import { CommandRegistrator } from "./commandRegistrator";
+import { rootDir } from "./utilManager";
 
 const resolver = "just-files";
-const link147 =
+
+const gitexec: string = "git rev-parse --abbrev-ref HEAD";
+const branch: string = "<branch>";
+const link152: string =
   "https://github.com/maxoiduss/just-files/"   +
-  "blob/mergeFromMaxoiduss-fixes/src/classes/" +
-  "extensionBrandResolver.ts#L147";
-const link166 =
+  `blob/${branch}/src/classes/` +
+  "extensionBrandResolver.ts#L152";
+const link171: string =
   "https://github.com/maxoiduss/just-files/"   +
-  "blob/mergeFromMaxoiduss-fixes/src/classes/" +
-  "extensionBrandResolver.ts#L166";
+  `blob/${branch}/src/classes/` +
+  "extensionBrandResolver.ts#L171";
 
 type TreeViewX = "Files" | "Just Files";
 type HasType = { type: string | undefined };
@@ -119,7 +124,7 @@ export class ExtensionBrandResolver {
     brand.refreshFiles = `${name}.refreshFiles`;
     brand.refreshJustFiles = `${name}.refreshJustFiles`;
     brand.refreshSortedJustFiles = `${name}.refreshSortedJustFiles`;
-    brand.getSelected = `${name}:getSelected`;
+    brand.getSelected = `${name}.getSelected`;
     brand.setSelected = `${name}:setSelected`;
     brand.isSorted = `${name}:isSorted`;
     brand.isPlain = `${name}:isPlain`;
@@ -158,8 +163,8 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if (!validated) {
-      this.showError("validateSetup failed", link147);
-      throw Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
+      this.showError("validateSetup failed", link152);
+      throw new Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
   }
@@ -171,23 +176,27 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...registration], on);
     if (!validated) {
-      this.showError("validateCommandRegistration failed", link166);
-      throw Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
+      this.showError("validateCommandRegistration failed", link171);
+      throw new Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }
 
   private showError(detail: string, link: string) {
     const jf: TreeViewX = "Just Files";
-    const open: string = "Check on Github";
-    const title: string = `Source: ${jf}`;
-    vscode.window.showErrorMessage(title, {
-        modal: true,
-        detail: `${detail} \nvisit: ${link}`
-      }, open
-    ).then((answer) => {
-      if (answer === open) {
-        vscode.env.openExternal(vscode.Uri.parse(link));
-    }});
+    const open = "Check on Github";
+    const title = `Source: ${jf}`;
+    exec(gitexec, { cwd: rootDir }, (err: any, stdout: string) => {
+      const branchName = stdout.trim();
+      link = link.replace(branch, branchName);
+      vscode.window.showErrorMessage(title, {
+          modal: true,
+          detail: `${detail} \nvisit: ${link}`
+        }, open
+      ).then((answer) => {
+        if (answer === open) {
+          vscode.env.openExternal(vscode.Uri.parse(link));
+      }});
+    });
   }
 
   private readConfigThenCommandsAndViews() {
@@ -205,6 +214,7 @@ export class ExtensionBrandResolver {
   }
 
   public resolve() {
+    const dot = ".";
     const isTreeview = (it: HasType) => it.type ?? "tree" === "tree";
     const isWebview = (it: HasType) => it.type === "webview";
     const isBoolean = (it: HasType) => it.type === "boolean";
@@ -212,7 +222,6 @@ export class ExtensionBrandResolver {
     const isNumber = (it: HasType) => it.type === "number";
     const hasClick = (s: string) => s.toLowerCase().includes("click");
     const afterDot = (s?: string) => s?.split(dot)?.slice(1)?.join(dot);
-    const dot = ".";
     
     const fromPackageJson = this.readConfigThenCommandsAndViews();
     if (!fromPackageJson) { return; }

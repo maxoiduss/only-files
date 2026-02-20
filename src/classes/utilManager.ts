@@ -17,7 +17,9 @@ import {
   WebviewViewProvider } from "vscode";
 import fpath = require("path");
 
-export const postfix = "hard_lock";
+const postfix = "hard_lock";
+
+export const rootDir = fpath.resolve(__dirname, "..");
 
 export function initTypes() {
   (vscode.workspace as any).fsh = FileSystemHard;
