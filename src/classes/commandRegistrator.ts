@@ -15,7 +15,7 @@ import {
   ExtensionBrandResolver
 } from "./extensionBrandResolver";
 
-const name = () => ExtensionBrandResolver.brand;
+const name = () => ExtensionBrandResolver.command;
 const configuration = () => ExtensionBrandResolver.configuration;
 const number1Property = () => ExtensionBrandResolver.number1Property;
 const number2Property = () => ExtensionBrandResolver.number2Property;

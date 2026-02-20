@@ -12,7 +12,7 @@ export const emptyItem: string = "empty";
 
 const empty = '';
 
-const name = () => ExtensionBrandResolver.brand;
+const name = () => ExtensionBrandResolver.command;
 
 export const command = {
     get tryOpen() { return `${name()}.tryOpen`; }

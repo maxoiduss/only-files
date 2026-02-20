@@ -71,7 +71,7 @@ function validate(entries: string[], on: Set<string>): boolean {
 }
 
 export class ExtensionBrandResolver {
-  public static readonly brand: string;
+  public static readonly command: string;
   public static readonly webview: string;
   public static readonly treeview1: string;
   public static readonly treeview2: string;
@@ -86,8 +86,12 @@ export class ExtensionBrandResolver {
   private readonly filtration:
   (value: any, index: number, array: any[]) => unknown =
         value => typeof value === "string"
-    &&  value.startsWith(ExtensionBrandResolver.brand)
+    &&  value.startsWith(ExtensionBrandResolver.command)
     && !value.includes(":");
+  
+  private commandsJSON: any;
+  private configurationJSON: any;
+  private viewsJSON: any;
 
   constructor(private readonly context: ExtensionContext) {
     if (ExtensionBrandResolver.instance) { return; }
@@ -96,7 +100,7 @@ export class ExtensionBrandResolver {
   }
 
   private setupBrand() {
-    const name = ExtensionBrandResolver.brand;
+    const name = ExtensionBrandResolver.command;
     brand.setContext = "setContext";
     brand.show = `${name}.show`;
     brand.hide = `${name}.hide`;
@@ -148,10 +152,9 @@ export class ExtensionBrandResolver {
   }
 
   private validateSetup() {
-    const fromPackageJson = this.readConfigThenCommandsAndViews();
-    if (!fromPackageJson) { return; }
+    if (!Array.isArray(this.commandsJSON)) { return; }
 
-    const commands = fromPackageJson.commands.map(
+    const commands = this.commandsJSON.map(
       (rec: { command: string; }) => rec.command
     ) as string[];
     const on = new Set(commands.sort());
@@ -192,18 +195,17 @@ export class ExtensionBrandResolver {
     }});
   }
 
-  private readConfigThenCommandsAndViews() {
+  private readFromPackageJSON() {
     const extensions = vscode.extensions.all
-      .filter(ext => ext.id.includes(resolver))
-      .map(ext => {
-        const packageJSON: any = ext.packageJSON;
-        return {
-          configuration: packageJSON.contributes?.configuration || [],
-          commands: packageJSON.contributes?.commands || [],
-          views: packageJSON.contributes?.views || {}
-        };
-      });
-    return extensions.length > 0 ? extensions[0] : undefined;
+      .filter(ext => ext.id.includes(resolver));
+    if (extensions.length <= 0) {
+      throw new Error("PACKAGE.JSON NOT FOUND");
+    }
+    const packageJSON: any = extensions[0].packageJSON;
+    this.configurationJSON
+      = packageJSON.contributes?.configuration || [];
+    this.commandsJSON = packageJSON.contributes?.commands || [];
+    this.viewsJSON = packageJSON.contributes?.views || {};
   }
 
   public resolve() {
@@ -216,19 +218,18 @@ export class ExtensionBrandResolver {
     const hasClick = (s: string) => s.toLowerCase().includes("click");
     const afterDot = (s?: string) => s?.split(dot)?.slice(1)?.join(dot);
     
-    const fromPackageJson = this.readConfigThenCommandsAndViews();
-    if (!fromPackageJson) { return; }
+    this.readFromPackageJSON();
 
-    const configs = fromPackageJson.configuration.map(
+    const configs = this.configurationJSON.map(
       (rec: { properties: { _: HasType } }) => rec.properties
     ) as { _: HasType }[];
-    const commands = fromPackageJson.commands.map(
+    const commands = this.commandsJSON.map(
       (rec: { command: string; }) => rec.command
     ) as string[];
-    const webviews = Object.values(fromPackageJson.views).find(
+    const webviews = Object.values(this.viewsJSON).find(
       (v) => Array.isArray(v) && v.some(item => isWebview(item))
     ) as Array<HasId>;
-    const treeviews = Object.values(fromPackageJson.views).find(
+    const treeviews = Object.values(this.viewsJSON).find(
       (v) => Array.isArray(v) && v.some(item => isTreeview(item))
     ) as Array<HasId>;
 
@@ -290,7 +291,7 @@ export class ExtensionBrandResolver {
     }
 
     const self = ExtensionBrandResolver as any;
-    self.brand = command;
+    self.command = command;
     self.webview = webview;
     self.treeview1 = treeview1;
     self.treeview2 = treeview2;

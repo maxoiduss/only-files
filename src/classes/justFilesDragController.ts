@@ -7,7 +7,7 @@ const URLS = "text/uri-list";
 const _ = {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     get MIME () {
-      return `application/${ExtensionBrandResolver.brand}.fileitem`;
+      return `application/${ExtensionBrandResolver.command}.fileitem`;
   }
 };
 const empty = '';
