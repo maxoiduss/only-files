@@ -382,8 +382,7 @@ export class JustFiles {
         this.foldersViewProvider.showItemInExplorerByUriOrTrySelect(uri);
       }
     );
-    this.context.subscriptions.push(provider);
-    this.context.subscriptions.push(preview);
+    this.context.subscriptions.push(provider, preview);
   }
 
   subscribeCleanJustView() {

@@ -3,7 +3,7 @@
 
 Avoid wasting time looking for a file among a large number of files or directories. Just Files helps you to select only the ones you need.
 
-<img src="resources/FromThisToThis.png" />
+<img src="https://raw.githubusercontent.com/maxoiduss/just-files/main/resources/FromThisToThis.png" />
 
 ## How does it work?
 - Install the extension
@@ -22,26 +22,26 @@ Avoid wasting time looking for a file among a large number of files or directori
 
 ## Demo
 
-<img src="resources/example.gif" />
+<img src="https://raw.githubusercontent.com/maxoiduss/just-files/main/resources/example.gif" />
 
 ## Views
 
-<img src="resources/package-explorer.png" />
+<img src="https://raw.githubusercontent.com/maxoiduss/just-files/main/resources/package-explorer.png" />
 
 ## <p id="addFiles">Add files</p>
 Apart of using the icons, you have many options for add or remove files from Just Files View:
 
 - Add files from Explorer
 
-<img src="resources/addFileFromExplorer.png"/>
+<img src="https://raw.githubusercontent.com/maxoiduss/just-files/main/resources/addFileFromExplorer.png"/>
 
 - Select multiple files and select the menu (You can click on one icon too):
 
-<img src="resources/multipleFiles.png" width="50%" height="50%"/>
+<img src="https://raw.githubusercontent.com/maxoiduss/just-files/main/resources/multipleFiles.png" width="50%" height="50%"/>
 
 - From tab menu:
 
-<img src="resources/menu.png" width="50%" height="50%"/>
+<img src="https://raw.githubusercontent.com/maxoiduss/just-files/main/resources/menu.png" width="50%" height="50%"/>
 
 - Use commands:
 

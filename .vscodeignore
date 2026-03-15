@@ -11,3 +11,8 @@ out/**
 .gitignore
 .yarnrc
 icon.png
+resources/addFileFromExplorer.png
+resources/example.gif
+resources/FromThisToThis.png
+resources/menu.png
+resources/multipleFiles.png
