@@ -1,10 +1,10 @@
 import * as vscode from "vscode";
+import * as fpath from 'path';
 import * as fs from "fs";
 import { EmptyFolderItem, FileItem } from "./fileItem";
 import { getUri } from "./utilManager";
-import fpath = require("path");
 
-const empty = '';
+const empty = '' as const;
 
 export class FileItemManager {
   getParentPath(fileItem: FileItem): string | undefined {
@@ -83,24 +83,6 @@ export class FileItemManager {
     : new FileItem(label, collapsibleState, isFile);
   }
 
-  getConfigurationFor<T>(ctx: vscode.ExtensionContext, key: string): [string, T][]
-  {
-    const as = <R>(target: any): R => target as unknown as R;
-    const raw = ctx.workspaceState.get<any>(key);
-
-    if (Array.isArray(raw)) {
-      return as<[string, any][]>(raw.flatMap(
-        (record) => typeof record === "string" ? [[record, as<T>(undefined)]] : []
-      ));
-    }
-
-    if (raw && typeof raw === "object") {
-      return Object.entries(raw) as [string, T][];
-    }
-
-    return [];
-  }
-
   getPathArray(fileItems: FileItem[]): string[] {
     const paths: string[] = fileItems
       .map((fileItem) => fileItem.resourceUri?.fsPath)
@@ -158,21 +140,20 @@ export class FileItemManager {
     return directories;
   }
 
-  isFileItemInArray(fileItem: FileItem, array: FileItem[]): boolean {
-    return array.some(item => item.like(fileItem));
-  }
-
   isChildOf(
-    childFileItem: FileItem,
-    parentFileItem: FileItem
+    childFileItemOrUri: FileItem | vscode.Uri,
+    parentFileItemOrUri: FileItem | vscode.Uri
   ): boolean {
-    const childFileItemPath = childFileItem.resourceUri?.fsPath || empty;
-    const parentFileItemPath = parentFileItem.resourceUri?.fsPath || empty;
+    const childFileItemPath = childFileItemOrUri instanceof vscode.Uri ?
+      childFileItemOrUri.fsPath
+    : childFileItemOrUri.resourceUri?.fsPath || empty;
+    const parentFileItemPath = parentFileItemOrUri instanceof vscode.Uri ?
+      parentFileItemOrUri.fsPath
+    : parentFileItemOrUri.resourceUri?.fsPath || empty;
 
     if (childFileItemPath === parentFileItemPath) {
       return false;
     }
-
     const relativePath = fpath.relative(parentFileItemPath, childFileItemPath);
 
     return !relativePath.startsWith("..") && !fpath.isAbsolute(relativePath);
@@ -194,6 +175,16 @@ export class FileItemManager {
     );
   }
 
+  changeUri(onItem: FileItem, newItem: FileItem, oldUri: vscode.Uri) {
+    const newPath = newItem.resourceUri?.fsPath;
+    if (newPath) {
+      const path = onItem.resourceUri?.fsPath.replace(oldUri.fsPath, newPath);
+      if (path) {
+        onItem.setUri(vscode.Uri.file(path));
+      }
+    }
+  };
+
   findThen(
     item: FileItem | string,
     inArray: FileItem[],
@@ -210,8 +201,8 @@ export class FileItemManager {
   async findAnyThen(
     items: (FileItem | string)[],
     inArray: FileItem[],
-    then: (foundElem: number, foundItem: number) => Promise<any>): Promise<boolean>
-  {
+    then: (foundElem: number, foundItem: number) => Promise<any>
+  ): Promise<boolean> {
     let foundPosition: number = -1;
     const foundIndex = inArray.findIndex(it => items.some((el, i) => {
       if (it.like(el)) {

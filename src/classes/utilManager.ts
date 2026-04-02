@@ -11,13 +11,15 @@ declare module "vscode" {
   }
 }
 import * as vscode from "vscode";
+import * as fpath from 'path';
 import {
   CancellationTokenSource as CTS,
   TreeItem,
   WebviewViewProvider } from "vscode";
-import fpath = require("path");
+  import { LogService } from "./logService";
 
 const postfix = "hard_lock";
+let numeric = 0;
 
 export function initTypes() {
   (vscode.workspace as any).fsh = FileSystemHard;
@@ -54,6 +56,7 @@ export const WindowHard = {
   ): vscode.Disposable {
     const registered = vscode.window.registerWebviewViewProvider(viewId, provider);
     provider.setDefaults();
+
     return registered;
   }
 };
@@ -66,6 +69,10 @@ export function getNonce() {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   return text;
+}
+
+export function getNumeric() {
+  return ++numeric;
 }
 
 export function getPathASsequence(pathOr: string | vscode.Uri): string[] {
@@ -94,8 +101,10 @@ export function getUri(uriOr: vscode.Uri | string): vscode.Uri {
   return typeof uriOr === "string" ? vscode.Uri.file(uriOr) : uriOr;
 }
 
-export function getUriFrom(uriOrItem: vscode.Uri | TreeItem): vscode.Uri {
-  return uriOrItem instanceof TreeItem ? uriOrItem.resourceUri! : uriOrItem;
+export function getUriFrom(uriOrItem: vscode.Uri | TreeItem | any): vscode.Uri {
+  return uriOrItem instanceof TreeItem ?
+    uriOrItem.resourceUri!
+  : uriOrItem || vscode.window.activeTextEditor?.document.uri;
 }
 
 export function hasNoName(path: string): boolean {
@@ -134,28 +143,33 @@ export function showProgressBar(withMessage: string): CTS {
   return cts;
 }
 
-export function showQuickInput(withText: string, option: string): Promise<string> {
-  return new Promise((resolve) => {
-    const pick = vscode.window.createQuickPick<vscode.QuickPickItem>();
+export function showQuickInput
+(withText: string, option: string, stop?: Promise<void>): Promise<string> {
+  const empty = '';
+  let pick: vscode.QuickPick<vscode.QuickPickItem>;
+
+  const run = new Promise<string>((resolve) => {
+    pick = vscode.window.createQuickPick<vscode.QuickPickItem>();
     pick.placeholder = pick.title = withText;
     pick.items = [];
     pick.value = option;
     pick.ignoreFocusOut = true;
     pick.matchOnDetail = false;
-    let secondsRemaining = 4;
+    let secondsRemaining = stop ? 0 : 4;
     let isResolved = false;
 
     const okButton: vscode.QuickInputButton = {
-      iconPath: new vscode.ThemeIcon('check'),
-      tooltip: 'Ok'
+      iconPath: new vscode.ThemeIcon("check"),
+      tooltip: "Ok"
     };
     const cancelButton: vscode.QuickInputButton = {
-      iconPath: new vscode.ThemeIcon('close'),
-      tooltip: 'Cancel'
+      iconPath: new vscode.ThemeIcon("close"),
+      tooltip: "Cancel"
     };
     pick.buttons = [okButton, cancelButton];
 
-    const runAccept = async (value: string) => {
+    const runAccept = async (value: string) =>
+    {
       if (isResolved) { return; }
       isResolved = true;
 
@@ -166,36 +180,46 @@ export function showQuickInput(withText: string, option: string): Promise<string
       try {
         pick.hide();
         resolve(value);
-      } catch {
-        resolve("");
+      } catch(error) {
+        resolve(empty);
       } finally {
         pick.busy = false;
       }
     };
-    const timer = setInterval(() => {
-      secondsRemaining--;
-      if (secondsRemaining > 0) {
-        pick.placeholder = pick.title = `${withText} (${secondsRemaining})`;
-      } else {
-        runAccept(pick.value);
-      }
-    }, 1000);
+    const timer = secondsRemaining > 0 ?
+      setInterval(() => {
+        secondsRemaining--;
+        if (secondsRemaining > 0) {
+          pick.placeholder = pick.title = `${withText} (${secondsRemaining})`;
+        } else {
+          runAccept(pick.value);
+        }
+      }, 1000) : undefined;
 
     pick.onDidAccept(() => { void runAccept(pick.value); });
     pick.onDidTriggerButton((button) => {
       if (button === okButton) { void runAccept(pick.value); }
-      else if (button === cancelButton) { void runAccept(""); }
+      else if (button === cancelButton) { void runAccept(empty); }
     });
     pick.onDidHide(() => {
       clearInterval(timer);
       pick.dispose();
-      if (!isResolved) { resolve("."); } 
+      if (!isResolved) { resolve(empty); }
     });
     pick.show();
   });
+
+  return Promise.race([
+    run,
+    stop?.then(() => {
+      pick.hide();
+      return empty;
+    }) ?? Promise.resolve(empty)
+  ]);
 }
 
-export async function setNothingToExcludeTemporary(): Promise<() => Promise<void>> {
+export async function setNothingToExcludeTemporary(): Promise<() => Promise<void>>
+{
   async function updateConfig(target: vscode.ConfigurationTarget, empty?: boolean)
   {
     try {
@@ -203,7 +227,7 @@ export async function setNothingToExcludeTemporary(): Promise<() => Promise<void
         await config.update(exclude, empty ? {} : previous[target], target);
       }
     } catch (error) {
-      console.error(`Failed to update files.${exclude} for ${target}: ${error}`);
+      LogService.error(`Failed to update files.${exclude} for ${target}: ${error}`);
     }
   }
   if (!useUnexcludeSystemConfig) { return async () => {}; }
@@ -235,6 +259,12 @@ export function isInFolder(path: string, folder: string): boolean {
   const folderPath = fpath.resolve(folder);
   const parent = fpath.dirname(filePath);
   return parent === folderPath;
+}
+
+export async function isFolder(uri: vscode.Uri): Promise<boolean | undefined> {
+  const dir = vscode.FileType.Directory;
+  try { return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
+  catch(error) { return undefined; }
 }
 
 export const largeProjectFilesAmount: number = 5555;
@@ -276,4 +306,28 @@ export async function getAllFolders(max?: number): Promise<vscode.Uri[] | null> 
   await restoreSetting();
 
   return [...folders].map(path => vscode.Uri.file(path));
+}
+
+export function getConfigurationFor<T>(
+  ctx: vscode.ExtensionContext, key: string
+): T | undefined {
+  return ctx.workspaceState.get<T>(key);
+}
+
+export function getConfigurationsFor<T>(
+  ctx: vscode.ExtensionContext, key: string
+): [string, T][] {
+  const as = <R>(target: any): R => target as unknown as R;
+  const raw = ctx.workspaceState.get<any>(key);
+
+  if (Array.isArray(raw)) {
+    return as<[string, any][]>(raw.flatMap(
+      (record) => typeof record === "string" ? [[record, as<T>(undefined)]] : []
+    ));
+  }
+  if (raw && typeof raw === "object") {
+    return Object.entries(raw) as [string, T][];
+  }
+
+  return [];
 }

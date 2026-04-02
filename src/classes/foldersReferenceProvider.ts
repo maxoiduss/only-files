@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import * as fpath from 'path';
 import { Location } from "vscode";
 import { FileItem } from "./fileItem";
 import { CommandRegistrator } from "./commandRegistrator";
@@ -7,7 +8,6 @@ import {
   showProgressBar,
   showQuickInput
 } from "./utilManager";
-import fpath = require("path");
 
 const EXCLUDES = [
   "jar",
@@ -28,9 +28,9 @@ const EXCLUDES = [
   "mp3",
   "mp4",
   "vsix"
-];
-const ignoreDefaultFileName = ".gitignore";
-const empty = '';
+] as const;
+const ignoreDefaultFileName = ".gitignore" as const;
+const empty = '' as const;
 
 type TextDocumentOr = vscode.TextDocument | undefined;
 

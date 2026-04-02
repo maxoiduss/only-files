@@ -10,9 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
   justFiles.subscribe();
 }
 
-export function deactivate(context: vscode.ExtensionContext) {
-  context?.workspaceState?.update("displayed", undefined);
-  context?.workspaceState?.update("hidden", undefined);
-  context?.workspaceState?.update("subDisplayed", undefined);
-  context?.workspaceState?.update("subHidden", undefined);
+export function deactivate() {
+  ExtensionBrandResolver.dispose();
+  JustFiles.dispose();
 }

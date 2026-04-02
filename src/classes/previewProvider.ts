@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
 import { getNonce, getString, hasNoName } from "./utilManager";
+import { LogService } from "./logService";
 
 function getPdfTemplate(
   pdfContent: string | Buffer,
@@ -247,13 +248,13 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
       </html>`;
 }
 
-const dropAreaMask = 'dropzone';
-const contextCommand = 'contextMenu';
-const resetStateCommand = 'resetState';
-const disableStateCommand = 'disableState';
-const contentLoadedCommand = 'contentLoaded';
-const fileDropCommand = 'fileDropped';
-const empty = '';
+const dropAreaMask = 'dropzone' as const;
+const contextCommand = 'contextMenu' as const;
+const resetStateCommand = 'resetState' as const;
+const disableStateCommand = 'disableState' as const;
+const contentLoadedCommand = 'contentLoaded' as const;
+const fileDropCommand = 'fileDropped' as const;
+const empty = '' as const;
 
 enum PreviewType {
   pdf   = "pdf",
@@ -289,6 +290,9 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
 
     const visibilityTimeout = 100;
 
+    view.onDidDispose(() => this.view = undefined,
+      this, this.context.subscriptions
+    );
     view.onDidChangeVisibility(() => {
       setTimeout(async () => {
         if (this.lastViewVisibleValue !== view.visible) {
@@ -298,7 +302,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           }
         }
       }, visibilityTimeout);
-    });
+    }, this, this.context.subscriptions);
     view.webview.onDidReceiveMessage(async (message) => {
       if (message.command === fileDropCommand && message.path) {
         const path = message.path as string;
@@ -315,9 +319,14 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       if (message.command === contextCommand) {
         await this.handleContextMenu();
       }
-    });
+    }, this, this.context.subscriptions);
     this.resolved();
-    console.log(context.state);
+
+    LogService.log("webview resolved with state:", context.state);
+  }
+
+  canBeShownAsWebView(): boolean {
+    return this.view !== undefined;
   }
 
   async showAsWebView(uriOr: vscode.Uri | string): Promise<void> {

@@ -2,19 +2,19 @@ import * as vscode from "vscode";
 import { ExtensionContext } from "vscode";
 import { CommandRegistrator } from "./commandRegistrator";
 
-const resolver = "just-files";
+const resolver = "just-files" as const;
 
-const branch: string = "mergeFromMaxoiduss-fixes";
-const link153: string =
+const branch = "mergeFromMaxoiduss-fixes" as const;
+const link176: string =
   "https://github.com/maxoiduss/just-files/"   +
   `blob/${branch}/src/classes/` +
-  "extensionBrandResolver.ts#L153";
-const link172: string =
+  "extensionBrandResolver.ts#L176";
+const link194: string =
   "https://github.com/maxoiduss/just-files/"   +
   `blob/${branch}/src/classes/` +
-  "extensionBrandResolver.ts#L172";
+  "extensionBrandResolver.ts#L194";
 
-type TreeViewX = "Files" | "Just Files";
+type ViewX = "Files" | "Just Files" | "Preview";
 type HasType = { type: string | undefined };
 type HasId = { id: string };
 
@@ -37,7 +37,9 @@ interface Brand {
   uncollapseAll: string;
   previewItem: string;
   removeAll: string;
+  remark: string;
   ignore: string;
+  showLogs: string;
   switch: string;
   switchback: string;
   searchListFiles: string;
@@ -48,6 +50,7 @@ interface Brand {
   setContext: string;
   isSorted: string;
   isPlain: string;
+  restore: string;
   list: {
     find: string,
     closeFind: string
@@ -59,10 +62,16 @@ interface Brand {
   workbench: {
     action : {
       closeFolder: string,
+      closeActiveEditor: string,
       focusActiveEditorGroup: string
+    },
+    view: {
+      extension: {
+        webviewContainer: string
+      }
     }
   };
-  focus: (on: TreeViewX) => string;
+  focus: (on: ViewX) => string;
 }
 export const brand = {} as Brand;
 
@@ -94,12 +103,13 @@ export class ExtensionBrandResolver {
   private viewsJSON: any;
 
   constructor(private readonly context: ExtensionContext) {
-    if (ExtensionBrandResolver.instance) { return; }
+    if (ExtensionBrandResolver.instance) { throw Error("ALREADY RESOLVED"); }
 
     ExtensionBrandResolver.instance = this;
   }
 
   private setupBrand() {
+    const focus = "focus";
     const name = ExtensionBrandResolver.command;
     brand.setContext = "setContext";
     brand.show = `${name}.show`;
@@ -117,7 +127,9 @@ export class ExtensionBrandResolver {
     brand.uncollapseAll = `${name}.uncollapseAll`;
     brand.previewItem = `${name}.previewItem`;
     brand.removeAll = `${name}.removeAll`;
+    brand.remark = `${name}.remark`;
     brand.ignore = `${name}.ignore`;
+    brand.showLogs = `${name}.showLogs`;
     brand.switch = `${name}.switch`;
     brand.switchback = `${name}.switchback`;
     brand.searchListFiles = `${name}.searchListFiles`;
@@ -129,6 +141,7 @@ export class ExtensionBrandResolver {
     brand.setSelected = `${name}:setSelected`;
     brand.isSorted = `${name}:isSorted`;
     brand.isPlain = `${name}:isPlain`;
+    brand.restore = `${name}.restore`;
     brand.list = {
       find: "list.find",
       closeFind: "list.closeFind"
@@ -140,13 +153,22 @@ export class ExtensionBrandResolver {
     brand.workbench = {
       action: {
         closeFolder: "workbench.action.closeFolder",
+        closeActiveEditor: "workbench.action.closeActiveEditor",
         focusActiveEditorGroup:
           "workbench.action.focusActiveEditorGroup"
+      },
+      view: {
+        extension: {
+          webviewContainer:
+            "workbench.view.extension.preView-container"
+        }
       }
     };
     brand.focus = (on) => on === "Files" ?
-      `${ExtensionBrandResolver.treeview1}.focus`
-    : `${ExtensionBrandResolver.treeview2}.focus`;
+      `${ExtensionBrandResolver.treeview1}.${focus}`
+    : on === "Just Files" ?
+        `${ExtensionBrandResolver.treeview2}.${focus}`
+      : `${ExtensionBrandResolver.webview}.${focus}`;
     
     this.validateSetup();
   }
@@ -163,7 +185,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if (!validated) {
-      this.showError("validateSetup failed", link153);
+      this.showError("validateSetup failed", link176);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
@@ -176,13 +198,13 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...registration], on);
     if (!validated) {
-      this.showError("validateCommandRegistration failed", link172);
+      this.showError("validateCommandRegistration failed", link194);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }
 
   private showError(detail: string, link: string) {
-    const jf: TreeViewX = "Just Files";
+    const jf: ViewX = "Just Files";
     const open = "Check on Github";
     const title = `Source: ${jf}`;
     vscode.window.showErrorMessage(title, {
@@ -302,5 +324,11 @@ export class ExtensionBrandResolver {
     self.booleanProperty = afterDot(booleanProp);
     
     this.setupBrand();
+  }
+
+  static dispose() {
+    ExtensionBrandResolver.instance.configurationJSON = undefined;
+    ExtensionBrandResolver.instance.commandsJSON = undefined;
+    ExtensionBrandResolver.instance.viewsJSON = undefined;
   }
 }

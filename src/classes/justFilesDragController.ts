@@ -3,14 +3,14 @@ import { TreeDragAndDropController } from "vscode";
 import { placeholder, FileItem } from "./fileItem";
 import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 
-const URLS = "text/uri-list";
+const URLS = "text/uri-list" as const;
 const _ = {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     get MIME () {
       return `application/${ExtensionBrandResolver.command}.fileitem`;
   }
 };
-const empty = '';
+const empty = '' as const;
 
 export class JustFilesDragController
   implements TreeDragAndDropController<FileItem>

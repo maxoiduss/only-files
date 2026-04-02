@@ -5,14 +5,14 @@ import { CommandRegistrator } from "./commandRegistrator";
 import { emptyItem, root, FileItem } from "./fileItem";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
 
-const URLS = "text/uri-list";
+const URLS = "text/uri-list" as const;
 const _ = {
   // eslint-disable-next-line @typescript-eslint/naming-convention
     get MIME () {
       return `application/${ExtensionBrandResolver.command}.fileitem`;
   }
 };
-const empty = '';
+const empty = '' as const;
 
 export class FoldersDragController
   implements TreeDragAndDropController<FileItem>
@@ -54,7 +54,7 @@ export class FoldersDragController
     dataTransfer.set(URLS, dataFirst);
 
     const items: FileItem[] = [...source];
-    await this.commandRegistrator.cutItems(items);
+    await this.commandRegistrator.cutOrCopyItems(items);
   }
 
   async handleDrop?(

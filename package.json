@@ -107,7 +107,22 @@
         "contents": "Loading the workspace..."
       }
     ],
+    "colors": [
+      {
+        "id": "justFilesViewColor",
+        "description": "Highlight color for the file decorator",
+        "defaults": {
+          "dark": "#6FD185",
+          "light": "#6FD185",
+          "highContrast": "#264D2E"
+        }
+      }
+    ],
     "commands": [
+      {
+        "command": "just-files.showLogs",
+        "title": "Show All Collected Logs"
+      },
       {
         "command": "just-files.switch",
         "title": "Switch between classic/plain views",
@@ -185,6 +200,14 @@
         "title": "Uncollapse All To Plain"
       },
       {
+        "command": "just-files.remark",
+        "title": "Mark/Unmark",
+        "icon": {
+          "light": "resources/light/markLight.svg",
+          "dark": "resources/dark/markDark.svg"
+        }
+      },
+      {
         "command": "just-files.addItemFromTabMenu",
         "title": "Send to Just Files"
       },
@@ -245,16 +268,32 @@
         }
       },
       {
+        "command": "just-files.restore",
+        "title": "Restore"
+      },
+      {
         "command": "just-files.rename",
         "title": "Rename"
+      },
+      {
+        "command": "just-files.renameTab",
+        "title": "Rename File"
       },
       {
         "command": "just-files.delete",
         "title": "Delete"
       },
       {
+        "command": "just-files.deleteHard",
+        "title": "Delete Permanently"
+      },
+      {
         "command": "just-files.duplicate",
         "title": "Duplicate"
+      },
+      {
+        "command": "just-files.emptify",
+        "title": "Emptify"
       },
       {
         "command": "just-files.copy",
@@ -299,6 +338,10 @@
       {
         "command": "just-files.closeFolder",
         "title": "Close Folder"
+      },
+      {
+        "command": "just-files.ctrl",
+        "title": "Copy Ctrl+Ctrl"
       }
     ],
     "menus": {
@@ -369,6 +412,10 @@
         {
           "command": "just-files.removeItemFromTabMenu",
           "group": "z"
+        },
+        {
+          "command": "just-files.renameTab",
+          "group": "1_open"
         },
         {
           "command": "just-files.previewItem",
@@ -442,6 +489,11 @@
           "group": "5_other"
         },
         {
+          "command": "just-files.restore",
+          "when": "(focusedView == justFilesView) && viewItem != empty && viewItem != folder",
+          "group": "4_modification"
+        },
+        {
           "command": "just-files.rename",
           "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root && viewItem != vac",
           "group": "4_modification"
@@ -457,9 +509,19 @@
           "group": "4_modification"
         },
         {
+          "command": "just-files.emptify",
+          "when": "focusedView == filesView && viewItem != root && viewItem != vac && viewItem == folder",
+          "group": "4_modification"
+        },
+        {
           "command": "just-files.collapseFolder",
           "group": "inline",
           "when": "view == filesView && viewItem != fileRoot && viewItem != root && viewItem != vac"
+        },
+        {
+          "command": "just-files.remark",
+          "group": "inline",
+          "when": "view == justFilesView && viewItem != empty"
         },
         {
           "command": "just-files.show",
@@ -501,9 +563,21 @@
         "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root"
       },
       {
+        "command": "just-files.renameTab",
+        "key": "shift+f2",
+        "mac": "shift+f2",
+        "when": "resourceScheme == file"
+      },
+      {
         "command": "just-files.delete",
         "key": "delete",
         "mac": "delete",
+        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root"
+      },
+      {
+        "command": "just-files.deleteHard",
+        "key": "shift+delete",
+        "mac": "shift+delete",
         "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty && viewItem != root"
       },
       {
@@ -531,6 +605,12 @@
         "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != empty"
       },
       {
+        "command": "just-files.previewItem",
+        "key": "ctrl+shift+alt+enter",
+        "mac": "cmd+shift+alt+enter",
+        "when": "resourceScheme == file"
+      },
+      {
         "command": "just-files.show",
         "key": "ctrl+y",
         "mac": "cmd+y",
@@ -546,13 +626,19 @@
         "command": "just-files.addItemFromCommand",
         "key": "ctrl+y",
         "mac": "cmd+y",
-        "when": "editorTextFocus"
+        "when": "resourceScheme == file"
       },
       {
         "command": "just-files.removeItemFromCommand",
         "key": "ctrl+alt+y",
         "mac": "cmd+alt+y",
-        "when": "editorTextFocus"
+        "when": "resourceScheme == file"
+      },
+      {
+        "command": "just-files.ctrl",
+        "key": "ctrl+ctrl ctrl",
+        "mac": "cmd+cmd cmd",
+        "when": "(focusedView == filesView) && viewItem != root && viewItem != vac"
       }
     ]
   },
