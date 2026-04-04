@@ -37,7 +37,17 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     return undefined;
   }
 
-  handleUri(uri: vscode.Uri) {
+  handleUri(uri: vscode.Uri, oldUri?: vscode.Uri) {
+    if (oldUri) {
+      if (this.decorations.has(oldUri.fsPath)) {
+        this.deleteUri(oldUri);
+        this.decorations.set(uri.fsPath, uri);
+        this.refresh(uri);
+      }
+      
+      return;
+    }
+    
     if (this.decorations.has(uri.fsPath)) {
       this.deleteUri(uri);
       this.refresh(uri);

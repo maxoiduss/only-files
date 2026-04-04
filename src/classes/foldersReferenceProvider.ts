@@ -245,6 +245,8 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
       const ignoreFiles = await vscode.workspace.findFiles(ignorePattern);
       this.gitignore = ignoreFiles.length > 0 ? ignoreFiles[0] : this.gitignore;
       await restoreSetting();
+    } else if (ignorePattern === empty) {
+      this.gitignore = undefined;
     }
     return this.gitignore;
   }

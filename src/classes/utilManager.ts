@@ -17,8 +17,11 @@ import {
   TreeItem,
   WebviewViewProvider } from "vscode";
   import { LogService } from "./logService";
+import { ExtensionBrandResolver } from "./extensionBrandResolver";
 
-const postfix = "hard_lock";
+const number3Property = () => ExtensionBrandResolver.number3Property;
+const configuration = () => ExtensionBrandResolver.configuration;
+const postfix = "hard_lock" as const;
 let numeric = 0;
 
 export function initTypes() {
@@ -146,6 +149,7 @@ export function showProgressBar(withMessage: string): CTS {
 export function showQuickInput
 (withText: string, option: string, stop?: Promise<void>): Promise<string> {
   const empty = '';
+  const config = vscode.workspace.getConfiguration(configuration());
   let pick: vscode.QuickPick<vscode.QuickPickItem>;
 
   const run = new Promise<string>((resolve) => {
@@ -155,7 +159,7 @@ export function showQuickInput
     pick.value = option;
     pick.ignoreFocusOut = true;
     pick.matchOnDetail = false;
-    let secondsRemaining = stop ? 0 : 4;
+    let secondsRemaining = stop ? 0 : config.get<number>(number3Property(), 4);
     let isResolved = false;
 
     const okButton: vscode.QuickInputButton = {
@@ -195,7 +199,10 @@ export function showQuickInput
           runAccept(pick.value);
         }
       }, 1000) : undefined;
-
+    const clearTimer = (time: NodeJS.Timeout | undefined, value?: any) => {
+      if (value && value !== option) { timer ? clearInterval(timer) : {}; }
+    };
+    pick.onDidChangeValue((value) => clearTimer(timer, value));
     pick.onDidAccept(() => { void runAccept(pick.value); });
     pick.onDidTriggerButton((button) => {
       if (button === okButton) { void runAccept(pick.value); }
@@ -208,14 +215,13 @@ export function showQuickInput
     });
     pick.show();
   });
-
-  return Promise.race([
-    run,
-    stop?.then(() => {
+  const promises: Promise<string>[] = stop ?
+    [stop.then(() => {
       pick.hide();
       return empty;
-    }) ?? Promise.resolve(empty)
-  ]);
+    }), run] : [run];
+
+  return Promise.race(promises);
 }
 
 export async function setNothingToExcludeTemporary(): Promise<() => Promise<void>>

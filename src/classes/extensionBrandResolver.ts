@@ -88,6 +88,7 @@ export class ExtensionBrandResolver {
   public static readonly stringProperty: string;
   public static readonly number1Property: string;
   public static readonly number2Property: string;
+  public static readonly number3Property: string;
   public static readonly booleanProperty: string;
   
   private static instance: ExtensionBrandResolver;
@@ -238,6 +239,7 @@ export class ExtensionBrandResolver {
     const isString = (it: HasType) => it.type === "string";
     const isNumber = (it: HasType) => it.type === "number";
     const hasClick = (s: string) => s.toLowerCase().includes("click");
+    const hasPick = (s: string) => s.toLowerCase().includes("pick");
     const afterDot = (s?: string) => s?.split(dot)?.slice(1)?.join(dot);
     
     this.readFromPackageJSON();
@@ -275,10 +277,18 @@ export class ExtensionBrandResolver {
       numberProps[0] : undefined;
     let number2Prop = numberProps.length > 1 ?
       numberProps[1]: undefined;
-    if (number2Prop && number1Prop && hasClick(number2Prop)) {
-      const temp = number1Prop;
-      number1Prop = number2Prop;
-      number2Prop = temp;
+    let number3Prop = numberProps.length > 1 ?
+      numberProps[2]: undefined;
+    if (number1Prop && number2Prop && number3Prop) {
+      const numbers = [number1Prop, number2Prop, number3Prop];
+      const clicks = numbers.findIndex((num) => hasClick(num));
+      const picks = numbers.findIndex((num) => hasPick(num));
+      const all = (numbers.length - 1) * numbers.length / 2;
+      if (clicks > 0 && picks > 0) {
+        number1Prop = numbers[clicks];
+        number3Prop = numbers[picks];
+        number2Prop = numbers[all - clicks - picks];
+      }
     }
 
     const stringProp = stringProps.length > 0 ?
@@ -288,7 +298,7 @@ export class ExtensionBrandResolver {
       booleanProps[0] : undefined;
     
     const config = new Set<string>(
-      [number1Prop, number2Prop, booleanProp].map((prop) =>
+      [number1Prop, booleanProp].map((prop) =>
         prop ? prop.split(dot)[0] : dot
       )
     ).keys().next().value;
@@ -321,6 +331,7 @@ export class ExtensionBrandResolver {
     self.stringProperty = afterDot(stringProp);
     self.number1Property = afterDot(number1Prop);
     self.number2Property = afterDot(number2Prop);
+    self.number3Property = afterDot(number3Prop);
     self.booleanProperty = afterDot(booleanProp);
     
     this.setupBrand();

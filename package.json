@@ -44,6 +44,13 @@
             "maximum": 2500,
             "description": "Tolerance between clicks in millisec to trigger rename file."
           },
+          "justFiles.timeToPick": {
+            "type": "number",
+            "default": 4,
+            "minimum": 1,
+            "maximum": 10,
+            "description": "Time in seconds quick pick dialog to auto accept."
+          },
           "justFiles.showEmptyFolders": {
             "type": "boolean",
             "default": true,
@@ -112,8 +119,8 @@
         "id": "justFilesViewColor",
         "description": "Highlight color for the file decorator",
         "defaults": {
-          "dark": "#6FD185",
-          "light": "#6FD185",
+          "dark": "#91B431",
+          "light": "#91B431",
           "highContrast": "#264D2E"
         }
       }

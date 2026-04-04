@@ -84,6 +84,8 @@ export class JustFiles {
       this.foldersViewProvider.refresh();
     }
     if (changed) {
+      changed.resourceUri ?
+        this.fileDecorator.handleUri(changed.resourceUri, onUri) : {};
       this.justFilesViewProvider.changeFileItem(changed, onUri);
     } else {
       this.justFilesViewProvider.refreshIfExistsFileItemByUri(onUri);

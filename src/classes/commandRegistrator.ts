@@ -208,7 +208,7 @@ export class CommandRegistrator {
       const interval = setInterval(() => {
         if (!this.wasRenaming) {
             clearInterval(interval); resolve();
-        }}, 500);
+        }}, 400);
     });
     this.wasRenaming = true;
 
@@ -365,9 +365,13 @@ export class CommandRegistrator {
           }
         } 
         else if (tolerance < FileItem.renameTolerance) {
-          fileItem.lastClickTime -= FileItem.renameTolerance;
           vscode.commands.executeCommand(commands.renameFile, fileItem);
-        } else { this.wasRenaming = false; }
+        } else {
+          if (this.wasRenaming) {
+            fileItem.lastClickTime -= FileItem.renameTolerance;
+          }
+          this.wasRenaming = false;
+        }
     });
     const _ctrlkey = vscode.commands.registerCommand(commands.ctrlPressed,
       async () => {
