@@ -244,8 +244,8 @@ export class FileItemManager {
       const labelB = (byNamesOnly ?
         fpath.basename(b.relativePath)
       :  b.relativePath).toLocaleLowerCase();
-      const aHasSep = /[\/\\]/.test(a.relativePath);
-      const bHasSep = /[\/\\]/.test(b.relativePath);
+      const aHasSep = !byNamesOnly && /[\/\\]/.test(a.relativePath);
+      const bHasSep = !byNamesOnly && /[\/\\]/.test(b.relativePath);
       
       if (labelA && labelB) {
         if (a.isFile && !b.isFile) {
@@ -259,6 +259,7 @@ export class FileItemManager {
         } else if (aHasSep && !bHasSep) {
           return -1;
         }
+
         return labelA.localeCompare(labelB);
       }
 
