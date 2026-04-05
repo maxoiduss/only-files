@@ -131,6 +131,10 @@
         "title": "Show All Collected Logs"
       },
       {
+        "command": "just-files.showSettings",
+        "title": "Show Extension Settings"
+      },
+      {
         "command": "just-files.switch",
         "title": "Switch between classic/plain views",
         "icon": {
@@ -443,7 +447,7 @@
         {
           "command": "just-files.closeFolder",
           "when": "focusedView == filesView && viewItem == root",
-          "group": "6_other"
+          "group": "7_other"
         },
         {
           "command": "just-files.revealFileInOS",
@@ -494,6 +498,11 @@
           "command": "just-files.uncollapseAll",
           "when": "focusedView == filesView",
           "group": "5_other"
+        },
+        {
+          "command": "just-files.showSettings",
+          "when": "focusedView == filesView && viewItem == root",
+          "group": "6_other"
         },
         {
           "command": "just-files.restore",

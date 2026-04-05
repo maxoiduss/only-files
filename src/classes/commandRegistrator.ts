@@ -38,11 +38,13 @@ const commands = {
   get paste() { return `${name()}.paste`; },
   get copyFilePath() { return `${name()}.copyFilePath`; },
   get copyRelative() { return `${name()}.copyRelativeFilePath`; },
+  get showSettings() { return `${name()}.showSettings`; },
   get reveal() { return `${name()}.revealFileInOS`; },
   get find() { return `${name()}.findRef`; },
   get eptifyFolder() { return `${name()}.emptify`; },
   get newFolder() { return `${name()}.newFolder`; },
   get newFile() { return `${name()}.newFile`; },
+      openSettings: "workbench.action.openSettings",
       referenceBuiltin: "editor.action.showReferences",
       revealBuiltin: "revealFileInOS"
 } as const;
@@ -488,9 +490,17 @@ export class CommandRegistrator {
         : fileItem.resourceUri.fsPath;
         this.createNewExplorerItem(folderPath, false);
     });
-
+    const _setting = vscode.commands.registerCommand(commands.showSettings,
+      async () => {
+        const byId = (id: any) => `@ext:${id}`;
+        await vscode.commands.executeCommand(
+          commands.openSettings,
+          byId(this.context?.extension?.id),
+        );
+      }
+    );
     this.context?.subscriptions.push(
-      _set, _click, _ctrlkey,
+      _set, _click, _ctrlkey, _setting,
       _rename, _renametb,
       _duplicat, _emptify, _copy, _cut, _paste,
       _delete, _deletehrd,
