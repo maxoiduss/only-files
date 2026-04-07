@@ -106,8 +106,8 @@ export function getUri(uriOr: vscode.Uri | string): vscode.Uri {
 
 export function getUriFrom(uriOrItem: vscode.Uri | TreeItem | any): vscode.Uri {
   return uriOrItem instanceof TreeItem ?
-    uriOrItem.resourceUri!
-  : uriOrItem || vscode.window.activeTextEditor?.document.uri;
+    (uriOrItem.resourceUri || vscode.window.activeTextEditor?.document.uri)!
+  : (getUri(uriOrItem) || vscode.window.activeTextEditor?.document.uri);
 }
 
 export function hasNoName(path: string): boolean {
@@ -271,6 +271,12 @@ export async function isFolder(uri: vscode.Uri): Promise<boolean | undefined> {
   const dir = vscode.FileType.Directory;
   try { return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
   catch(error) { return undefined; }
+}
+
+export async function isValidUri(uriOr: vscode.Uri | string | undefined): Promise<boolean> {
+  if (uriOr === undefined) { return false; }
+
+  return isFolder(getUri(uriOr)) !== undefined;
 }
 
 export const largeProjectFilesAmount: number = 5555;

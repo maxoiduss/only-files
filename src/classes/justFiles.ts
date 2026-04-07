@@ -445,11 +445,13 @@ export class JustFiles {
         const uri: vscode.Uri = getUriFrom(uriOr);
         if (!this.previewProvider.canBeShownAsWebView()) {
           await vscode.commands.executeCommand(
-            brand.workbench.view.extension.webviewContainer
-          );
+            brand.workbench.view.extension.webviewContainer);
           await vscode.commands.executeCommand(brand.focus("Preview"));
         }
         await this.previewProvider.showAsWebView(uri.fsPath);
+        await vscode.commands.executeCommand(
+          brand.workbench.view.extension.treeviewContainer);
+        await vscode.commands.executeCommand(brand.focus("Files"));
         this.foldersViewProvider.trySelectByUri(uri);
       }
     );
@@ -531,7 +533,7 @@ export class JustFiles {
     const refreshFilesView = vscode.commands.registerCommand(
       brand.refreshFiles, () => {
         this.foldersViewProvider.refresh();
-        this.revealFilesTreeViewItem(this.foldersViewProvider.root, true);
+        this.foldersViewProvider.revealRoot();
       }
     );
     this.context.subscriptions.push(refreshFilesView);

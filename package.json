@@ -2,7 +2,7 @@
   "name": "just-files",
   "displayName": "Just Files",
   "description": "Select and work just with the files you will use",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "publisher": "palaso",
   "icon": "resources/icon.png",
   "repository": {
@@ -16,7 +16,7 @@
     "Other"
   ],
   "activationEvents": [
-    "onWebviewView:preView"
+    "onWebviewView:pre-view"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -73,7 +73,7 @@
           "order": 2
         },
         {
-          "id": "preView-container",
+          "id": "pre-view-container",
           "title": "Preview",
           "icon": "resources/previewer.svg",
           "order": 1
@@ -95,9 +95,9 @@
           "icon": "resources/folder.svg"
         }
       ],
-      "preView-container": [
+      "pre-view-container": [
         {
-          "id": "preView",
+          "id": "pre-view",
           "name": "Preview",
           "type": "webview",
           "icon": "resources/previewer.svg"

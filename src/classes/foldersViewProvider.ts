@@ -219,6 +219,10 @@ implements vscode.TreeDataProvider<FileItem>, vscode.Disposable {
     return this.showingRoot;
   }
 
+  revealRoot() {
+    this.revealItem(this.root, true);
+  }
+
   setIgnoreItems(items: [boolean, RegExp][]) {
     this.ignoreItems = {
       fileRules: items.flatMap(([fileRule, expr]) => fileRule ? expr : []),

@@ -67,7 +67,8 @@ interface Brand {
     },
     view: {
       extension: {
-        webviewContainer: string
+        webviewContainer: string,
+        treeviewContainer: string
       }
     }
   };
@@ -161,7 +162,9 @@ export class ExtensionBrandResolver {
       view: {
         extension: {
           webviewContainer:
-            "workbench.view.extension.preView-container"
+            "workbench.view.extension.pre-view-container",
+          treeviewContainer:
+            "workbench.view.extension.just-files-explorer"
         }
       }
     };

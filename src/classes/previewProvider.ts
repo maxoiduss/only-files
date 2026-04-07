@@ -1,10 +1,15 @@
 import * as vscode from "vscode";
 import * as path from "path";
-import * as fs from "fs";
 import * as marked from "marked";
 import { WebviewView } from "vscode";
-import { getNonce, getString, hasNoName } from "./utilManager";
+import { getNonce, getString, getUri, hasNoName } from "./utilManager";
 import { LogService } from "./logService";
+
+const emptyFrame =
+  `<div class="container">
+    <h2>Drag-n-Shift Here</h2>
+    <div class="placeholder"></div>
+  </div>` as const;
 
 function getPdfTemplate(
   pdfContent: string | Buffer,
@@ -135,16 +140,16 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
             vscode.postMessage({
               command: '${contextCommand}'
             });
-          });
+          }, { passive: true });
           dropZone.addEventListener('dragover', (event) => {
             event.preventDefault();
             dropZone.style.border = '2px dashed var(--vscode-editor-background)';
             dropZone.style.backgroundColor = '#0051ff62';
-          });
+          }, { passive: true });
           dropZone.addEventListener('dragleave', (event) => {
             dropZone.style.border = '2px dashed var(--vscode-background)';
             dropZone.style.backgroundColor = dropZoneColor;
-          });
+          }, { passive: true });
           dropZone.addEventListener('drop', (event) => {
             event.preventDefault();
             dropZone.style.border = '2px dashed var(--vscode-background)';
@@ -158,7 +163,7 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
                 path: uri
               });
             }
-          });
+          }, { passive: false });
 
           let state = vscode.getState();
           let scale = state?.scale;
@@ -223,7 +228,7 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
               await transform(true);
               resetState(true);
             }
-          });
+          }, { passive: true });
           window.addEventListener('wheel', (e) => {
             if (e.ctrlKey && scale) {
               e.preventDefault();
@@ -241,7 +246,7 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
               vscode.postMessage({
                 command: '${contentLoadedCommand}'
               });
-            }
+            }, { passive: true }
           );
         </script>
       </body>
@@ -321,6 +326,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
       }
     }, this, this.context.subscriptions);
     this.resolved();
+    this.updateDefaults();
 
     LogService.log("webview resolved with state:", context.state);
   }
@@ -354,6 +360,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
   async setDefaults(): Promise<void> {
     await this.toBeResolved;
 
+    this.updateDefaults();
+  }
+
+  private async updateDefaults(): Promise<void> {
     if (this.view) {
       await this.updateWebview();
       
@@ -407,38 +417,37 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     }
   }
 
+  private setEmptyView(nonce: string, cspSource: string) {
+    this.view!.webview.html = getHtmlTemplate(emptyFrame, nonce, cspSource);
+    this.setTitle(empty, true);
+  }
+
   private async updateWebview(
-    uri: vscode.Uri | string  = empty, 
+    uriOr: vscode.Uri | string  = empty, 
     type: PreviewType = PreviewType.error
   ): Promise<void> {
     if (!this.view) { return; }
 
-    this.setTitle(uri, true);
+    this.setTitle(uriOr, true);
 
     const non = getNonce();
     const csps = this.cspSourceDefault;
 
     if (type === PreviewType.error) {
-      const emptyFrame =
-        `<div class="container">
-          <h2>Drag-n-Shift Here</h2>
-          <div class="placeholder"></div>
-        </div>`;
-      this.view.webview.html = getHtmlTemplate(emptyFrame, non, csps);
-      this.setTitle(empty, true);
+      this.setEmptyView(non, csps);
       return;
     }
     if (type === PreviewType.md) {
-      const content = fs.readFileSync(
-        vscode.Uri.file(uri.toString()).fsPath, 'utf-8'
-      );
+      const rawContent = await vscode.workspace.fs.readFile(getUri(uriOr));
+      const content = Buffer.from(rawContent).toString('utf8');
       const markedContent = await marked.parse(content);
       this.view.webview.html = getHtmlTemplate(markedContent, non, csps);
       return;
     }
     else {
-      fs.readFile(vscode.Uri.file(uri.toString()).fsPath, (err, content) => {
-        if (err) { this.showError(this.context.extension.id, err); }
+      try {
+        const rawContent = await vscode.workspace.fs.readFile(getUri(uriOr));
+        const content = Buffer.from(rawContent);
         if (!this.view) { return; }
 
         if (type === PreviewType.pdf) {
@@ -448,19 +457,20 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
           this.view.webview.html = getHtmlTemplate(pdfContent, non, csps);
           return;
         }
+
         const htmlContent = content.toString('utf8');
         if (type === PreviewType.txt) {
-          this.view.webview.html = getHtmlTemplate(
-            `<h4>${htmlContent}</h4>`, non, csps
-          );
-          return;
-        }
-        this.view.webview.html = getHtmlTemplate(htmlContent, non, csps);
-      });
+            this.view.webview.html = getHtmlTemplate(
+              `<h4>${htmlContent}</h4>`, non, csps
+            );
+            return;
+          }
+          this.view.webview.html = getHtmlTemplate(htmlContent, non, csps);
+      } catch (err) { this.showError(this.context.extension.id, err); }
     }
   }
 
-  private showError(extensionId: string, err: NodeJS.ErrnoException) {
+  private showError(extensionId: string, err: any) {
     vscode.window.showErrorMessage(`${extensionId} error: ${err}`);
   }
 }
