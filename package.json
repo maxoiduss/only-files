@@ -121,14 +121,14 @@
         "defaults": {
           "dark": "#91B431",
           "light": "#91B431",
-          "highContrast": "#264D2E"
+          "highContrast": "#005431"
         }
       }
     ],
     "commands": [
       {
         "command": "just-files.showLogs",
-        "title": "Show All Collected Logs"
+        "title": "Show Just Files Collected Logs"
       },
       {
         "command": "just-files.showSettings",
