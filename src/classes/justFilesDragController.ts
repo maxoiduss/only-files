@@ -58,8 +58,7 @@ export class JustFilesDragController
         .map((path) => vscode.Uri.parse(path));
       uris.forEach((uri) =>
         vscode.commands.executeCommand(
-          brand.addItemFromTabMenu,
-          uri
+          brand.addItemFromTabMenu, uri
         )
       );
       return;

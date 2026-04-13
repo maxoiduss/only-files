@@ -1,53 +1,36 @@
 import * as vscode from "vscode";
 import * as fpath from 'path';
-import * as fs from "fs";
 import { EmptyFolderItem, FileItem } from "./fileItem";
-import { getUri } from "./utilManager";
+import { getUri, isFile, isValidUri } from "./utilManager";
 
 const empty = '' as const;
 
 export class FileItemManager {
-  getParentPath(fileItem: FileItem): string | undefined {
-    if (fileItem.resourceUri) {
-      const filePath = fileItem.resourceUri.fsPath;
-      const parentPath = fpath.dirname(filePath);
-      return parentPath;
-    }
-
-    return undefined;
-  }
-
-  findRootFolder (
-    forPath: string,
-    inItems: FileItem[]): FileItem | undefined {
+  findRootFolder(forPath: string, inItems: FileItem[]): FileItem | undefined {
     return inItems.find(it => {
       if (it.resourceUri && !(it instanceof EmptyFolderItem)) {
         return forPath.startsWith(it.resourceUri.fsPath);
       }
     });
   }
-
-  isValidUri(uriOr: vscode.Uri | string | undefined): boolean {
-    if (uriOr === undefined) {
-      return false;
-    }
-    const uri = getUri(uriOr);
-    const filePath = uri.fsPath;
-
-    return fs.existsSync(filePath);
+  
+  async createFileItems(uris: vscode.Uri[] | string[]): Promise<FileItem[]> {
+    return Promise.all(uris.map((u) =>
+      this.createFileItem(u)
+    ));
   }
 
-  createFileItem(
+  async createFileItem(
     uriOr: vscode.Uri | string,
     plainMode?: boolean,
     expanded?: boolean
-  ): FileItem {
+  ): Promise<FileItem> {
     const uri = getUri(uriOr);
 
-    if (this.isValidUri(uri)) {
+    if (await isValidUri(uri)) {
       const label = plainMode ? uri.fsPath : fpath.basename(uri.fsPath);
-      const isFile = fs.statSync(uri.fsPath).isFile();
-      const collapsibleState = isFile ?
+      const file = await isFile(uri) === true;
+      const collapsibleState = file ?
         vscode.TreeItemCollapsibleState.None
       : expanded ?
         vscode.TreeItemCollapsibleState.Expanded
@@ -55,7 +38,7 @@ export class FileItemManager {
 
       return this.getNewFileItem(
         plainMode ? undefined : uri,
-        label, collapsibleState, isFile
+        label, collapsibleState, file
       );
     }
     
@@ -83,31 +66,21 @@ export class FileItemManager {
     : new FileItem(label, collapsibleState, isFile);
   }
 
-  getPathArray(fileItems: FileItem[]): string[] {
-    const paths: string[] = fileItems
-      .map((fileItem) => fileItem.resourceUri?.fsPath)
-      .filter((fsPath): fsPath is string => fsPath !== undefined);
+  async getSiblings(fileItem: FileItem): Promise<FileItem[]> {
+    const currentPath = fileItem.resourceUri?.fsPath;
+    if (!currentPath) { return []; }
 
-    return paths;
-  }
-
-  getSiblings(fileItem: FileItem): FileItem[] {
-    const directoryPath = this.getParentPath(fileItem);
-    if (!directoryPath) {
+    const directoryPath = fpath.dirname(currentPath);
+    const directoryUri = vscode.Uri.file(directoryPath);
+    try {
+      const entries = await vscode.workspace.fs.readDirectory(directoryUri);
+      const siblingPaths: string[] = entries
+        .map(([name, ]) => fpath.join(directoryPath, name))
+        .filter(path => path !== currentPath);
+      return this.createFileItems(siblingPaths);
+    } catch (error) {
       return [];
     }
-    const items: string[] = fs
-      .readdirSync(directoryPath, { withFileTypes: true })
-      .map((entry: fs.Dirent) => fpath.join(directoryPath, entry.name));
-
-    const indexFileItem = items.findIndex(
-      (item) => item === fileItem.resourceUri?.fsPath
-    );
-    if (indexFileItem > -1) {
-      items.splice(indexFileItem, 1);
-    }
-
-    return items.map((path) => this.createFileItem(path));
   }
 
   getParentInArray(
@@ -136,7 +109,6 @@ export class FileItemManager {
       currentPath = fpath.join(currentPath, segment);
       directories.unshift(currentPath);
     }
-
     return directories;
   }
 
@@ -159,22 +131,6 @@ export class FileItemManager {
     return !relativePath.startsWith("..") && !fpath.isAbsolute(relativePath);
   }
 
-  isChildOfArray(
-    childFileItem: FileItem,
-    parentFileItems: FileItem[]
-  ): boolean {
-    return parentFileItems.some((item) => this.isChildOf(childFileItem, item));
-  }
-
-  isParentOfArray(
-    parentFileItem: FileItem,
-    childrenFileItems: FileItem[]
-  ): boolean {
-    return childrenFileItems.some((item) =>
-      this.isChildOf(item, parentFileItem)
-    );
-  }
-
   changeUri(onItem: FileItem, newItem: FileItem, oldUri: vscode.Uri) {
     const newPath = newItem.resourceUri?.fsPath;
     if (newPath) {
@@ -183,7 +139,7 @@ export class FileItemManager {
         onItem.setUri(vscode.Uri.file(path));
       }
     }
-  };
+  }
 
   findThen(
     item: FileItem | string,
@@ -224,8 +180,8 @@ export class FileItemManager {
     then?: () => any)
   {
     if (Array.isArray(collection)) {
-      this.findThen(item, collection, (rm) => {
-        collection.splice(rm, 1);
+      this.findThen(item, collection, (where) => {
+        collection.splice(where, 1);
         then?.();
       });
     } else
@@ -259,10 +215,8 @@ export class FileItemManager {
         } else if (aHasSep && !bHasSep) {
           return -1;
         }
-
         return labelA.localeCompare(labelB);
       }
-
       return 0;
     });
   }

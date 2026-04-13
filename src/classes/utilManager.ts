@@ -1,4 +1,7 @@
 declare module "vscode" {
+  export interface Searchable {
+    onSearch: boolean;
+  }
   export interface HasDefaults {
     setDefaults(): Promise<void>;
   }
@@ -267,16 +270,24 @@ export function isInFolder(path: string, folder: string): boolean {
   return parent === folderPath;
 }
 
+export async function isFile(uri: vscode.Uri): Promise<boolean | undefined> {
+  const file = vscode.FileType.File;
+  try { return ((await vscode.workspace.fs.stat(uri)).type & file) === file; }
+  catch(error) { return undefined; }
+}
+
 export async function isFolder(uri: vscode.Uri): Promise<boolean | undefined> {
   const dir = vscode.FileType.Directory;
   try { return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
   catch(error) { return undefined; }
 }
 
-export async function isValidUri(uriOr: vscode.Uri | string | undefined): Promise<boolean> {
+export async function isValidUri(
+  uriOr: vscode.Uri | string | undefined
+): Promise<boolean> {
   if (uriOr === undefined) { return false; }
 
-  return isFolder(getUri(uriOr)) !== undefined;
+  return (await isFolder(getUri(uriOr))) !== undefined;
 }
 
 export const largeProjectFilesAmount: number = 5555;

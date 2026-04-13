@@ -4,6 +4,7 @@ import * as marked from "marked";
 import { WebviewView } from "vscode";
 import { getNonce, getString, getUri, hasNoName } from "./utilManager";
 import { LogService } from "./logService";
+import { brand } from "./extensionBrandResolver";
 
 const emptyFrame =
   `<div class="container">
@@ -401,9 +402,10 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     }
     else {
       if (showSettings && result === ok) {
+        const byId = (id: any) => `@ext:${id}`;
         await vscode.commands.executeCommand(
-          "workbench.action.openSettings",
-          `@ext:${this.context.extension.id}`
+          brand.workbench.action.openSettings,
+          byId(this.context?.extension?.id)
         );
         return;
       }

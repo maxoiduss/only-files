@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ThemeColor } from 'vscode';
-import { getConfigurationsFor, isFolder } from './utilManager';
+import { getConfigurationsFor, isValidUri } from './utilManager';
 
 const decorMap = "decorations" as const;
 
@@ -59,11 +59,17 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     this.refresh(uri);
   }
 
+  async getDecorationsAsUris(): Promise<vscode.Uri[]> {
+    await this.validateDecorations();
+
+    return [...this.decorations.values()].map((val) => vscode.Uri.from(val));
+  }
+
   private async validateDecorations(): Promise<void> {
     const invalid = await Promise.all(
       Array.from(this.decorations.entries())
            .flatMap(async ([path, uri]) =>
-              await isFolder(uri) === undefined ? [path] : []
+              await isValidUri(uri) ? [] : [path] 
             )
       );
     invalid.flat().forEach((key) => this.decorations.delete(key));

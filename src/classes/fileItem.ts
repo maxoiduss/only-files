@@ -3,11 +3,13 @@ import * as fpath from 'path';
 import { ExtensionBrandResolver
 } from "./extensionBrandResolver";
 
+export const file = "file" as const;
 export const folder = "folder" as const;
-export const root = "root" as const;
 export const emptyRoot = "vac" as const;
-export const placeholder = "empty" as const;
+export const placeholder = "dummy" as const;
 export const emptyItem = "empty" as const;
+export const rootFile = "rooting" as const;
+export const root = "root" as const;
 
 const empty = '' as const;
 const timegap = 2500 as const;
@@ -85,7 +87,7 @@ export class FileItem extends vscode.TreeItem {
       typeof this.label === "string" ? this.label : this.relativePath
     );
     return this.isFile ?
-      isInRoot ? "fileRoot" : "file"
+      isInRoot ? rootFile : file
     : folder;
   }
 
@@ -158,7 +160,7 @@ export class EmptyFolderItem extends FileItem {
         false);
     }
     this.contextValue = this.collapsibleState ===
-      vscode.TreeItemCollapsibleState.None ? folder : root;
+      vscode.TreeItemCollapsibleState.None ? emptyItem : root;
     this.iconPath = new vscode.ThemeIcon("folder");
     this.command = undefined;
   }

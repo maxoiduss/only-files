@@ -33,6 +33,7 @@ interface Brand {
   addItemFromExplorer: string;
   revealInSidebar: string;
   revealInExplorer: string;
+  collectMarked: string;
   collapseFolder: string;
   uncollapseAll: string;
   previewItem: string;
@@ -61,6 +62,7 @@ interface Brand {
   };
   workbench: {
     action : {
+      openSettings: string,
       closeFolder: string,
       closeActiveEditor: string,
       focusActiveEditorGroup: string
@@ -90,7 +92,8 @@ export class ExtensionBrandResolver {
   public static readonly number1Property: string;
   public static readonly number2Property: string;
   public static readonly number3Property: string;
-  public static readonly booleanProperty: string;
+  public static readonly boolean1Property: string;
+  public static readonly boolean2Property: string;
   
   private static instance: ExtensionBrandResolver;
 
@@ -125,6 +128,7 @@ export class ExtensionBrandResolver {
     brand.closeFolder = `${name}.closeFolder`;
     brand.revealInSidebar = `${name}.revealInSidebar`;
     brand.revealInExplorer = "revealInExplorer";
+    brand.collectMarked = `${name}.collect`;
     brand.collapseFolder = `${name}.collapseFolder`;
     brand.uncollapseAll = `${name}.uncollapseAll`;
     brand.previewItem = `${name}.previewItem`;
@@ -154,6 +158,7 @@ export class ExtensionBrandResolver {
     };
     brand.workbench = {
       action: {
+        openSettings: "workbench.action.openSettings",
         closeFolder: "workbench.action.closeFolder",
         closeActiveEditor: "workbench.action.closeActiveEditor",
         focusActiveEditorGroup:
@@ -243,6 +248,7 @@ export class ExtensionBrandResolver {
     const isNumber = (it: HasType) => it.type === "number";
     const hasClick = (s: string) => s.toLowerCase().includes("click");
     const hasPick = (s: string) => s.toLowerCase().includes("pick");
+    const hasShow = (s: string) => s.toLowerCase().includes("show");
     const afterDot = (s?: string) => s?.split(dot)?.slice(1)?.join(dot);
     
     this.readFromPackageJSON();
@@ -294,14 +300,19 @@ export class ExtensionBrandResolver {
       }
     }
 
-    const stringProp = stringProps.length > 0 ?
+    let stringProp = stringProps.length > 0 ?
       stringProps[0] : undefined;
 
-    const booleanProp = booleanProps.length > 0 ?
-      booleanProps[0] : undefined;
+    const boolean1Prop = booleanProps.length > 1 && !hasShow(booleanProps[0]) ?
+      booleanProps[0]
+    : booleanProps.length > 1 ? booleanProps[1] : undefined;
+    
+    const boolean2Prop = booleanProps.length > 1 && hasShow(booleanProps[1]) ?
+      booleanProps[1]
+    : booleanProps.length > 0 ? booleanProps[0] : undefined;
     
     const config = new Set<string>(
-      [number1Prop, booleanProp].map((prop) =>
+      [number1Prop, boolean1Prop].map((prop) =>
         prop ? prop.split(dot)[0] : dot
       )
     ).keys().next().value;
@@ -335,7 +346,8 @@ export class ExtensionBrandResolver {
     self.number1Property = afterDot(number1Prop);
     self.number2Property = afterDot(number2Prop);
     self.number3Property = afterDot(number3Prop);
-    self.booleanProperty = afterDot(booleanProp);
+    self.boolean1Property = afterDot(boolean1Prop);
+    self.boolean2Property = afterDot(boolean2Prop);
     
     this.setupBrand();
   }

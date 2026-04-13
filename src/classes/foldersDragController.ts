@@ -97,9 +97,7 @@ export class FoldersDragController
       return;
     }
     const uris = urisFromDataTransfer();
-    const items: FileItem[] = uris.map((u) =>
-      this.fileItemManager.createFileItem(u)
-    );
+    const items = await this.fileItemManager.createFileItems(uris);
     await this.commandRegistrator.copyItems(items);
     await this.commandRegistrator.pasteItems(where);
     return;

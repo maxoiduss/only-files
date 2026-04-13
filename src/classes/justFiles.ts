@@ -11,7 +11,7 @@ import { JustFilesViewProvider } from "./justFilesViewProvider";
 import { PreviewProvider } from "./previewProvider";
 import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 import { LogService } from "./logService";
-import { getUriFrom, initTypes, isFolder, isProjectTooLarge, same 
+import { getUriFrom, initTypes, isFolder, isProjectTooLarge, isValidUri, same 
 } from "./utilManager";
 
 export class JustFiles {
@@ -132,7 +132,7 @@ export class JustFiles {
   }
   
   private async restoreFileItem(item: FileItem): Promise<void> {
-    if (item.resourceUri && await isFolder(item.resourceUri) !== undefined) {
+    if (item.resourceUri && await isValidUri(item.resourceUri)) {
       vscode.window.showInformationMessage(
         `File is valid: ${item.resourceUri.fsPath}`
       );
@@ -162,12 +162,24 @@ export class JustFiles {
       showDialog: true
     });
     const antipattern = await this.referenceProvider.createRegexFrom(file);
-    this.foldersViewProvider.setIgnoreItems(antipattern);
+    this.foldersViewProvider.setIgnoredItems(antipattern);
+  }
+
+  private async addOrHideOnJustFilesByUris(uris: vscode.Uri[], add: boolean) {
+    const factory = new FileItemManager();
+    const all = Promise.all(uris.map((uri) => factory.createFileItem(uri)));
+    const items = await all;
+    const hide = add !== true;
+    items.forEach((item) => hide ?
+      this.justFilesViewProvider.addHideFileItem(item)
+    : this.justFilesViewProvider.addFileItem(item)
+    );
+    this.justFilesViewProvider.refresh();
   }
   
-  private addOrHideOnJustFiles(uriOr: string | vscode.Uri, add: boolean) {
+  private async addOrHideOnJustFiles(uriOr: string | vscode.Uri, add: boolean) {
     const factory = new FileItemManager();
-    const item = factory.createFileItem(uriOr);
+    const item = await factory.createFileItem(uriOr);
     add === true ?
       this.justFilesViewProvider.addFileItem(item)
     : this.justFilesViewProvider.addHideFileItem(item);
@@ -201,6 +213,7 @@ export class JustFiles {
     this.subscribeRefreshJustFilesView();
     this.subscribeSearchList();
     this.subscribeRevealInExplorer();
+    this.subscribeCollectAllMarked();
     this.subscribeCollapseToFolder();
     this.subscribeUncollapseAll();
     this.subscribeOpenFolder();
@@ -244,6 +257,7 @@ export class JustFiles {
       if (event.affectsConfiguration(ExtensionBrandResolver.configuration)) {
         CommandRegistrator.updateTolerances();
         this.foldersViewProvider.setShowEmptyUncollapsedFolders();
+        this.foldersViewProvider.setShowUncollapsedPlainFolders();
       }
     });
     this.context.subscriptions.push(did);
@@ -255,8 +269,7 @@ export class JustFiles {
 
     const getSelection = vscode.commands.registerCommand(brand.getSelected,
       async () => {
-        await vscode.commands.executeCommand(
-          brand.setSelected,
+        await vscode.commands.executeCommand(brand.setSelected,
           this.filesSelectedItems.length > 0 ?
             this.filesSelectedItems
           : this.justFilesSelectedItems.length > 0 ?
@@ -381,8 +394,8 @@ export class JustFiles {
   }
   
   subscribeCloseFolder() {
-    const closeFolder = vscode.commands.registerCommand(brand.closeFolder,
-     () => vscode.commands.executeCommand(brand.workbench.action.closeFolder)
+    const closeFolder = vscode.commands.registerCommand(brand.closeFolder, () =>
+      vscode.commands.executeCommand(brand.workbench.action.closeFolder)
     );
     this.context.subscriptions.push(closeFolder);
   }
@@ -398,6 +411,16 @@ export class JustFiles {
         }
     });
     this.context.subscriptions.push(reveal);
+  }
+
+  subscribeCollectAllMarked() {
+    const collect = vscode.commands.registerCommand(brand.collectMarked,
+      async () => {
+        const uris = await this.fileDecorator.getDecorationsAsUris();
+        await this.addOrHideOnJustFilesByUris(uris, true);
+      }
+    );
+    this.context.subscriptions.push(collect);
   }
 
   subscribeCollapseToFolder() {
@@ -471,7 +494,7 @@ export class JustFiles {
   subscribeSwitchIgnore() {
     const switchIgnore = vscode.commands.registerCommand(
       brand.ignore, async () => {
-        const wasSet = this.foldersViewProvider.resetIgnoreItems();
+        const wasSet = this.foldersViewProvider.resetIgnoredItems();
         if (!wasSet) {
           await this.fillIgnoredFiles();
         }
@@ -500,40 +523,36 @@ export class JustFiles {
   }
     
   subscribeSearchList() {
+    const search = async (list: vscode.Searchable, exec: () => Promise<void>) =>
+    { await exec();
+
+      list.onSearch = !list.onSearch;
+      await vscode.commands.executeCommand(
+        list.onSearch ? brand.list.find : brand.list.closeFind
+      );
+    };
     const searchListFiles = vscode.commands.registerCommand(
-      brand.searchListFiles, async () => {
-        await vscode.commands.executeCommand(brand.focus("Files"));
-
-        this.foldersViewProvider.onSearch =
-          !this.foldersViewProvider.onSearch;
-        if (this.foldersViewProvider.onSearch) {
-          await vscode.commands.executeCommand(brand.list.closeFind);
-          return;
-        }
-        await vscode.commands.executeCommand(brand.list.find);
-      }
-    );
+      brand.searchListFiles, () => search(this.foldersViewProvider,
+          async () => vscode.commands.executeCommand(brand.focus("Files"))
+        )
+      );
     const searchListJustFiles = vscode.commands.registerCommand(
-      brand.searchListJustFiles, async () => {
-        await vscode.commands.executeCommand(brand.focus("Just Files"));
-
-        this.justFilesViewProvider.onSearch =
-          !this.justFilesViewProvider.onSearch;
-        if (this.justFilesViewProvider.onSearch) {
-          await vscode.commands.executeCommand(brand.list.closeFind);
-          return;
-        }
-        await vscode.commands.executeCommand(brand.list.find);
-      }
-    );
+      brand.searchListJustFiles, () => search(this.justFilesViewProvider,
+          async () => vscode.commands.executeCommand(brand.focus("Just Files"))
+        )
+      );
     this.context.subscriptions.push(searchListFiles, searchListJustFiles);
   }
 
   subscribeRefreshFilesView() {
     const refreshFilesView = vscode.commands.registerCommand(
       brand.refreshFiles, () => {
-        this.foldersViewProvider.refresh();
-        this.foldersViewProvider.revealRoot();
+        if (this.foldersViewProvider.isEmpty) {
+          vscode.commands.executeCommand(brand.closeFolder);
+        } else {
+          this.foldersViewProvider.refresh();
+          this.foldersViewProvider.revealRoot();
+        }
       }
     );
     this.context.subscriptions.push(refreshFilesView);
@@ -594,8 +613,8 @@ export class JustFiles {
     });
     const remove = vscode.workspace.onDidDeleteFiles((item) => {
       const factory = new FileItemManager();
-      item.files.map((file) => {
-        const removedItem = factory.createFileItem(file.path);
+      item.files.forEach(async (file) => {
+        const removedItem = await factory.createFileItem(file.path);
         this.justFilesViewProvider.removeItemFromJustFiles(removedItem);
       });
       this.refreshAllViews();
