@@ -57,13 +57,13 @@ export class JustFilesViewProvider
   }
 
   private isChildOfArray(
-      childFileItem: FileItem,
-      parentFileItems: FileItem[]
-    ): boolean {
-      return parentFileItems.some(
-        (item) => this.fileItemManager.isChildOf(childFileItem, item)
-      );
-    }
+    childFileItem: FileItem,
+    parentFileItems: FileItem[]
+  ): boolean {
+    return parentFileItems.some(
+      (item) => this.fileItemManager.isChildOf(childFileItem, item)
+    );
+  }
   
   private addDisplayFileItem(item: FileItem) {
     if (!this.isFileItemInArray(item, this.displayedFileItems)) {
@@ -71,6 +71,67 @@ export class JustFilesViewProvider
     }
   }
 
+  private async addSubNode(fileItem: FileItem): Promise<void> {
+    if (this.isSubItemAlreadyDisplayed(fileItem)) {
+      this.cleanFileItemChildren(fileItem);
+
+      return;
+    }
+    this.addSubDisplayedItem(fileItem);
+    this.removeHideFileItem(fileItem);
+    this.removeSubHiddenFileItem(fileItem);
+    this.cleanFileItemChildren(fileItem);
+
+    const parent = this.fileItemManager.getParentInArray(
+      fileItem, this.displayedFileItems
+    );
+    if (parent) {
+      const routes = this.fileItemManager.getDirectoriesUntilParent(
+        fileItem.resourceUri?.fsPath || empty,
+        parent.resourceUri?.fsPath || empty
+      );
+      for (const path of routes) {
+        const parentItem = await this.fileItemManager.createFileItem(path);
+        const siblingsAll = await this.fileItemManager.getSiblings(parentItem);
+        const siblings = siblingsAll.filter((item) => 
+             !this.isFileItemInArray(item, this.subDisplayedFileItems)
+          && !this.isParentOfArray(item, this.subDisplayedFileItems)
+        );
+        siblings.forEach((item) => {
+          if (!this.isSubItemAlreadyDisplayed(item)) {
+            this.addSubHiddenFileItem(item);
+          }
+        });
+
+        if (this.isFileItemInArray(parentItem, this.hiddenFileItems)) {
+          this.removeHideFileItem(parentItem);
+        }
+        this.addSubDisplayedItem(parentItem);
+      }
+    }
+  }
+
+  private addSubDisplayedItem(item: FileItem) {
+    this.removeSubHiddenFileItem(item);
+    if (!this.isFileItemInArray(item, this.subDisplayedFileItems)) {
+      this.subDisplayedFileItems.push(item);
+    }
+  }
+
+  private addSubHiddenFileItem(item: FileItem) {
+    if (this.isFileItemInArray(item, this.subDisplayedFileItems)) {
+      this.removeSubFileItem(item);
+      this.cleanFileItemChildren(item);
+
+      return;
+    }
+
+    if  (!this.isFileItemInArray(item, this.subHiddenFileItems) 
+      && !this.isFileItemInArray(item, this.hiddenFileItems)) {
+      this.subHiddenFileItems.push(item);
+    }
+  }
+  
   private addMainNode(item: FileItem) {
     if (this.isParentOfArray(item, this.displayedFileItems))
     {
@@ -109,138 +170,6 @@ export class JustFilesViewProvider
         this.removeSubFileItem(item);
       }
     }));
-  }
-
-  dispose() { this._onDidChangeTreeData.dispose(); }
-
-  switchSortedModeTag() {
-    vscode.commands.executeCommand(
-      brand.setContext, brand.isSorted, this.sortedMode
-    );
-  }
-
-  async refreshIfExistsFileItemByUri(uri: vscode.Uri): Promise<void> {
-    const found = this.displayedFileItems.find((it) => it.like(uri.fsPath));
-    if (await isValidUri(uri) || !found) {
-      this.refresh(found);
-    }
-  }
-  
-  changeFileItem(item: FileItem, oldUri: vscode.Uri) {
-    const toRefresh: FileItem[] = [];
-    const allItems = [
-      ...this.displayedFileItems,
-      ...this.subDisplayedFileItems,
-      ...this.hiddenFileItems,
-      ...this.subHiddenFileItems
-    ];
-    allItems.forEach((it) => {
-      if (this.fileItemManager.isChildOf(it, oldUri)) {
-        this.fileItemManager.changeUri(it, item, oldUri);
-        toRefresh.push(it);
-      }
-    });
-    const found = allItems.find((it) => it.like(oldUri.fsPath));
-    if (found) {
-      this.fileItemManager.changeUri(found, item, oldUri);
-      toRefresh.push(found);
-    } else if (allItems.find((it) => it.like(item))) {
-      toRefresh.push(item);
-    } else {
-      this.displayedFileItems.forEach((it) => {
-        if (this.fileItemManager.isChildOf(oldUri, it)) {
-          toRefresh.push(it);
-        }
-      });
-    }
-    if (toRefresh.length > 1) { this.refresh(); }
-    else if (toRefresh.length === 1) { this.refresh(toRefresh[0]); }
-  }
-
-  addFileItem(fileItem: FileItem) {
-    const isChildFile = this.isChildOfArray(fileItem, this.displayedFileItems);
-    if (!isChildFile) {
-      this.addMainNode(fileItem);
-      return;
-    }
-    this.addSubNode(fileItem);
-  }
-
-  addHideFileItem(item: FileItem) {
-    if (this.isFileItemInArray(item, this.displayedFileItems)) {
-      this.removeFileItem(item);
-      this.cleanFileItemChildren(item);
-
-      return;
-    }
-
-    if  (!this.isFileItemInArray(item, this.hiddenFileItems)
-      && !this.isFileItemInArray(item, this.subHiddenFileItems)) {
-      this.hiddenFileItems.push(item);
-      this.cleanFileItemChildren(item);
-    }
-  }
-
-  private addSubNode(fileItem: FileItem) {
-    if (this.isSubItemAlreadyDisplayed(fileItem)) {
-      this.cleanFileItemChildren(fileItem);
-
-      return;
-    }
-    this.addSubDisplayedItem(fileItem);
-    this.removeHideFileItem(fileItem);
-    this.removeSubHiddenFileItem(fileItem);
-    this.cleanFileItemChildren(fileItem);
-
-    const parent = this.fileItemManager.getParentInArray(
-      fileItem,
-      this.displayedFileItems
-    );
-    if (parent) {
-      const route = this.fileItemManager.getDirectoriesUntilParent(
-        fileItem.resourceUri?.fsPath || empty,
-        parent.resourceUri?.fsPath || empty
-      );
-      route.forEach(async (path) => {
-        const parentItem = await this.fileItemManager.createFileItem(path);
-        const siblingsAll = await this.fileItemManager.getSiblings(parentItem);
-        const siblings = siblingsAll.filter((item) =>
-             !this.isFileItemInArray(item, this.subDisplayedFileItems)
-          && !this.isParentOfArray(item, this.subDisplayedFileItems)
-        );
-        siblings.forEach((item) => {
-          if (!this.isSubItemAlreadyDisplayed(item)) {
-            this.addSubHiddenFileItem(item);
-          }
-        });
-
-        if (this.isFileItemInArray(parentItem, this.hiddenFileItems)) {
-          this.removeHideFileItem(parentItem);
-        }
-        this.addSubDisplayedItem(parentItem);
-      });
-    }
-  }
-
-  private addSubDisplayedItem(item: FileItem) {
-    this.removeSubHiddenFileItem(item);
-    if (!this.isFileItemInArray(item, this.subDisplayedFileItems)) {
-      this.subDisplayedFileItems.push(item);
-    }
-  }
-
-  private addSubHiddenFileItem(item: FileItem) {
-    if (this.isFileItemInArray(item, this.subDisplayedFileItems)) {
-      this.removeSubFileItem(item);
-      this.cleanFileItemChildren(item);
-
-      return;
-    }
-
-    if  (!this.isFileItemInArray(item, this.subHiddenFileItems) 
-      && !this.isFileItemInArray(item, this.hiddenFileItems)) {
-      this.subHiddenFileItems.push(item);
-    }
   }
 
   private cleanFileItemChildren(item: FileItem) {
@@ -326,6 +255,21 @@ export class JustFilesViewProvider
     }
   }
 
+  dispose() { this._onDidChangeTreeData.dispose(); }
+
+  switchSortedModeTag() {
+    vscode.commands.executeCommand(
+      brand.setContext, brand.isSorted, this.sortedMode
+    );
+  }
+
+  clean() {
+    this.displayedFileItems = [];
+    this.hiddenFileItems = [];
+    this.subDisplayedFileItems = [];
+    this.subHiddenFileItems = [];
+  }
+  
   refresh(element?: FileItem) {
     const asPaths = (items: FileItem[]) => items.map(i => i.resourceUri?.fsPath);
     this.removeNotFiles().then(() =>
@@ -344,11 +288,73 @@ export class JustFilesViewProvider
     });
   }
 
-  clean() {
-    this.displayedFileItems = [];
-    this.hiddenFileItems = [];
-    this.subDisplayedFileItems = [];
-    this.subHiddenFileItems = [];
+  async refreshIfExistsFileItemByUri(uri: vscode.Uri): Promise<void> {
+    const found = this.displayedFileItems.find((it) => it.like(uri.fsPath));
+    if (await isValidUri(uri) || !found) {
+      this.refresh(found);
+    }
+  }
+  
+  async addFileItem(fileItem: FileItem): Promise<void> {
+    const isChildFile = this.isChildOfArray(fileItem, this.displayedFileItems);
+    if (!isChildFile) {
+      this.addMainNode(fileItem);
+      return;
+    }
+    await this.addSubNode(fileItem);
+  }
+
+  addHideFileItem(item: FileItem) {
+    if (this.isFileItemInArray(item, this.displayedFileItems)) {
+      this.removeFileItem(item);
+      this.cleanFileItemChildren(item);
+
+      return;
+    }
+
+    if  (!this.isFileItemInArray(item, this.hiddenFileItems)
+      && !this.isFileItemInArray(item, this.subHiddenFileItems)) {
+      this.hiddenFileItems.push(item);
+      this.cleanFileItemChildren(item);
+    }
+  }
+  
+  changeFileItem(item: FileItem, oldUri: vscode.Uri) {
+    const toRefresh: FileItem[] = [];
+    const allItems = [
+      ...this.displayedFileItems,
+      ...this.subDisplayedFileItems,
+      ...this.hiddenFileItems,
+      ...this.subHiddenFileItems
+    ];
+    allItems.forEach((it) => {
+      if (this.fileItemManager.isChildOf(it, oldUri)) {
+        this.fileItemManager.changeUri(it, item, oldUri);
+        toRefresh.push(it);
+      }
+    });
+    const found = allItems.find((it) => it.like(oldUri.fsPath));
+    if (found) {
+      this.fileItemManager.changeUri(found, item, oldUri);
+      toRefresh.push(found);
+    } else if (allItems.find((it) => it.like(item))) {
+      toRefresh.push(item);
+    } else {
+      this.displayedFileItems.forEach((it) => {
+        if (this.fileItemManager.isChildOf(oldUri, it)) {
+          toRefresh.push(it);
+        }
+      });
+    }
+    if (toRefresh.length > 1) { this.refresh(); }
+    else if (toRefresh.length === 1) { this.refresh(toRefresh[0]); }
+  }
+
+  removeItemFromJustFiles(item: FileItem) {
+    this.removeFileItem(item);
+    this.removeHideFileItem(item);
+    this.removeSubFileItem(item);
+    this.removeSubHiddenFileItem(item);
   }
 
   getTreeItem(element: FileItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -385,12 +391,5 @@ export class JustFilesViewProvider
     }
 
     return Promise.resolve(this.fileItemManager.sortItems(items, this.sortedMode));
-  }
-
-  removeItemFromJustFiles(item: FileItem) {
-    this.removeFileItem(item);
-    this.removeHideFileItem(item);
-    this.removeSubFileItem(item);
-    this.removeSubHiddenFileItem(item);
   }
 }

@@ -145,8 +145,8 @@ export class JustFiles {
     });
     if (uris && uris.length > 0) {
       const uri = uris[0];
-      this.addOrHideOnJustFiles(getUriFrom(item), false);
-      this.addOrHideOnJustFiles(uri, true);
+      await this.addOrHideOnJustFiles(getUriFrom(item), false);
+      await this.addOrHideOnJustFiles(uri, true);
 
       const activeEditor = vscode.window.activeTextEditor;
       if (activeEditor && same(activeEditor.document.uri, uri)) {
@@ -170,18 +170,18 @@ export class JustFiles {
     const all = Promise.all(uris.map((uri) => factory.createFileItem(uri)));
     const items = await all;
     const hide = add !== true;
-    items.forEach((item) => hide ?
-      this.justFilesViewProvider.addHideFileItem(item)
-    : this.justFilesViewProvider.addFileItem(item)
-    );
+    for (const item of items) {
+      hide ? this.justFilesViewProvider.addHideFileItem(item)
+           : await this.justFilesViewProvider.addFileItem(item);
+    }
     this.justFilesViewProvider.refresh();
   }
   
-  private async addOrHideOnJustFiles(uriOr: string | vscode.Uri, add: boolean) {
+  private async addOrHideOnJustFiles(it: vscode.Uri | FileItem, add: boolean) {
     const factory = new FileItemManager();
-    const item = await factory.createFileItem(uriOr);
+    const item = it instanceof FileItem ? it : await factory.createFileItem(it);
     add === true ?
-      this.justFilesViewProvider.addFileItem(item)
+      await this.justFilesViewProvider.addFileItem(item)
     : this.justFilesViewProvider.addHideFileItem(item);
     this.justFilesViewProvider.refresh();
   }
@@ -296,18 +296,18 @@ export class JustFiles {
 
   subscribeShow() {
     const show = vscode.commands.registerCommand(brand.show,
-      (fileItem) => {
+      async (fileItem) => {
         const isFileItemContainedInFilesSelectedItems =
           this.filesSelectedItems.some((item) => item.like(fileItem));
 
         if (!fileItem || isFileItemContainedInFilesSelectedItems)
         {
-          this.filesSelectedItems.map((item) => {
-            this.justFilesViewProvider.addFileItem(item as FileItem);
-            this.justFilesViewProvider.refresh();
-          });
+          for (const item of this.filesSelectedItems) {
+            await this.addOrHideOnJustFiles(item as FileItem, true);
+          }
+          this.justFilesViewProvider.refresh();
         } else {
-          this.justFilesViewProvider.addFileItem(fileItem);
+          await this.addOrHideOnJustFiles(fileItem, true);
           this.justFilesViewProvider.refresh();
         }
       }
@@ -317,7 +317,7 @@ export class JustFiles {
 
   subscribeHide() {
     const hide = vscode.commands.registerCommand(brand.hide,
-      (fileItem) => {
+      async (fileItem) => {
         const isFileItemContainedInJustFilesSelectedItems =
           this.justFilesSelectedItems.some((item) =>
             item instanceof FileItem && item.like(fileItem)
@@ -325,12 +325,14 @@ export class JustFiles {
 
         if (!fileItem || isFileItemContainedInJustFilesSelectedItems)
         {
-          this.justFilesSelectedItems.map(async (item) => {
-            this.justFilesViewProvider.addHideFileItem(item as FileItem);
-            this.justFilesViewProvider.refresh();
+          this.justFilesSelectedItems.forEach((item) => {
+            if (item instanceof FileItem) {
+              this.addOrHideOnJustFiles(item, false);
+            }
           });
-        } else {
-          this.justFilesViewProvider.addHideFileItem(fileItem);
+          this.justFilesViewProvider.refresh();
+        } else if (fileItem instanceof FileItem) {
+          await this.addOrHideOnJustFiles(fileItem, false);
           this.justFilesViewProvider.refresh();
         }
       }
@@ -340,8 +342,8 @@ export class JustFiles {
 
   subscribeAddFromTab() {
     const addFromTab = vscode.commands.registerCommand(
-      brand.addItemFromTabMenu, (uri) =>
-        this.addOrHideOnJustFiles(uri, true)
+      brand.addItemFromTabMenu, async (uri) =>
+        await this.addOrHideOnJustFiles(getUriFrom(uri), true)
     );
     this.context.subscriptions.push(addFromTab);
   }
@@ -349,17 +351,17 @@ export class JustFiles {
   subscribeRemoveFromTab() {
     const removeFromTab = vscode.commands.registerCommand(
       brand.removeItemFromTabMenu, async (uri) =>
-        this.addOrHideOnJustFiles(uri.path, false)
+        await this.addOrHideOnJustFiles(getUriFrom(uri), false)
     );
     this.context.subscriptions.push(removeFromTab);
   }
 
   subscribeAddFromCommand() {
     const addFromCommand = vscode.commands.registerCommand(
-      brand.addItemFromCommand, () => {
+      brand.addItemFromCommand, async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
-          this.addOrHideOnJustFiles(activeEditor.document.uri, true);
+          await this.addOrHideOnJustFiles(activeEditor.document.uri, true);
         }
       }
     );
@@ -371,7 +373,7 @@ export class JustFiles {
       brand.removeItemFromCommand, async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
-          this.addOrHideOnJustFiles(activeEditor.document.uri, false);
+          await this.addOrHideOnJustFiles(activeEditor.document.uri, false);
         }
       }
     );
@@ -380,8 +382,8 @@ export class JustFiles {
 
   subscribeAddFromExplorer() {
     const addFromExplorer = vscode.commands.registerCommand(
-      brand.addItemFromExplorer, (uri) =>
-        this.addOrHideOnJustFiles(uri.path, true)
+      brand.addItemFromExplorer, async (uri) =>
+        await this.addOrHideOnJustFiles(getUriFrom(uri), true)
     );
     this.context.subscriptions.push(addFromExplorer);
   }
