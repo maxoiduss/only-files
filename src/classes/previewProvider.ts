@@ -6,10 +6,12 @@ import { getNonce, getString, getUri, hasNoName } from "./utilManager";
 import { LogService } from "./logService";
 import { brand } from "./extensionBrandResolver";
 
+const container = "container" as const;
+const placeholder = "placeholder" as const;
 const emptyFrame =
-  `<div class="container">
+  `<div class="${container}">
     <h2>Drag-n-Shift Here</h2>
-    <div class="placeholder"></div>
+    <div class="${placeholder}"></div>
   </div>` as const;
 
 function getPdfTemplate(
@@ -20,6 +22,7 @@ function getPdfTemplate(
   useModernLoad: "yes" | "no" = "yes"
 ) {
   const tempLocalFolder = 'resources';
+  const viewerContainer = 'pdf-viewer-container';
   const pdfjs = {
     folder: 'pdfjs',
     min: { mjs: 'pdf.min.mjs' },
@@ -42,7 +45,7 @@ function getPdfTemplate(
   );
 
   return `<div id="drop-zone">
-            <div id="pdf-viewer-container"/>
+            <div id="${viewerContainer}"/>
           </div>
       <script nonce="${nonce}" type="module">
         import { getDocument, GlobalWorkerOptions } from '${pdfjsUri}';
@@ -64,7 +67,7 @@ function getPdfTemplate(
         });
         
         pdfjsLib.promise.then(pdf => {
-          const viewerContainer = document.getElementById('pdf-viewer-container');
+          const viewerContainer = document.getElementById('${viewerContainer}');
           for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
             pdf.getPage(pageNum).then(page => {
               const scale = 1.5;
@@ -119,12 +122,12 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
             list-style: none;
             padding: 0;
           }
-          .container {
+          .${container} {
             display: flex;
             flex-direction: column;
             height: 100vh;
           }
-          .placeholder {
+          .${placeholder} {
             flex: 1;
             background: rgba(0, 0, 0, 0.0);
           } 
@@ -145,7 +148,7 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
           dropZone.addEventListener('dragover', (event) => {
             event.preventDefault();
             dropZone.style.border = '2px dashed var(--vscode-editor-background)';
-            dropZone.style.backgroundColor = '#0051ff62';
+            dropZone.style.backgroundColor = '#0051FF62';
           }, { passive: true });
           dropZone.addEventListener('dragleave', (event) => {
             dropZone.style.border = '2px dashed var(--vscode-background)';
@@ -240,8 +243,7 @@ function getHtmlTemplate(content: string, nonce: string, cspSource: string) {
             }
           }, { passive: false });
 
-          document.addEventListener(
-            'DOMContentLoaded',
+          document.addEventListener('DOMContentLoaded',
             async () => {
               await transform(true);
               vscode.postMessage({
