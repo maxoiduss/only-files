@@ -301,7 +301,7 @@ export async function isProjectTooLarge(foldersMax: number = 1111):
 
 export async function getAllFolders(max?: number): Promise<vscode.Uri[] | null> {
   const folders = new Set<string>();
-  const roots = vscode.workspace.workspaceFolders?.map(f => f.uri);
+  const roots = vscode.workspace.workspaceFolders?.map((f) => f.uri);
   if (!roots) { return []; }
   
   const restoreSetting = await setNothingToExcludeTemporary();
@@ -328,7 +328,7 @@ export async function getAllFolders(max?: number): Promise<vscode.Uri[] | null> 
   }
   await restoreSetting();
 
-  return [...folders].map(path => vscode.Uri.file(path));
+  return [...folders].map((path) => vscode.Uri.file(path));
 }
 
 export function getConfigurationFor<T>(

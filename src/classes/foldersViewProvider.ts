@@ -126,13 +126,13 @@ export class FoldersViewProvider
 
     if (itemOnly) {
       const rel = itemOnly.relativePath;
-      return !this.ignoredItems.folderRules.some(expr => expr.test(rel))
-          && !this.ignoredItems.fileRules.some(expr => expr.test(rel));
+      return !this.ignoredItems.folderRules.some((expr) => expr.test(rel))
+          && !this.ignoredItems.fileRules.some((expr) => expr.test(rel));
     }
     
     for (const [path, ] of this.collapsingItems) {
       const folder = vscode.workspace.asRelativePath(path).replace(/\\/g, '/');
-      if (this.ignoredItems.folderRules.some(expr => expr.test(folder))) {
+      if (this.ignoredItems.folderRules.some((expr) => expr.test(folder))) {
         this.popFromCollapsings(path);
       }
     }
@@ -335,13 +335,13 @@ export class FoldersViewProvider
     const emptify = async (item: FileItem): Promise<FileItem> =>
       await this.createFileItem(item, true, false);
     const clearItemsOfEmptyElements = () =>
-      items = items.filter(item => !(item instanceof EmptyFolderItem));
+      items = items.filter((item) => !(item instanceof EmptyFolderItem));
     const filterItemsOfIgnoredElements = () =>
       items = items.filter(this.checkIgnoredItems);
     const addFileItem = async (uri: vscode.Uri) =>
       items.push(await this.createFileItem(uri, this.plainMode));
     const initCollapsingItemsByAllFolders = async () =>
-      await Promise.all((await getAllFolders())!.map(uri =>
+      await Promise.all((await getAllFolders())!.map((uri) =>
         this.updateCollapsings(uri, TreeItemCollapsibleState.Collapsed, true)));
     const excludeOrEmptifyNestedPlainItems = async (colls: [string, State][]) =>
     {
@@ -359,7 +359,7 @@ export class FoldersViewProvider
     {
       const toSelect = this.selectedItem[1];
       if (toSelect) {
-        const pathes = this.selectedItem.filter(i => i !== undefined);
+        const pathes = this.selectedItem.filter((i) => i !== undefined);
         this.fileItemManager.findAnyThen(pathes, items,
           async (found) => this.revealItem(items[found], !items[found].isFile)
         );
@@ -461,7 +461,7 @@ export class FoldersViewProvider
       items = items.filter(this.checkIgnoredItems);
 
       if (this.uncollapsedMode[0] && !this.showEmptyUncollapsedFolders) {
-        items = items.filter(item => item.isFile);
+        items = items.filter((item) => item.isFile);
       }
     };
     const sortItemsThenCheckRoot = async(): Promise<FileItem[]> =>

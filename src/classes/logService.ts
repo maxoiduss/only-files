@@ -31,7 +31,7 @@ function stringify(value: any): string {
   let stringified = JSON.stringify(value);
   if (stringified === "{}") {
     stringified = Object.getOwnPropertyNames(value)
-      .map(key => `${key}: ${value[key]}`)
+      .map((key) => `${key}: ${value[key]}`)
       .join(joiner);
   }
   return stringified;
@@ -57,7 +57,7 @@ export class LogService {
   }
 
   static log(...args: any[]): void {
-    const message = args.map(arg => 
+    const message = args.map((arg) => 
       typeof arg === 'object' ? stringify(arg) : String(arg)
     ).join(joiner);
     this.logs.push(
@@ -67,7 +67,7 @@ export class LogService {
   }
 
   static error(...args: any[]): void {
-    const message = args.map(arg => 
+    const message = args.map((arg) => 
       typeof arg === 'object' ? stringify(arg) : String(arg)
     ).join(joiner);
     this.logs.push(

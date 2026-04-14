@@ -185,8 +185,8 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     return gitignore ? ((await openTextDocument(gitignore))
       ?.getText() ?? empty)
       .split(/[\r\n]+/)
-      .filter(line => this.skipEmptyOrNegationAndLineIsComment(line))
-      .map(str => {
+      .filter((line) => this.skipEmptyOrNegationAndLineIsComment(line))
+      .map((str) => {
         if (str.startsWith('/')) { str = str.slice(1); }
         return str.endsWith("/") ? `${str}**` : str;
       }) : [];

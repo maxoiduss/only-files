@@ -24,7 +24,7 @@ export class JustFilesDragController
     token: vscode.CancellationToken
   ): Promise<void> {
     if (token.isCancellationRequested) { return; }
-    if (source.some(i => i.contextValue === placeholder)) {
+    if (source.some((i) => i.contextValue === placeholder)) {
       return;
     }
 

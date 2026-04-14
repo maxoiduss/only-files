@@ -45,7 +45,7 @@ export class JustFilesViewProvider
   }
 
   private isFileItemInArray(fileItem: FileItem, array: FileItem[]): boolean {
-    return array.some(item => item.like(fileItem));
+    return array.some((item) => item.like(fileItem));
   }
 
   private isParentOfArray(
@@ -272,10 +272,9 @@ export class JustFilesViewProvider
   
   refresh(element?: FileItem) {
     const asPaths = (items: FileItem[]) => items.map(i => i.resourceUri?.fsPath);
+
     this.removeNotFiles().then(() =>
-
       this._onDidChangeTreeData.fire(element)
-
     ).finally(() => {
       this.context.workspaceState.update(displayed, 
         asPaths(this.displayedFileItems));
@@ -372,8 +371,8 @@ export class JustFilesViewProvider
           return Promise.resolve([new PlaceholderItem()]);
       }
       
-      return Promise.resolve(
-        this.fileItemManager.sortItems(this.displayedFileItems, this.sortedMode)
+      return this.fileItemManager.sortItems(
+        this.displayedFileItems, this.sortedMode
       );
     }
 
@@ -390,6 +389,6 @@ export class JustFilesViewProvider
       }
     }
 
-    return Promise.resolve(this.fileItemManager.sortItems(items, this.sortedMode));
+    return this.fileItemManager.sortItems(items, this.sortedMode);
   }
 }

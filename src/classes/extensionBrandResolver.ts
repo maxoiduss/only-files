@@ -79,7 +79,7 @@ interface Brand {
 export const brand = {} as Brand;
 
 function validate(entries: string[], on: Set<string>): boolean {
-  return entries.every(entry => on.has(entry));
+  return entries.every((entry) => on.has(entry));
 }
 
 export class ExtensionBrandResolver {
@@ -99,7 +99,7 @@ export class ExtensionBrandResolver {
 
   private readonly filtration:
   (value: any, index: number, array: any[]) => unknown =
-        value => typeof value === "string"
+        (value) => typeof value === "string"
     &&  value.startsWith(ExtensionBrandResolver.command)
     && !value.includes(":");
   
@@ -228,7 +228,7 @@ export class ExtensionBrandResolver {
 
   private readFromPackageJSON() {
     const extensions = vscode.extensions.all
-      .filter(ext => ext.id.includes(resolver));
+      .filter((ext) => ext.id.includes(resolver));
     if (extensions.length <= 0) {
       throw new Error("PACKAGE.JSON NOT FOUND");
     }
@@ -260,10 +260,10 @@ export class ExtensionBrandResolver {
       (rec: { command: string; }) => rec.command
     ) as string[];
     const webviews = Object.values(this.viewsJSON).find(
-      (v) => Array.isArray(v) && v.some(item => isWebview(item))
+      (v) => Array.isArray(v) && v.some((item) => isWebview(item))
     ) as Array<HasId>;
     const treeviews = Object.values(this.viewsJSON).find(
-      (v) => Array.isArray(v) && v.some(item => isTreeview(item))
+      (v) => Array.isArray(v) && v.some((item) => isTreeview(item))
     ) as Array<HasId>;
 
     const properties = configs.length > 0 ?

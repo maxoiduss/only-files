@@ -269,12 +269,12 @@ export class CommandRegistrator {
   async copyItems(items: Object): Promise<void> {
     this.internals.clear();
     const fileItems = await this.getAllSelectedIfBad(items);
-    await Promise.all(fileItems.map(i => this.copyItem(i)));
+    await Promise.all(fileItems.map((i) => this.copyItem(i)));
   }
 
   async cutItems(items: FileItem[]): Promise<void> {
     this.internals.clear();
-    await Promise.all(items.map(i => this.copyItem(i)));
+    await Promise.all(items.map((i) => this.copyItem(i)));
     this.wasCutted = true;
   }
 
@@ -404,13 +404,13 @@ export class CommandRegistrator {
       async (item: Object) => {
         const elements = Array.isArray(item) ? item : undefined;
         const items = await this.getAllSelectedIfBad(elements);
-        await Promise.all(items.map(i => this.deleteItem(i)));
+        await Promise.all(items.map((i) => this.deleteItem(i)));
     });
     const _deletehrd = vscode.commands.registerCommand(commands.deleteHard,
       async (item: Object) => {
         const elements = Array.isArray(item) ? item : undefined;
         const items = await this.getAllSelectedIfBad(elements);
-        await Promise.all(items.map(i => this.deleteItem(i, false, true)));
+        await Promise.all(items.map((i) => this.deleteItem(i, false, true)));
     });
     const _copy = vscode.commands.registerCommand(commands.copy,
       async (item: Object) => {

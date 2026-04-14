@@ -7,7 +7,7 @@ const empty = '' as const;
 
 export class FileItemManager {
   findRootFolder(forPath: string, inItems: FileItem[]): FileItem | undefined {
-    return inItems.find(it => {
+    return inItems.find((it) => {
       if (it.resourceUri && !(it instanceof EmptyFolderItem)) {
         return forPath.startsWith(it.resourceUri.fsPath);
       }
@@ -76,7 +76,7 @@ export class FileItemManager {
       const entries = await vscode.workspace.fs.readDirectory(directoryUri);
       const siblingPaths: string[] = entries
         .map(([name, ]) => fpath.join(directoryPath, name))
-        .filter(path => path !== currentPath);
+        .filter((path) => path !== currentPath);
       return this.createFileItems(siblingPaths);
     } catch (error) {
       return [];
@@ -146,7 +146,7 @@ export class FileItemManager {
     inArray: FileItem[],
     then: (found: number) => any): boolean
   {
-    const foundIndex = inArray.findIndex(it => it.like(item));
+    const foundIndex = inArray.findIndex((it) => it.like(item));
     if (foundIndex >= 0) {
       then(foundIndex);
       return true;
@@ -160,7 +160,7 @@ export class FileItemManager {
     then: (foundElem: number, foundItem: number) => Promise<any>
   ): Promise<boolean> {
     let foundPosition: number = -1;
-    const foundIndex = inArray.findIndex(it => items.some((el, i) => {
+    const foundIndex = inArray.findIndex((it) => items.some((el, i) => {
       if (it.like(el)) {
         foundPosition = i;
         return true;
