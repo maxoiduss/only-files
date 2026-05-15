@@ -1,4 +1,4 @@
-enum TypeLog {
+const enum TypeLog {
   log = "[log]",
   error = "[error]"
 }
@@ -15,7 +15,7 @@ const joiner: string = "\n";
 const label: string = "just-files";
 const show: string = "Show All Collected Logs";
 
-function formatDate(date: Date): string {
+const formatDate = (date: Date): string => {
   const pad = (n: number) => n.toString().padStart(2, '0');
   const padMs = (n: number) => n.toString().padStart(3, '0');
   return `${date.getFullYear()}-` +
@@ -25,9 +25,9 @@ function formatDate(date: Date): string {
          `${pad(date.getMinutes())}:` +
          `${pad(date.getSeconds())}.` +
          `${padMs(date.getMilliseconds())}`;
-}
+};
 
-function stringify(value: any): string {
+const stringify = (value: any): string => {
   let stringified = JSON.stringify(value);
   if (stringified === "{}") {
     stringified = Object.getOwnPropertyNames(value)
@@ -35,7 +35,7 @@ function stringify(value: any): string {
       .join(joiner);
   }
   return stringified;
-}
+};
 
 export class LogService {
   private static logs: Log[] = [];

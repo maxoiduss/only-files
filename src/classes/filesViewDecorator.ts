@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ThemeColor } from 'vscode';
-import { getConfigurationsFor, isValidUri } from './utilManager';
+import { getConfigurationsFor, getPathDepth, getUri, isValidUri
+} from './utilManager';
 
 const decorMap = "decorations" as const;
 
@@ -8,15 +9,17 @@ type UrisOr = undefined | vscode.Uri | vscode.Uri[];
 
 export class FilesViewDecorator
 implements vscode.FileDecorationProvider, vscode.Disposable {
-  private _onDidChangeFileDecorations: vscode.EventEmitter<UrisOr> =
+  private itDidChangeFileDecorations: vscode.EventEmitter<UrisOr> =
     new vscode.EventEmitter<UrisOr>();
   readonly onDidChangeFileDecorations: vscode.Event<UrisOr> =
-    this._onDidChangeFileDecorations.event;
+    this.itDidChangeFileDecorations.event;
   
+  private readonly context: vscode.ExtensionContext;
   private readonly decorations: Map<string, vscode.Uri> = new Map();
   private readonly color: ThemeColor = new ThemeColor("justFilesViewColor");
 
-  constructor(private readonly context: vscode.ExtensionContext) {
+  constructor(context: vscode.ExtensionContext) {
+    this.context = context;
     const decorations =
       getConfigurationsFor<vscode.Uri>(this.context, decorMap);
 
@@ -24,10 +27,12 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     this.validateDecorations();
   }
 
-  dispose() { this._onDidChangeFileDecorations.dispose(); }
+  public dispose() { this.itDidChangeFileDecorations.dispose(); }
 
-  provideFileDecoration(uri: vscode.Uri): vscode.FileDecoration | undefined {
-    if (this.decorations.has(uri.fsPath)) {
+  public provideFileDecoration(
+    uri: vscode.Uri
+  ): vscode.FileDecoration | undefined {
+    if (this.decorations.has(uri.toString())) {
       return {
         color: this.color,
         propagate: false
@@ -37,35 +42,49 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     return undefined;
   }
 
-  handleUri(uri: vscode.Uri, oldUri?: vscode.Uri) {
+  public handleUri(uri: vscode.Uri, oldUri?: vscode.Uri) {
     if (oldUri) {
-      if (this.decorations.has(oldUri.fsPath)) {
+      if (this.decorations.has(oldUri.toString())) {
         this.deleteUri(oldUri);
-        this.decorations.set(uri.fsPath, uri);
+        this.decorations.set(uri.toString(), uri);
         this.refresh(uri);
       }
       
       return;
     }
     
-    if (this.decorations.has(uri.fsPath)) {
+    if (this.decorations.has(uri.toString())) {
       this.deleteUri(uri);
       this.refresh(uri);
 
       return;
     }
 
-    this.decorations.set(uri.fsPath, uri);
+    this.decorations.set(uri.toString(), uri);
     this.refresh(uri);
   }
+  
+  public refuse() {
+    this.decorations.clear();
+    this.refresh();
+  }
 
-  async getDecorationsAsUris(): Promise<vscode.Uri[]> {
+  public async getDecorationsAsUris(): Promise<vscode.Uri[]> {
     await this.validateDecorations();
 
-    return [...this.decorations.values()].map((val) => vscode.Uri.from(val));
+    const uris = [...this.decorations.values()];
+    const pairs = uris.map((uri) => [uri, getPathDepth(uri.path)] as const);
+    const sorted = pairs.sort((a, b) => a[1] - b[1]);
+
+    return sorted.map(([uri]) => uri);
   }
 
   private async validateDecorations(): Promise<void> {
+    for (const [key, uri] of this.decorations) {
+      if (!(uri instanceof vscode.Uri)) {
+        this.decorations.set(key, getUri(uri));
+      }
+    }
     const invalid = await Promise.all(
       Array.from(this.decorations.entries())
            .flatMap(async ([path, uri]) =>
@@ -77,7 +96,7 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
   }
 
   private deleteUri(uri: vscode.Uri) {
-    this.decorations.delete(uri.fsPath);
+    this.decorations.delete(uri.toString());
     this.refresh(uri);
   }
 
@@ -86,8 +105,8 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     this.context.workspaceState.update(decorMap, map);
   }
 
-  private refresh(uriOr: vscode.Uri | undefined) {
+  private refresh(uriOr?: vscode.Uri | undefined) {
     this.updateConfiguration();
-    this._onDidChangeFileDecorations.fire(uriOr);
+    this.itDidChangeFileDecorations.fire(uriOr);
   }
 }

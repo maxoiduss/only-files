@@ -1,123 +1,392 @@
-declare module "vscode" {
-  export interface Searchable {
-    onSearch: boolean;
-  }
-  export interface HasDefaults {
-    setDefaults(): Promise<void>;
-  }
-  export namespace workspace {
-    export const fsh: typeof FileSystemHard;
-  }
-  export namespace window {
-    export const registerWebviewViewProviderWithDefaults:
-      typeof WindowHard.registerWebviewViewProvider;
-  }
-}
 import * as vscode from "vscode";
-import * as fpath from 'path';
 import {
-  CancellationTokenSource as CTS,
-  TreeItem,
-  WebviewViewProvider } from "vscode";
-  import { LogService } from "./logService";
-import { ExtensionBrandResolver } from "./extensionBrandResolver";
+  CancellationTokenSource as CTS, TreeItem, WebviewViewProvider
+} from "vscode";
+import { HasDefaults } from "../interfaces/vzcode";
+import { ExtensionBrandResolver
+} from "./extensionBrandResolver";
+import { LogService as Log
+} from "./logService";
 
-const number3Property = () => ExtensionBrandResolver.number3Property;
 const configuration = () => ExtensionBrandResolver.configuration;
+const number3Property = () => ExtensionBrandResolver.number3Property;
+
+const normalize = true as const;
 const postfix = "hard_lock" as const;
+const scheme = '://' as const;
+const empty = '' as const;
+const dot = '.' as const;
+
 let numeric = 0;
 
-export function initTypes() {
-  (vscode.workspace as any).fsh = FileSystemHard;
-  (vscode.window as any).registerWebviewViewProviderWithDefaults =
-    WindowHard.registerWebviewViewProvider;
-}
+export let autodebug: boolean[] = [];
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const FileSystemHard = {
-  async copy(
-    source: vscode.Uri,
-    target: vscode.Uri,
-    options?: { useTrash?: boolean | undefined; }
-  ) {
-    const filename = fpath.basename(target.fsPath);
-    const parent = vscode.Uri.joinPath(source, '..');
-    const retarget = vscode.Uri.joinPath(parent,
-      `${filename}_${postfix}`
-    );
-    await vscode.workspace.fs.copy(source, retarget,
-      { overwrite: false });
-    await vscode.workspace.fs.delete(source,
-      { recursive: true, useTrash: options?.useTrash });
-    await vscode.workspace.fs.rename(retarget, target,
-      { overwrite: true });
+export const workspace = {
+  fsh: {
+    async copy(
+      source: vscode.Uri,
+      target: vscode.Uri,
+      options?: { useTrash?: boolean | undefined; }
+    ): Promise<void> {
+      const filename = basename(target);
+      const parent = vscode.Uri.joinPath(source, '..');
+      const retarget = vscode.Uri.joinPath(parent,
+        `${filename}_${postfix}`
+      );
+      await vscode.workspace.fs.copy(source, retarget,
+        { overwrite: false });
+      await vscode.workspace.fs.delete(source,
+        { recursive: true, useTrash: options?.useTrash });
+      await vscode.workspace.fs.rename(retarget, target,
+        { overwrite: true });
+    }
+  },
+  fs: {
+    copy(
+      source: vscode.Uri,
+      target: vscode.Uri,
+      options?: { overwrite?: boolean; }
+    ): Thenable<void> {
+      return vscode.workspace.fs.copy(source, target, options);
+    }
   }
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const WindowHard = {
+export const window = {
   registerWebviewViewProvider(
     viewId: string,
-    provider: WebviewViewProvider & vscode.HasDefaults
+    provider: WebviewViewProvider & HasDefaults
   ): vscode.Disposable {
-    const registered = vscode.window.registerWebviewViewProvider(viewId, provider);
+    const registered = vscode.window.registerWebviewViewProvider(
+      viewId, provider
+    );
     provider.setDefaults();
 
     return registered;
   }
 };
 
-export function getNonce() {
-  let text = '';
+export const asRelative = (
+  uriOr: vscode.Uri | undefined,
+  root?: string
+): string => {
+  if (!uriOr) { return dot; }
+
+  const folder = vscode.workspace.getWorkspaceFolder(uriOr);
+  if (folder) {
+    if (same(folder.uri, uriOr)) {
+      return root !== undefined ? root : folder.name;
+    }
+    return vscode.workspace.asRelativePath(uriOr);
+  }
+
+  return getNicePath(uriOr);
+};
+
+export const basename = (pathOrUri: string | vscode.Uri): string => {
+  const separator = '/';
+  const pathOr = typeof pathOrUri === 'string' ? pathOrUri : pathOrUri.path;
+  const pathe = normalize && typeof pathOrUri === 'string' ?
+    pathOr.replace(/\\/g, separator) : pathOr;
+  const trimmedPath = pathe.length > 1 && pathe.endsWith(separator) ?
+    pathe.replace(/\/+$/, '') : pathe;
+  const lastIndex = trimmedPath.lastIndexOf(separator);
+
+  return lastIndex === -1 ? trimmedPath : trimmedPath.substring(lastIndex + 1);
+};
+
+export const extname = (pathOrUri: string | vscode.Uri): string => {
+  const separator = '/';
+  const pathOr = typeof pathOrUri === 'string' ? pathOrUri : pathOrUri.path;
+  const pathe = normalize && typeof pathOrUri === 'string' ?
+    pathOr.replace(/\\/g, separator) : pathOr;
+  const trimmedPath = pathe.length > 1 && pathe.endsWith(separator) ?
+    pathe.replace(/\/+$/, empty) : pathe;
+  const base = trimmedPath.substring(trimmedPath.lastIndexOf(separator) + 1);
+  const lastDot = base.lastIndexOf(dot);
+  if (lastDot <= 0) {
+    return empty;
+  }
+  return base.substring(lastDot + 1);
+};
+
+export const getNonce = () => {
+  let text = empty;
   const possible =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
   for (let i = 0; i < 32; i++) {
     text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
   return text;
-}
+};
 
-export function getNumeric() {
-  return ++numeric;
-}
+export const getNumeric = (): number => {
+  return numeric < Number.MAX_SAFE_INTEGER - 1 ? ++numeric : (numeric = 1);
+};
 
-export function getPathASsequence(pathOr: string | vscode.Uri): string[] {
-  return typeof pathOr === "string" ?
-    pathOr.split(fpath.sep)
-  : pathOr.fsPath.split(fpath.sep);
-}
+export const getRootOf = (path: string): string => {
+  const separator = '/';
+  const driveMatch = path.match(/^[a-zA-Z]:[\\/]/);
+  if (driveMatch) {
+    return driveMatch[0].replace(/\\/g, separator);
+  }
+  if (path.startsWith(separator)) { return separator; }
 
-export function getSequenceASpath(path: string[]): string {
-  return path.join(fpath.sep);
-}
+  return separator;
+};
 
-export function same(path1: string, path2: string): boolean;
-export function same(uri1: vscode.Uri, uri2: vscode.Uri): boolean;
-export function same(o1: vscode.Uri | string, o2: vscode.Uri | string): boolean {
-  return o1 instanceof vscode.Uri && o2 instanceof vscode.Uri ?
-    o1.fsPath === o2.fsPath
-  : o1.toString() === o2.toString();
-}
+export const getNicePath = (fromUriOr: vscode.Uri | string): string => {
+  const uri = typeof fromUriOr === "string" ? getUri(fromUriOr) : fromUriOr;
 
-export function getString(fromUriOr: vscode.Uri | string): string {
-  return typeof fromUriOr === "string" ? fromUriOr : fromUriOr.fsPath;
-}
+  return uri.scheme === 'file' ? uri.fsPath : uri.path;
+};
 
-export function getUri(uriOr: vscode.Uri | string): vscode.Uri {
-  return typeof uriOr === "string" ? vscode.Uri.file(uriOr) : uriOr;
-}
+export const getUri = (fromUriOr: vscode.Uri | string): vscode.Uri => {
+  const separator = '/';
+  const uri = typeof fromUriOr === "string" ?
+    fromUriOr.includes(scheme) ?
+      vscode.Uri.parse(fromUriOr)
+    : vscode.Uri.file(
+        normalize ? fromUriOr.replace(/\\/g, separator) : fromUriOr
+      )
+  : fromUriOr;
 
-export function getUriFrom(uriOrItem: vscode.Uri | TreeItem | any): vscode.Uri {
+  if (uri instanceof vscode.Uri) { return uri; }
+
+  const raw = uri as any;
+  if (raw && typeof raw === 'object' && 'external' in raw) {
+    return vscode.Uri.parse(raw.external);
+  }
+  
+  return vscode.Uri.parse(raw.toString());
+};
+
+export const getUriFrom = (
+  uriOrItem: vscode.Uri | TreeItem | any
+): vscode.Uri => {
   return uriOrItem instanceof TreeItem ?
     (uriOrItem.resourceUri || vscode.window.activeTextEditor?.document.uri)!
-  : (getUri(uriOrItem) || vscode.window.activeTextEditor?.document.uri);
-}
+  : typeof uriOrItem === "string" || uriOrItem instanceof vscode.Uri ?
+      getUri(uriOrItem)
+    : vscode.window.activeTextEditor?.document.uri || vscode.Uri.file(empty);
+};
 
-export function hasNoName(path: string): boolean {
+export const getFolder = async(uri: vscode.Uri): Promise<vscode.Uri> => {
+  return await isFolder(uri) ? uri : vscode.Uri.joinPath(uri, '..');
+};
+
+export const getFoldersBy = (
+  pathOrUri: string | vscode.Uri,
+  actionOnStep?: (stepUri: vscode.Uri, isLast: boolean) => void
+) : string[] | undefined => {
+  const uri = getUri(pathOrUri);
+  const base = vscode.workspace.getWorkspaceFolder(uri);
+  if (!base) { return undefined; }
+
+  const separator = '/';
+  const itemUriStrings: string[] = [];
+  const relativePath = vscode.workspace.asRelativePath(uri, false);
+  const segments = relativePath.split(separator).filter((s) => s.length > 0);
+  let currentUri = base.uri;
+
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i];
+    const isLast = i === segments.length - 1;
+    currentUri = vscode.Uri.joinPath(currentUri, segment);
+    
+    const uriString = currentUri.toString();
+    itemUriStrings.push(uriString);
+
+    actionOnStep?.(currentUri, isLast);
+  }
+
+  return itemUriStrings;
+};
+
+export const getPathDepth = (path: string): number => {
+  let count = 0;
+  const separator = '/';
+  const uri = getUri(path);
+  const pathe = asRelative(uri);
+
+  for (const char of pathe) {
+    if (char === separator) { ++count; }
+  }
+  return count;
+};
+
+export const getWorkspaceFolderIndex = (uri: vscode.Uri): number => {
+  const folder = vscode.workspace.getWorkspaceFolder(uri);
+  if (!folder) { return -1; }
+
+  return vscode.workspace.workspaceFolders?.indexOf(folder) ?? -1;
+};
+
+export const resolveUri = async (
+  relativePathOrUri: vscode.Uri | string
+): Promise<vscode.Uri> => {
+  const separator = '/';
+  const folders = vscode.workspace.workspaceFolders ?? [];
+  const isMultiRoot = folders.length > 1;
+  const pathe = typeof relativePathOrUri === 'string' ?
+    relativePathOrUri
+  : vscode.workspace.asRelativePath(relativePathOrUri, isMultiRoot);
+
+  if (isMultiRoot) {
+    const segments = pathe.split(separator);
+    const folderName = segments[0];
+    const relativePart = segments.slice(1).join(separator);
+    const targetFolder = folders.find((f) => same(f.name, folderName));
+
+    if (targetFolder) {
+      const potentialUri = vscode.Uri.joinPath(targetFolder.uri, relativePart);
+      if (await isValidUri(potentialUri)) {
+        return potentialUri;
+      }
+    }
+  }
+
+  for (const folder of folders) {
+    const potentialUri = vscode.Uri.joinPath(folder.uri, pathe);
+    if (await isValidUri(potentialUri)) {
+      return potentialUri;
+    }
+  }
+
+  return getUri(relativePathOrUri);
+};
+
+export const same = <
+  T1 extends string | vscode.Uri,
+  T2 extends string | vscode.Uri
+  >(o1: T1, o2: T2): boolean =>
+{ return o1.toString() === o2.toString(); }
+
+export const hasNoName = (path: string): boolean => {
   return ["", "/", "\\", "\""].includes(path);
-}
+};
 
-export function showProgressBar(withMessage: string): CTS {
+export const isFile = async (
+  uri: vscode.Uri
+): Promise<boolean | undefined> => {
+  const file = vscode.FileType.File;
+  try { return ((await vscode.workspace.fs.stat(uri)).type & file) === file; }
+  catch(error) { return undefined; }
+};
+
+export const isFolder = async (
+  uri: vscode.Uri
+): Promise<boolean | undefined> => {
+  const dir = vscode.FileType.Directory;
+  try { return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
+  catch(error) { return undefined; }
+};
+
+export const isValidUri = async (
+  uriOr: vscode.Uri | undefined
+): Promise<boolean> => {
+  if (uriOr === undefined) { return false; }
+
+  return (await isFolder(uriOr)) !== undefined;
+};
+
+export const largeProjectFilesAmount: number = 5555;
+export const useUnexcludeSystemConfig = true;
+
+export const isProjectTooLarge = async (
+  foldersMax: number = 1111
+): Promise<boolean> => {
+  const folders = await getAllFolders(undefined, {max: foldersMax });
+  return folders === null || folders.length > foldersMax;
+};
+
+export const setNothingToExcludeTemporary = async (
+): Promise<() => Promise<void>> =>
+{ const updateConfig = async (
+    target: vscode.ConfigurationTarget, empty?: boolean) =>
+  {
+    try {
+      if (previous[target]) {
+        await config.update(exclude, empty ? {} : previous[target], target);
+      }
+    } catch (error) {
+      Log.error(`Failed to update files.${exclude} for ${target}: ${error}`);
+    }
+  }
+  if (!useUnexcludeSystemConfig) { return async () => {}; }
+
+  const exclude = "exclude";
+  const config = vscode.workspace.getConfiguration("files", null);
+  const values = config.inspect<Record<string, boolean>>(exclude);
+  const previous:
+    Record<vscode.ConfigurationTarget, Record<string, boolean> | undefined> = {
+      [vscode.ConfigurationTarget.Global]: values?.globalValue,
+      [vscode.ConfigurationTarget.Workspace]: values?.workspaceValue,
+      [vscode.ConfigurationTarget.WorkspaceFolder]: values?.workspaceFolderValue
+  };
+  await updateConfig(vscode.ConfigurationTarget.WorkspaceFolder, true);
+  await updateConfig(vscode.ConfigurationTarget.Workspace, true);
+  await updateConfig(vscode.ConfigurationTarget.Global, true);
+
+  return async () => {
+    await updateConfig(vscode.ConfigurationTarget.WorkspaceFolder);
+    await updateConfig(vscode.ConfigurationTarget.Workspace);
+    await updateConfig(vscode.ConfigurationTarget.Global);
+  };
+};
+
+export const getProjectName = (): string | undefined => {
+  return vscode.workspace.name ?? vscode.workspace.workspaceFolders?.[0]?.name;
+};
+
+export const getAllFolders = async (
+  workspaceFolderIndex?: number,
+  options?: { max?: number }
+): Promise<vscode.Uri[] | null> => {
+  const separator = '/';
+  const folders = new Set<vscode.Uri>();
+  let roots = vscode.workspace.workspaceFolders?.map((f) => f.uri);
+  if (!roots) { return []; }
+
+  if (workspaceFolderIndex !== undefined) {
+    const specificRoot = roots[workspaceFolderIndex];
+    if (!specificRoot) { return []; }
+
+    roots = [specificRoot];
+  }
+  const restoreSetting = await setNothingToExcludeTemporary();
+
+  for (const root of roots) {
+    const pattern = new vscode.RelativePattern(root, '**');
+    const files = await vscode.workspace.findFiles(pattern, null, 55555);
+    if (options?.max && files.length > largeProjectFilesAmount) {
+      await restoreSetting(); return null;
+    }
+
+    for (const file of files) {
+      const relativeStr = file.path.slice(root.path.length);
+      const parts = relativeStr.split(separator).filter(Boolean);
+      parts.pop(); 
+
+      let currentUri = root;
+      for (const part of parts) {
+        currentUri = vscode.Uri.joinPath(currentUri, part);
+        folders.add(currentUri);
+
+        if (options?.max && folders.size > options?.max) {
+          await restoreSetting();
+          return null;
+        }
+      }
+    }
+  }
+  await restoreSetting();
+
+  return [...folders];
+};
+
+export const showProgressBar = (withMessage: string): CTS => {
   const cts = new CTS();
 
   vscode.window.withProgress({
@@ -147,11 +416,13 @@ export function showProgressBar(withMessage: string): CTS {
   });
 
   return cts;
-}
+};
 
-export function showQuickInput
-(withText: string, option: string, stop?: Promise<void>): Promise<string> {
-  const empty = '';
+export const showQuickInput = (
+  withText: string,
+  option: string,
+  stop?: Promise<void>
+): Promise<string> => {
   const config = vscode.workspace.getConfiguration(configuration());
   let pick: vscode.QuickPick<vscode.QuickPickItem>;
 
@@ -225,121 +496,17 @@ export function showQuickInput
     }), run] : [run];
 
   return Promise.race(promises);
-}
+};
 
-export async function setNothingToExcludeTemporary(): Promise<() => Promise<void>>
-{
-  async function updateConfig(target: vscode.ConfigurationTarget, empty?: boolean)
-  {
-    try {
-      if (previous[target]) {
-        await config.update(exclude, empty ? {} : previous[target], target);
-      }
-    } catch (error) {
-      LogService.error(`Failed to update files.${exclude} for ${target}: ${error}`);
-    }
-  }
-  if (!useUnexcludeSystemConfig) { return async () => {}; }
-
-  const exclude = "exclude";
-  const config = vscode.workspace.getConfiguration("files", null);
-  const values = config.inspect<Record<string, boolean>>(exclude);
-  const previous:
-    Record<vscode.ConfigurationTarget, Record<string, boolean> | undefined> = {
-      [vscode.ConfigurationTarget.Global]: values?.globalValue,
-      [vscode.ConfigurationTarget.Workspace]: values?.workspaceValue,
-      [vscode.ConfigurationTarget.WorkspaceFolder]: values?.workspaceFolderValue
-  };
-  await updateConfig(vscode.ConfigurationTarget.WorkspaceFolder, true);
-  await updateConfig(vscode.ConfigurationTarget.Workspace, true);
-  await updateConfig(vscode.ConfigurationTarget.Global, true);
-
-  return async () => {
-    await updateConfig(vscode.ConfigurationTarget.WorkspaceFolder);
-    await updateConfig(vscode.ConfigurationTarget.Workspace);
-    await updateConfig(vscode.ConfigurationTarget.Global);
-  };
-}
-
-export function isInFolder(path: string, folder: string): boolean {
-  if (path === folder) { return true; }
-  
-  const filePath = fpath.resolve(path);
-  const folderPath = fpath.resolve(folder);
-  const parent = fpath.dirname(filePath);
-  return parent === folderPath;
-}
-
-export async function isFile(uri: vscode.Uri): Promise<boolean | undefined> {
-  const file = vscode.FileType.File;
-  try { return ((await vscode.workspace.fs.stat(uri)).type & file) === file; }
-  catch(error) { return undefined; }
-}
-
-export async function isFolder(uri: vscode.Uri): Promise<boolean | undefined> {
-  const dir = vscode.FileType.Directory;
-  try { return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
-  catch(error) { return undefined; }
-}
-
-export async function isValidUri(
-  uriOr: vscode.Uri | string | undefined
-): Promise<boolean> {
-  if (uriOr === undefined) { return false; }
-
-  return (await isFolder(getUri(uriOr))) !== undefined;
-}
-
-export const largeProjectFilesAmount: number = 5555;
-export const useUnexcludeSystemConfig = true;
-
-export async function isProjectTooLarge(foldersMax: number = 1111):
-  Promise<boolean> {
-  const folders = await getAllFolders(foldersMax);
-  return folders === null || folders.length > foldersMax;
-}
-
-export async function getAllFolders(max?: number): Promise<vscode.Uri[] | null> {
-  const folders = new Set<string>();
-  const roots = vscode.workspace.workspaceFolders?.map((f) => f.uri);
-  if (!roots) { return []; }
-  
-  const restoreSetting = await setNothingToExcludeTemporary();
-
-  for (const root of roots) {
-    const files = await vscode.workspace.findFiles('**', null, 55555);
-    if (max && files.length > largeProjectFilesAmount) {
-      await restoreSetting(); return null;
-    }
-
-    for (const file of files) {
-      const relative = fpath.relative(root.fsPath, file.fsPath);
-      const directory = fpath.dirname(relative);
-      const parts = directory.split(fpath.sep).filter(Boolean);
-
-      for (let i = 0; i < parts.length; i++) {
-        const folderPath = fpath.join(root.fsPath, ...parts.slice(0, i + 1));
-        if (folderPath !== root.fsPath) {
-          folders.add(folderPath); }
-        if (max && folders.size > max) {
-          await restoreSetting(); return null; }
-      }
-    }
-  }
-  await restoreSetting();
-
-  return [...folders].map((path) => vscode.Uri.file(path));
-}
-
-export function getConfigurationFor<T>(
+export const getConfigurationFor = <T>(
   ctx: vscode.ExtensionContext, key: string
-): T | undefined {
+): T | undefined => {
   return ctx.workspaceState.get<T>(key);
-}
+};
 
-export function getConfigurationsFor<T>(
+export const getConfigurationsFor = <T>(
   ctx: vscode.ExtensionContext, key: string
-): [string, T][] {
+): [string, T][] => {
   const as = <R>(target: any): R => target as unknown as R;
   const raw = ctx.workspaceState.get<any>(key);
 
@@ -353,4 +520,4 @@ export function getConfigurationsFor<T>(
   }
 
   return [];
-}
+};

@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
 import { JustFiles } from "./classes/justFiles";
 import { ExtensionBrandResolver } from "./classes/extensionBrandResolver";
+import { ExtensionStaticService } from "./classes/extensionStaticService";
 
 export function activate(context: vscode.ExtensionContext) {
-  const brandResolver = new ExtensionBrandResolver(context);
+  const brandResolver = new ExtensionBrandResolver();
   brandResolver.resolve();
   
   const justFiles = new JustFiles(context);
@@ -12,5 +13,5 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {
   ExtensionBrandResolver.dispose();
-  JustFiles.dispose();
+  ExtensionStaticService.dispose();
 }

@@ -324,6 +324,10 @@
         "title": "Collect All Marked"
       },
       {
+        "command": "just-files.refuse",
+        "title": "Refuse All Marked"
+      },
+      {
         "command": "just-files.copyFilePath",
         "title": "Copy Path"
       },
@@ -357,7 +361,7 @@
       },
       {
         "command": "just-files.closeFolder",
-        "title": "Close Folder"
+        "title": "Close Folders"
       },
       {
         "command": "just-files.ctrl",
@@ -367,13 +371,13 @@
     "menus": {
       "explorer/context": [
         {
-          "when": "resourceScheme == 'file' || resourceScheme == 'untitled'",
           "command": "just-files.addItemFromExplorer",
+          "when": "resourceScheme && resourceScheme != untitled",
           "group": "z"
         },
         {
-          "when": "resourceScheme == 'file' || resourceScheme == 'untitled'",
           "command": "just-files.previewItem",
+          "when": "resourceScheme && resourceScheme != untitled",
           "group": "z"
         }
       ],
@@ -509,6 +513,11 @@
           "group": "5_other"
         },
         {
+          "command": "just-files.refuse",
+          "when": "focusedView == justFilesView && viewItem == dummy",
+          "group": "5_other"
+        },
+        {
           "command": "just-files.uncollapseAll",
           "when": "focusedView == filesView",
           "group": "5_other"
@@ -596,7 +605,7 @@
         "command": "just-files.renameTab",
         "key": "shift+f2",
         "mac": "shift+f2",
-        "when": "resourceScheme == file"
+        "when": "resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "just-files.delete",
@@ -638,7 +647,7 @@
         "command": "just-files.previewItem",
         "key": "ctrl+shift+alt+enter",
         "mac": "cmd+shift+alt+enter",
-        "when": "resourceScheme == file"
+        "when": "resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "just-files.show",
@@ -656,13 +665,13 @@
         "command": "just-files.addItemFromCommand",
         "key": "ctrl+y",
         "mac": "cmd+y",
-        "when": "resourceScheme == file"
+        "when": "resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "just-files.removeItemFromCommand",
         "key": "ctrl+alt+y",
         "mac": "cmd+alt+y",
-        "when": "resourceScheme == file"
+        "when": "resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "just-files.ctrl",
@@ -681,9 +690,11 @@
     "build": "node ./esbuild.config.js --watch",
     "package": "vsce package",
     "justbuild": "node ./esbuild.config.js",
-    "watch": "tsc -w -p ./ --noEmit",
-    "lint": "eslint src",
-    "runtest": "node ./out/test/runTest.js"
+    "check": "tsc -p ./ --noEmit",
+    "lint": "eslint src && tsc -p tsconfig.json --noEmit",
+    "runtest": "node ./out/test/runTest.js",
+    "unittest": "mocha -r ts-node/register src/tests/**/*.test.ts --timeout 5000"
+
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",

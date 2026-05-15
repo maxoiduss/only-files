@@ -1,5 +1,10 @@
+import fpath from 'path';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = fpath.dirname(__filename);
 
 export default [
   {
@@ -7,7 +12,8 @@ export default [
       'node_modules',
       "out/",
       "dist/",
-      "**/*.d.ts"
+      "**/*.d.ts",
+      "src/tests/**/*.test.ts"
     ],
   },
   {
@@ -18,7 +24,9 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        ecmaVersion: 6,
+        project: fpath.join(__dirname, 'tsconfig.json'),
+        tsconfigRootDir: __dirname,
+        ecmaVersion: 2020,
         sourceType: "module"
       }
     },
@@ -27,13 +35,22 @@ export default [
       "@typescript-eslint": tsPlugin
     },
     rules: {
-      "@typescript-eslint/naming-convention": "warn",
-      "@typescript-eslint/semi": "warn",
       "curly": "warn",
       "eqeqeq": "warn",
       "no-throw-literal": "warn",
       "semi": "warn",
-      "no-unused-vars": "warn"
+      "no-unused-vars": "off",
+      "no-unused-private-class-members": "warn",
+      "@typescript-eslint/semi": "warn",
+      "@typescript-eslint/naming-convention": "warn",
+      "@typescript-eslint/no-unused-vars": [
+        "warn", { 
+          "vars": "all",
+          "ignoreRestSiblings": false,
+          "varsIgnorePattern": "^_",
+          "argsIgnorePattern": "^_"
+        }
+      ]
     }
   }
 ];

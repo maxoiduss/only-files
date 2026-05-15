@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import * as fpath from 'path';
 import { Location } from "vscode";
 import { FileItem } from "./fileItem";
 import { CommandRegistrator } from "./commandRegistrator";
+import * as manager from "./fileItemManager";
 import {
   setNothingToExcludeTemporary,
   showProgressBar,
@@ -34,7 +34,9 @@ const empty = '' as const;
 
 type TextDocumentOr = vscode.TextDocument | undefined;
 
-export async function getPositionSafelyFrom(file: vscode.Uri): Promise<vscode.Position> {
+export const getPositionSafelyFrom = async (
+  file: vscode.Uri
+): Promise<vscode.Position> => {
   const doc = await openTextDocument(file);
 
   if (!doc) { return new vscode.Position(0, 1); }
@@ -46,7 +48,7 @@ export async function getPositionSafelyFrom(file: vscode.Uri): Promise<vscode.Po
     }
   }
   return new vscode.Position(1, 0);
-}
+};
 
 async function openTextDocument(item: FileItem): Promise<string>;
 async function openTextDocument(resourceUri: vscode.Uri): Promise<TextDocumentOr>;
@@ -116,10 +118,9 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     pattern: string,
     whereToSearch: string
   ): RegExpMatchArray | null {
-    function escapeRegExp(source: string): string {
+    const escapeRegExp = (source: string): string => {
       return source.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    }
-
+    };
     const cleanWhereToSearch = this.stripComments(whereToSearch);
     const mask = `${escapeRegExp(pattern)}\\b\\s*([A-Za-z0-9_$-]+)(?=[\\s<{(]|$)`;
     const criteria = new RegExp(mask, "u");
@@ -135,15 +136,12 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     if (!fileItem.resourceUri) { return []; }
 
     const maskDoc = await openTextDocument(fileItem);
-
     if (maskDoc === empty) { return []; }
     
-    const mask = pattern
-      ? this.createSearchMatchFromPattern(pattern, maskDoc)
-      : null;
+    const mask = pattern ?
+      this.createSearchMatchFromPattern(pattern, maskDoc) : null;
     const searchText = mask ? mask[1] : undefined;
-    const searchPattern = 
-      searchText ?? fpath.parse(fileItem.resourceUri.fsPath).name;
+    const searchPattern = searchText ?? manager.getNameWithoutExt(fileItem);
     const locations: Location[] = [];
     const gitignore = await this.readIgnoreFile({ showDialog: false });
     const antipatternList = await this.createAntipattern(gitignore);

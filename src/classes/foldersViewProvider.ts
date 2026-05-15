@@ -1,124 +1,96 @@
 import * as vscode from "vscode";
-import * as fpath from 'path';
+import * as vzcode from "../interfaces/vzcode";
+import * as manager from "./fileItemManager";
+import * as helper from "./foldersProviderHelper";
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
+import { brand } from "./extensionBrandResolver";
+import { ExtensionStaticService } from "./extensionStaticService";
+import { State, FoldersProviderHelper } from "./foldersProviderHelper";
+import { EmptyFolderItem, emptyRoot, FileItem, root, RootFileItem
+} from "./fileItem";
 import {
   asRelative,
-  EmptyFolderItem,
-  emptyRoot,
-  FileItem,
-  root,
-  RootFileItem
-} from "./fileItem";
-import { FileItemManager } from "./fileItemManager";
-import {
   getAllFolders,
-  getConfigurationFor,
-  getConfigurationsFor,
-  isFolder,
-  isInFolder 
+  getFolder,
+  getFoldersBy,
+  getUri,
+  getWorkspaceFolderIndex,
+  resolveUri,
+  same
 } from "./utilManager";
-import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 
-const collapsinges = "collapsinges" as const;
-const plainModeOn = "plainModeOn" as const;
-
-const configuration = () => ExtensionBrandResolver.configuration;
-const boolean1Property = () => ExtensionBrandResolver.boolean1Property;
-const boolean2Property = () => ExtensionBrandResolver.boolean2Property;
-
-function isExpanded(state: State | TreeItemCollapsibleState | undefined):boolean
-{
-  return (typeof state === "number") ?
-    state === TreeItemCollapsibleState.Expanded
-  : state !== undefined ?
-      (state as State).collapses === TreeItemCollapsibleState.Expanded
-    : false;
-}
-
-type State = {
-  isPlain: boolean;
-  collapses: TreeItemCollapsibleState;
-};
+type FileItemOr = FileItem | undefined | void;
 
 type Ignore = {
   readonly fileRules: RegExp[];
   readonly folderRules: RegExp[];
 };
 
-type FileItemOr = FileItem | undefined | void;
+typeof FoldersProviderHelper;
+/** @see Docs on {@link FoldersProviderHelper} */
 
 export class FoldersViewProvider
   implements vscode.TreeDataProvider<FileItem>,
-  vscode.Searchable,
+  vzcode.Changable<FileItem>,
+  vzcode.Searchable,
   vscode.Disposable
 {
-  private _onDidChangeTreeData: vscode.EventEmitter<FileItemOr> =
+  private didChangeTreeData: vscode.EventEmitter<FileItemOr> =
     new vscode.EventEmitter<FileItemOr>();
   readonly onDidChangeTreeData: vscode.Event<FileItemOr> =
-    this._onDidChangeTreeData.event;
+    this.didChangeTreeData.event;
 
-  public isEmpty: boolean = true;
+  public isEmpty: boolean = false;
   public onSearch: boolean = false;
-  public plainMode: boolean = false;
+  
+  public get plainMode() { return ExtensionStaticService.plainMode; }
+  public set plainMode(val: boolean) { ExtensionStaticService.plainMode = val; }
 
-  private showingRoot: boolean = true;
-  private showEmptyUncollapsedFolders: boolean = true;
-  private showUncollapsedPlainFolders: boolean = false;
-  private uncollapsedMode: [boolean, boolean] = [false, false];
-  private readonly fileItemManager = new FileItemManager();
   private readonly collapsingItems: Map<string, State> = new Map();
+  private readonly context: vscode.ExtensionContext;
+  private readonly revealItem: (item: FileItem, expand?: boolean) => void;
+  private showingRoot: boolean = true;
+  private uncollapsedMode: [boolean, boolean] = [false, false];
   private ignoredItems: Ignore | undefined;
   private focusedItem: FileItem | undefined;
   private expandedItem: FileItem | undefined;
   private selectedItem: (FileItem | string | undefined)[] = [];
-  private root!: RootFileItem;
+  private roots!: RootFileItem[];
+
+  private selectedWorkspaceFolder: number = -1;
+  private loadingWorkspaceFolders: Promise<any> | undefined;
+  private didChangedWorkspaceFolders = 
+    vscode.workspace.onDidChangeWorkspaceFolders(async () => {
+      this.loadingWorkspaceFolders = helper.loadWorkspaceRoots(async (load) =>
+        this.roots = await load());
+      });
+  
+  private get root() { return this.roots[this.roots.length - 1]; }
+  private get workspaceFolders() {
+    return vscode.workspace.workspaceFolders ?? []; }
+  private get showEmptyUncollapsedFolders() {
+    return ExtensionStaticService.showEmptyUncollapsedFolders; }
+  private get showUncollapsedPlainFolders() {
+    return ExtensionStaticService.showUncollapsedPlainFolders; }
 
   constructor(
-    private readonly context: vscode.ExtensionContext,
-    private readonly revealItem: (item: FileItem, expand?: boolean) => void
+    context: vscode.ExtensionContext,
+    revealItem: (item: FileItem, expand?: boolean) => void
   ) {
-    new Promise(async () => this.root = await this.createFileItem());
+    this.context = context;
+    this.revealItem = revealItem;
     this.checkIgnoredItems = this.checkIgnoredItems.bind(this);
-    this.setShowEmptyUncollapsedFolders();
-    this.setShowUncollapsedPlainFolders();
+    helper.setShowEmptyUncollapsedFolders();
+    helper.setShowUncollapsedPlainFolders();
+    
+    this.loadingWorkspaceFolders =
+    helper.loadWorkspaceRoots(async (load) => this.roots = await load());
+    helper.loadWorkspaceContexts(this.context,
+      (mode) => (this.plainMode = mode),
+      this.updateCollapsings.bind(this)
+    );
 
-    const collapsingConfig =
-      getConfigurationsFor<State>(this.context, collapsinges);
-    collapsingConfig.forEach(async ([path, state]) =>
-      await this.updateCollapsings(
-        vscode.Uri.file(path), state.collapses, state.isPlain
-      ));
-    this.plainMode = getConfigurationFor<boolean>(this.context, plainModeOn)
-      ?? this.plainMode;
     if (this.plainMode) { this.switchPlainModeTag(); }
-  }
-
-  private createFileItem(
-      uriOr?: vscode.Uri | string | FileItem | undefined,
-      plainMode?: boolean,
-      expanded?: boolean): Promise<FileItem> {
-    switch (typeof uriOr) {
-      case "undefined": return Promise.resolve(new RootFileItem());
-      case "object": if (uriOr instanceof FileItem) {
-        return Promise.resolve(
-          new EmptyFolderItem(plainMode ?
-            uriOr.resourceUri! : uriOr,
-            expanded
-        ));
-      } else { return Promise.resolve(this.fileItemManager.createFileItem(
-        uriOr, plainMode, expanded
-      )); }
-      case "string":
-      default: return Promise.resolve(this.fileItemManager.createFileItem(
-        uriOr as string, plainMode, expanded
-      ));
-    }
-  }
-
-  private collapseItem(item: FileItem, thenRefresh: boolean = true) {
-    this.expandedItem = item;
-
-    if (thenRefresh) { this.refresh(); }
   }
 
   private checkIgnoredItems(itemOnly?: FileItem | undefined): boolean {
@@ -130,55 +102,105 @@ export class FoldersViewProvider
           && !this.ignoredItems.fileRules.some((expr) => expr.test(rel));
     }
     
-    for (const [path, ] of this.collapsingItems) {
-      const folder = vscode.workspace.asRelativePath(path).replace(/\\/g, '/');
+    for (const [pathe] of this.collapsingItems) {
+      const folder = asRelative(getUri(pathe));
       if (this.ignoredItems.folderRules.some((expr) => expr.test(folder))) {
-        this.popFromCollapsings(path);
+        this.popFromCollapsings(pathe);
       }
     }
     return false;
   }
 
-  private refreshStatesFor(items: FileItem[]) {
-    for (const [path, state] of this.collapsingItems) {
-      this.fileItemManager.findThen(path, items, (check) => {
-        if (!state.isPlain) {
-          items[check].hasExpandedState(
-            { changeTo: isExpanded(state.collapses)});
-        }
-      });
-    }
-  }
-
   private async updateCollapsings(
     uri: vscode.Uri,
     collapses: TreeItemCollapsibleState,
-    isPlain: boolean
-  ): Promise<void> {
-    const dir = await isFolder(uri) ? uri.fsPath : fpath.dirname(uri.fsPath);
+    isPlain: boolean ): Promise<void>
+  { const dir = (await getFolder(uri)).toString();
     this.collapsingItems.set(dir, { isPlain: isPlain, collapses: collapses });
   }
 
-  private async popFromCollapsings(uriOr: vscode.Uri | string): Promise<boolean>
-  {
-    let dir: string;
-    if (uriOr instanceof vscode.Uri) {
-      dir = await isFolder(uriOr) ? uriOr.fsPath : fpath.dirname(uriOr.fsPath);
-    } else {
-      dir = uriOr;
-    }
+  private async popFromCollapsings(
+    uriOr: vscode.Uri | string ): Promise<boolean>
+  { const dir = (await getFolder(getUri(uriOr))).toString();
     return this.collapsingItems.delete(dir);
   }
+  
+  private async collapseItem(item: FileItem): Promise<void> {
+    this.expandedItem = item;
+    this.expandedItem.hasExpandedState({ changeTo: false });
+    if (item.resourceUri) {
+      const exist = this.collapsingItems.get(item.resourceUri.toString());
+      if (exist) {
+        await this.updateCollapsings(
+          item.resourceUri, TreeItemCollapsibleState.Collapsed, exist.isPlain
+        );
+      }
+    }
+    this.refresh();
+  }
 
-  dispose() { this._onDidChangeTreeData.dispose(); }
+  public async changeTreeItem(
+    fileItem: FileItem,
+    oldUri: vscode.Uri
+  ): Promise<void> {
+    const exist = this.collapsingItems.get(oldUri.toString());
+    const newUri = fileItem.resourceUri;
+    if (!newUri) { return; }
 
-  switchPlainModeTag() {
+    const changeCollapsingUri = async (target: vscode.Uri, state: State) =>
+    { const uri = manager.changeUri(undefined, newUri, target);
+      if (uri) {
+        await this.popFromCollapsings(target);
+        await this.updateCollapsings(uri, state.collapses, state.isPlain);
+      }
+    };
+    if (exist) { await changeCollapsingUri(oldUri, exist); }
+
+    for (const [pathe, state] of this.collapsingItems) {
+      const targetUri = getUri(pathe);
+      if (manager.check(targetUri).isChildOf(oldUri)) {
+        await changeCollapsingUri(targetUri, state);
+      }
+    }
+  }
+
+  public dispose() {
+    this.didChangedWorkspaceFolders.dispose();
+    this.didChangeTreeData.dispose();
+  }
+
+  public setWorkspaceFolderFrom(itemOr: FileItem | vscode.Uri | string) {
+    const uri = itemOr instanceof FileItem ?
+      itemOr.resourceUri! : getUri(itemOr);
+    const number = getWorkspaceFolderIndex(uri);
+    if (number >= 0) {
+      this.selectedWorkspaceFolder = number;
+    }
+  }
+
+  public switchPlainModeTag() {
     vscode.commands.executeCommand(
       brand.setContext, brand.isPlain, this.plainMode
     );
   }
 
-  releaseSelection() {
+  public prepareState(fileItem: FileItem) {
+    helper.refreshStatesFor(fileItem, this.collapsingItems);
+  }
+
+  public prepareLabel(fileItem: FileItem) {
+    fileItem.setLabel();
+  }
+
+  public canBeCreated(withUri: vscode.Uri | undefined) {
+    if (withUri) {
+      const plain = this.collapsingItems.get(withUri.toString())?.isPlain;
+      return plain !== true;
+    }
+    return true;
+  }
+
+  public releaseSelection() {
     const item = this.selectedItem[0];
     if (item instanceof FileItem) {
       this.selectedItem[0] = undefined;
@@ -186,44 +208,30 @@ export class FoldersViewProvider
     }
   }
 
-  trySelectByUri(uri: vscode.Uri) {
-    const base = vscode.workspace.getWorkspaceFolder(uri);
-    if (!base) { return; }
-
-    let separator = '/';
-    let itemPath = base.uri.fsPath.replace(/\\/g, separator);
-    const folders = asRelative(uri).split(separator);
+  public trySelectByUri(uri: vscode.Uri) {
+    const oldSelectedItem = this.selectedItem;
     this.selectedItem = [];
-    
-    for (let i = 0; i < folders.length; i++) {
-      const folder = folders[i];
-      itemPath += `${separator}${folder}`;
 
-      const itemUri = vscode.Uri.file(itemPath);
-      this.selectedItem.push(itemUri.fsPath);
+    const newSelectedItem = getFoldersBy(uri, (stepUri, isLast) =>
+    {
+      this.selectedItem.push(stepUri.toString());
+      const exist = this.collapsingItems.get(stepUri.toString());
 
-      const isLast = i === folders.length - 1;
-      const exist = this.collapsingItems.get(itemUri.fsPath);
       if (!isLast && (!exist || exist.isPlain === false)) {
-        this.updateCollapsings(itemUri,
+        this.updateCollapsings(stepUri,
           TreeItemCollapsibleState.Expanded, false);
       }
+    });
+
+    if (!newSelectedItem) {
+      this.selectedItem = oldSelectedItem;
+      return;
     }
-    this.selectedItem = [undefined, ...this.selectedItem.reverse()];
+    this.selectedItem = [undefined, ...newSelectedItem.reverse()];
     this.refresh();
   }
 
-  setShowEmptyUncollapsedFolders() {
-    const config = vscode.workspace.getConfiguration(configuration());
-    this.showEmptyUncollapsedFolders = config.get(boolean2Property(), true);
-  }
-
-  setShowUncollapsedPlainFolders() {
-    const config = vscode.workspace.getConfiguration(configuration());
-    this.showUncollapsedPlainFolders = config.get(boolean1Property(), true);
-  }
-
-  rootIsShown(shouldBeShown?: boolean | undefined): boolean {
+  public rootIsShown(shouldBeShown?: boolean | undefined): boolean {
     if (shouldBeShown !== undefined) {
       this.showingRoot = shouldBeShown;
       this.refresh();
@@ -231,57 +239,64 @@ export class FoldersViewProvider
     return this.showingRoot;
   }
 
-  revealRoot() { this.revealItem(this.root, true); }
+  public revealRoot() { this.revealItem(this.root, true); }
 
-  setIgnoredItems(items: [boolean, RegExp][]) {
+  public setIgnoredItems(items: [boolean, RegExp][]) {
     this.ignoredItems = {
       fileRules: items.flatMap(([fileRule, expr]) => fileRule ? expr : []),
       folderRules: items.flatMap(([fileRule, expr]) => fileRule ? [] : expr)
     };
   }
 
-  resetIgnoredItems(): boolean {
+  public resetIgnoredItems(): boolean {
     const wasSet = this.ignoredItems !== undefined;
     this.ignoredItems = undefined;
     return wasSet;
   }
 
-  addCollapsingElement(element: FileItem) {
+  public addCollapsingElement(element: FileItem) {
     element.hasExpandedState({ changeTo: true });
+
     if (element.resourceUri) {
+      const collapsing = element.resourceUri.toString();
+      const isPlain = this.collapsingItems.get(collapsing)?.isPlain;
       this.updateCollapsings(
         element.resourceUri,
         element.collapsibleState!,
-        false
+        isPlain ?? false
       );
     }
   }
 
-  removeCollapsingElement(element: FileItem) {
+  public removeCollapsingElement(element: FileItem) {
     element.hasExpandedState({ changeTo: false });
+    
     if (element.resourceUri) {
-      this.popFromCollapsings(element.resourceUri);
+      const collapsing = element.resourceUri.toString();
+      const isPlain = this.collapsingItems.get(collapsing)?.isPlain;
+      if (!isPlain) {
+        this.popFromCollapsings(element.resourceUri);
+      }
     }
   }
 
-  refresh(element?: FileItem): void {
-    this._onDidChangeTreeData.fire(element);
-    
-    const collapsings = Object.fromEntries(this.collapsingItems);
-    this.context.workspaceState.update(collapsinges, collapsings);
-    this.context.workspaceState.update(plainModeOn, this.plainMode);
+  public refresh(element?: FileItem): void {
+    this.didChangeTreeData.fire(element);
+
+    helper.saveWorkspaceContexts(
+      this.context, this.plainMode, this.collapsingItems
+    );
   }
 
-  getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
+  public getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
     return element;
   }
 
-  // eslint-disable-next-line no-unused-vars
-  getParent?(element: FileItem): ProviderResult<FileItem> {
+  public getParent?(_element: FileItem): ProviderResult<FileItem> {
     return;
   }
 
-  canUncollapseAll(value: boolean) {
+  public couldUncollapseAll(value: boolean) {
     if (value){
       this.plainMode = true;
       this.uncollapsedMode = [true, true];
@@ -295,7 +310,7 @@ export class FoldersViewProvider
     this.refresh();
   }
 
-  async collapseOrUncollapseItem(item: FileItem): Promise<void> {
+  public async collapseOrUncollapseItem(item: FileItem): Promise<void> {
     const expanded: boolean | undefined = item.hasExpandedState();
 
     if (this.plainMode) {
@@ -303,14 +318,12 @@ export class FoldersViewProvider
         this.revealItem(item, true); /// if collapsed or empty folder - expand
         return;
       }
-      let uri = item.resourceUri ?? vscode.Uri.file(item.label! as string);
-      uri = item.isFile ? vscode.Uri.joinPath(uri, "..") : uri; /// get folder
-      const exists = this.collapsingItems.get(uri.fsPath);
+      const uri = await helper.getFolder(item); /// get folder
+      const exists = this.collapsingItems.get(uri.toString());
 
-      if (exists && exists.isPlain) {
-        if (item instanceof EmptyFolderItem || item.isFile) { /// remove plain
+      if (exists && exists.isPlain) { /// go back to classic mode for the item
+        if (item instanceof EmptyFolderItem || item.isFile) { /// set not plain
           this.updateCollapsings(uri, TreeItemCollapsibleState.Expanded, false);
-          this.collapseItem(item); /// go back to classic mode and collapse
         }
       } else { /// otherwise - uncollapse the folder to plain mode
         this.updateCollapsings(uri, TreeItemCollapsibleState.Expanded, true);
@@ -318,52 +331,70 @@ export class FoldersViewProvider
       }
       this.refresh();
     } else if (expanded) {
-      this.collapseItem(item, true);
+      this.collapseItem(item); /// save item as expanded
     } else {
-      this.revealItem(item, true);
+      this.revealItem(item, true); /// expand item and nothing else to do
     }
     this.uncollapsedMode[0] = false;
   }
 
-  async getChildren(element?: FileItem): Promise<FileItem[]> {
-    const purify = (item: FileItem, then?: () => any) =>
-      this.fileItemManager.findAnyThen([item], items, async (replacing) => {
+  public async getChildren(element?: FileItem): Promise<FileItem[]>
+  {
+    const purify = <T extends FileItem>(item: T, then?: () => any) =>
+      manager.findAnyThen([item], items, async (replacing) => {
         const replaced = items[replacing];
-        items[replacing] = await this.createFileItem(replaced, false, true);
+        items[replacing] = await helper.createTreeItem(replaced, true);
         then?.();
       });
-    const emptify = async (item: FileItem): Promise<FileItem> =>
-      await this.createFileItem(item, true, false);
+    const emptify = async (item: FileItem) =>
+      await helper.createTreeItem(item, false);
     const clearItemsOfEmptyElements = () =>
       items = items.filter((item) => !(item instanceof EmptyFolderItem));
     const filterItemsOfIgnoredElements = () =>
       items = items.filter(this.checkIgnoredItems);
     const addFileItem = async (uri: vscode.Uri) =>
-      items.push(await this.createFileItem(uri, this.plainMode));
-    const initCollapsingItemsByAllFolders = async () =>
-      await Promise.all((await getAllFolders())!.map((uri) =>
+      items.push(await helper.createTreeItem(
+        uri, helper.getExpandingStateFor(uri, this.collapsingItems)));
+    const initCollapsingItemsByAllSubFoldersOf = async (wsFolder: number) =>
+      await Promise.all((await getAllFolders(wsFolder))!.map((uri) =>
         this.updateCollapsings(uri, TreeItemCollapsibleState.Collapsed, true)));
+    const isWorkspaceFolder = (item: FileItem) =>
+      this.workspaceFolders.some((f) => item.like(f.uri.toString()));
+    const hideEmptyFoldersOnSelectedWorkspace = () =>
+    {
+      let checked = false;
+      const check = (item: FileItem) => {
+        if (manager.check(item).isChildOf(folder.uri)) {
+          checked = true; return item.isFile;
+        } else { return true; }
+      };
+      let  folder = this.workspaceFolders[this.selectedWorkspaceFolder];
+      if  (folder) { items = items.filter(check); }
+      if (checked) { this.selectedWorkspaceFolder = -1; }
+    };
     const excludeOrEmptifyNestedPlainItems = async (colls: [string, State][]) =>
     {
-      items = (await Promise.all(items.flatMap(async (it) => {
-        const uri = it.resourceUri ?? vscode.Uri.file(it.label! as string);
-        for (const [path, state] of colls) {
-          if (state.isPlain && isInFolder(uri.fsPath, path)) {
-            return uri.fsPath === path ? [await emptify(it)] : [];
+      items = (await Promise.all(items.flatMap(async (item) => {
+        const uri = item.resourceUri ?? await resolveUri(item.getLabel());
+        for (const [pathe, state] of colls) {
+          const child = uri.toString();
+          const parent = manager.getParent(uri).toString();
+          if (state.isPlain && (same(child, pathe) || same(parent, pathe))) {
+            return same(child, pathe) ? [await emptify(item)] : [];
           } /// emptify or exclude
         }
-        return [it]; /// get existing element - nothing to change
+        return [item]; /// get existing element - nothing to change
       }))).flat();
     };
     const revealSelectedItem = () =>
     {
-      const toSelect = this.selectedItem[1];
+      const toSelect = this.selectedItem[1]; /// the first is undefined
       if (toSelect) {
         const pathes = this.selectedItem.filter((i) => i !== undefined);
-        this.fileItemManager.findAnyThen(pathes, items,
+        manager.findAnyThen(pathes, items,
           async (found) => this.revealItem(items[found], !items[found].isFile)
         );
-        this.fileItemManager.findThen(toSelect.toString(), items,
+        manager.findThen(toSelect.toString(), items,
           (found) => this.selectedItem = [items[found]]
         );
       }
@@ -378,7 +409,8 @@ export class FoldersViewProvider
       if (!targetItem) { return true; }
       if (targetItem.isFile) {
         let found = false;
-        this.fileItemManager.findThen(targetItem, items, (i) => {
+        manager.findThen(targetItem, items, (i) =>
+        {
           if (on.expand) { this.expandedItem = undefined; }
           if (on.focus) { this.focusedItem  = undefined; }
 
@@ -389,42 +421,39 @@ export class FoldersViewProvider
       }
       return false;
     };
-    const refreshFilterItems = async (on: { root: boolean } = { root: true }) =>
+    const refreshAndFilterItems = async (on: {root: boolean} = {root: true}) =>
     {
-      await refreshCollapsibleStates();
+      if (this.expandedItem) { await collapseExpandedItem(); }
+      if (on.root && helper.isTimeToRefreshStates()) {
+        helper.refreshStatesFor(items, this.collapsingItems);
+      }
 
       if (this.plainMode) { await filterItemsInPlainMode(on.root); }
       else { filterItemsOfIgnoredElements(); }
 
       itemMustBeRevealed({ expand: false, focus: true });
+
+      if (!this.showUncollapsedPlainFolders) {
+        clearItemsOfEmptyElements();
+      }
     };
     const collapseExpandedItem = async () =>
     {
       if (itemMustBeRevealed({ expand: true, focus: false })) { return; }
-
-      await purify(this.expandedItem as FileItem, () => {
-        this.fileItemManager.remove(this.expandedItem as FileItem,
-          this.collapsingItems, () => {
-            this.expandedItem = undefined;
-            this.refresh();
-        });
-      });
-    };
-    const refreshCollapsibleStates = async () =>
-    {
-      this.refreshStatesFor(items);
-
       if (this.expandedItem) {
-        await collapseExpandedItem();
+        await purify(this.expandedItem, async () => {
+          this.expandedItem = undefined;
+          this.refresh();
+        });
       }
     };
-    const filterItemsInPlainMode = async (root: boolean = true) =>
+    const filterItemsInPlainMode = async (rooted: boolean = true) =>
     {
       const getNestedComponentsArrays = async () =>
         await Promise.all(collapsings.flatMap(async ([path, state]) => {
           if (!state.isPlain) { return []; }
           /// get all nested files and folders excluding plain folders
-          const collapsingUri = vscode.Uri.file(path);
+          const collapsingUri = getUri(path);
           let files: [string, vscode.FileType][];
           try {
             files = await vscode.workspace.fs.readDirectory(collapsingUri);
@@ -432,85 +461,100 @@ export class FoldersViewProvider
             this.popFromCollapsings(path);
             files = [];
           } /// exclude plain folders
-          return Promise.all(files.map(async ([file, ]) => {
-            const uri = vscode.Uri.joinPath(collapsingUri, file); /// create uri
+          const elements = await Promise.all(files.map(async ([file]) => {
+            let uri = vscode.Uri.joinPath(collapsingUri, file); /// create uri
             let expanded: boolean | undefined; /// state to pass to a new item
             return collapsings.some(([nestedPath, nestedState]) => {
-              if (uri.fsPath === nestedPath) { /// item detected in collapsings
-                expanded = isExpanded(nestedState.collapses);
+              if (same(uri, nestedPath)) { /// detected in collapsings
+                expanded = helper.isExpanded(nestedState.collapses);
                 return nestedState.isPlain; /// plain items shouldn't be created
               } return false; /// these items will be created and maybe expanded
             }) ?
-            [] : await this.createFileItem(uri, true, expanded);
+            [] : await helper.createTreeItem(uri, expanded);
           }));
+          return elements.flat();
         })
       );
       if (this.uncollapsedMode[0] && this.collapsingItems.size <= 0) {
-        await initCollapsingItemsByAllFolders();
+        if (this.selectedWorkspaceFolder >= 0) {
+          await initCollapsingItemsByAllSubFoldersOf(
+            this.selectedWorkspaceFolder
+          );
+        }
       }
       this.checkIgnoredItems();
       
       await excludeOrEmptifyNestedPlainItems(
         [...this.collapsingItems.entries()]
       );
-      if (!root) { filterItemsOfIgnoredElements(); return; }
+      if (!rooted) { filterItemsOfIgnoredElements(); return; }
 
       const collapsings = [...this.collapsingItems.entries()];
       const componentsArrays = await getNestedComponentsArrays();
-      items.push(...componentsArrays.flat(2));
-      items = items.filter(this.checkIgnoredItems);
+      const components = [...componentsArrays.flat()];
 
-      if (this.uncollapsedMode[0] && !this.showEmptyUncollapsedFolders) {
-        items = items.filter((item) => item.isFile);
+      items.push(...components.filter(
+        (item) => element ? manager.check(item).isChildOf(element) : true)
+      );
+      filterItemsOfIgnoredElements;
+
+      if (this.uncollapsedMode[0]) {
+        if (!this.showEmptyUncollapsedFolders) {
+          if (this.selectedWorkspaceFolder >= 0) {
+            hideEmptyFoldersOnSelectedWorkspace();
+          }
+        } else { this.selectedWorkspaceFolder = -1; }
       }
     };
-    const sortItemsThenCheckRoot = async(): Promise<FileItem[]> =>
+    const withRoot = (sorted: FileItem[], rootIndex: number = 0): FileItem[] =>
     {
-      if (!this.showUncollapsedPlainFolders) { clearItemsOfEmptyElements(); }
-
-      const sorted = this.fileItemManager.sortItems(items);
-      this.isEmpty = sorted.length === 0;
-
       if (this.showingRoot) {
-        this.root.contextValue = this.isEmpty ? emptyRoot : root;
-        sorted.push(this.root);
+        this.roots[rootIndex].contextValue = this.isEmpty ? emptyRoot : root;
+        sorted.push(this.roots[rootIndex]);
       }
       return sorted;
     };
+
     let items: FileItem[] = [];
+    await this.loadingWorkspaceFolders;
 
     if (!element) {
-      const workspaceFolders = vscode.workspace.workspaceFolders || [];
-
-      if (workspaceFolders.length === 1) {
+      if (this.workspaceFolders.length === 1)
+      {
         const files = await vscode.workspace.fs.readDirectory(
-          workspaceFolders[0].uri
+          this.workspaceFolders[0].uri
         );
-
         for (const [name] of files) {
-          const itemUri = vscode.Uri.joinPath(workspaceFolders[0].uri, name);
-          await addFileItem(itemUri);
+          const uri = vscode.Uri.joinPath(this.workspaceFolders[0].uri, name);
+          await addFileItem(uri);
         }
-        await refreshFilterItems();
-        return sortItemsThenCheckRoot();
+        await refreshAndFilterItems();
+        const sorted = manager.sortItems(items);
+
+        return withRoot(sorted);
       }
 
-      for (const folder of workspaceFolders) {
+      for (const folder of this.workspaceFolders) {
         await addFileItem(folder.uri);
       }
-      await refreshFilterItems();
-      return sortItemsThenCheckRoot();
+      this.isEmpty = this.workspaceFolders.length <= 0;
+
+      await refreshAndFilterItems({ root: false });
+      const sorted = manager.sortItems(items);
+
+      return this.isEmpty ? withRoot(sorted) : sorted;
     }
 
     const files = await vscode.workspace.fs.readDirectory(element.resourceUri!);
-
     for (const [name] of files) {
       const itemUri = vscode.Uri.joinPath(element.resourceUri!, name);
       await addFileItem(itemUri);
     }
-    await refreshFilterItems({ root: false });
-    if (!this.showUncollapsedPlainFolders) { clearItemsOfEmptyElements(); }
-    
-    return this.fileItemManager.sortItems(items);
+    await refreshAndFilterItems({ root: isWorkspaceFolder(element) });
+
+    const rootIndex = this.roots.findIndex((root) => root.like(element));
+    const sorted = manager.sortItems(items);
+
+    return rootIndex >= 0 ? withRoot(sorted, rootIndex) : sorted; 
   }
 }

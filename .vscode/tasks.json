@@ -4,11 +4,21 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "npm-watch",
-      "icon": { "id": "loading", "color": "terminal.ansiGreen" },
+      "label": "ts-check",
+      "icon": { "id": "symbol-interface", "color": "terminal.ansiBlue" },
       "type": "npm",
-      "script": "watch",
-      "problemMatcher": "$tsc-watch",
+      "script": "check",
+      "problemMatcher": ["$tsc"],
+      "presentation": {
+        "reveal": "silent"
+      }
+    },
+    {
+      "label": "es-build",
+      "icon": { "id": "build", "color": "terminal.ansiGreen" },
+      "type": "npm",
+      "script": "build",
+      "problemMatcher": [],
       "isBackground": true,
       "presentation": {
         "reveal": "never"
@@ -19,21 +29,12 @@
       }
     },
     {
-      "label": "npm-build",
-      "icon": { "id": "build", "color": "terminal.ansiBlue" },
-      "type": "npm",
-      "script": "build",
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
-    },
-    {
       "label": "npm-run",
-      "dependsOn": ["npm-watch", "npm-build"],
-      "dependsOrder": "parallel"
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "ts-check",
+        "es-build"
+      ],
     }
   ]
 }

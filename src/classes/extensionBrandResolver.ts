@@ -1,18 +1,17 @@
 import * as vscode from "vscode";
-import { ExtensionContext } from "vscode";
-import { CommandRegistrator } from "./commandRegistrator";
+import { getRegistratorCommands } from "./commandRegistrator";
 
 const resolver = "just-files" as const;
 
 const branch = "mergeFromMaxoiduss-fixes" as const;
-const link176: string =
+const link184: string =
   "https://github.com/maxoiduss/just-files/"   +
   `blob/${branch}/src/classes/` +
-  "extensionBrandResolver.ts#L176";
-const link194: string =
+  "extensionBrandResolver.ts#L184";
+const link202: string =
   "https://github.com/maxoiduss/just-files/"   +
   `blob/${branch}/src/classes/` +
-  "extensionBrandResolver.ts#L194";
+  "extensionBrandResolver.ts#L202";
 
 type ViewX = "Files" | "Just Files" | "Preview";
 type HasType = { type: string | undefined };
@@ -33,6 +32,7 @@ interface Brand {
   addItemFromExplorer: string;
   revealInSidebar: string;
   revealInExplorer: string;
+  refuseMarked: string;
   collectMarked: string;
   collapseFolder: string;
   uncollapseAll: string;
@@ -76,11 +76,12 @@ interface Brand {
   };
   focus: (on: ViewX) => string;
 }
-export const brand = {} as Brand;
 
-function validate(entries: string[], on: Set<string>): boolean {
+const validate = (entries: string[], on: Set<string>): boolean => {
   return entries.every((entry) => on.has(entry));
-}
+};
+
+export const brand = {} as Brand;
 
 export class ExtensionBrandResolver {
   public static readonly command: string;
@@ -107,7 +108,7 @@ export class ExtensionBrandResolver {
   private configurationJSON: any;
   private viewsJSON: any;
 
-  constructor(private readonly context: ExtensionContext) {
+  constructor() {
     if (ExtensionBrandResolver.instance) { throw Error("ALREADY RESOLVED"); }
 
     ExtensionBrandResolver.instance = this;
@@ -128,6 +129,7 @@ export class ExtensionBrandResolver {
     brand.closeFolder = `${name}.closeFolder`;
     brand.revealInSidebar = `${name}.revealInSidebar`;
     brand.revealInExplorer = "revealInExplorer";
+    brand.refuseMarked = `${name}.refuse`;
     brand.collectMarked = `${name}.collect`;
     brand.collapseFolder = `${name}.collapseFolder`;
     brand.uncollapseAll = `${name}.uncollapseAll`;
@@ -194,20 +196,20 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if (!validated) {
-      this.showError("validateSetup failed", link176);
+      this.showError("validateSetup failed", link184);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
   }
 
   private validateCommandRegistration(on: Set<string>) {
-    const commands = CommandRegistrator.getCommands();
+    const commands = getRegistratorCommands();
     const registration = new Set<string>(
       Object.values(commands).filter(this.filtration).sort()
     );
     const validated = validate([...registration], on);
     if (!validated) {
-      this.showError("validateCommandRegistration failed", link194);
+      this.showError("validateCommandRegistration failed", link202);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }
@@ -240,12 +242,14 @@ export class ExtensionBrandResolver {
   }
 
   public resolve() {
-    const dot = ".";
+    /// there are settings parts you should use to identify each in json
+    const dot = '.'; /// common interactions with human analyzis is here
     const isTreeview = (it: HasType) => it.type ?? "tree" === "tree";
     const isWebview = (it: HasType) => it.type === "webview";
     const isBoolean = (it: HasType) => it.type === "boolean";
     const isString = (it: HasType) => it.type === "string";
     const isNumber = (it: HasType) => it.type === "number";
+    const hasEmpty = (s: string) => s.toLowerCase().includes("empty");
     const hasClick = (s: string) => s.toLowerCase().includes("click");
     const hasPick = (s: string) => s.toLowerCase().includes("pick");
     const hasShow = (s: string) => s.toLowerCase().includes("show");
@@ -303,11 +307,13 @@ export class ExtensionBrandResolver {
     let stringProp = stringProps.length > 0 ?
       stringProps[0] : undefined;
 
-    const boolean1Prop = booleanProps.length > 1 && !hasShow(booleanProps[0]) ?
+    const boolean1Prop = booleanProps.length > 1
+                      && !hasEmpty(booleanProps[0]) ?
       booleanProps[0]
     : booleanProps.length > 1 ? booleanProps[1] : undefined;
     
-    const boolean2Prop = booleanProps.length > 1 && hasShow(booleanProps[1]) ?
+    const boolean2Prop = booleanProps.length > 1
+                      && hasShow(booleanProps[1]) ?
       booleanProps[1]
     : booleanProps.length > 0 ? booleanProps[0] : undefined;
     

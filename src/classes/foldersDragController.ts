@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { TreeDragAndDropController } from "vscode";
-import { FileItemManager } from "./fileItemManager";
+import * as manager from "./fileItemManager";
 import { CommandRegistrator } from "./commandRegistrator";
 import { emptyItem, root, FileItem } from "./fileItem";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
@@ -19,8 +19,6 @@ export class FoldersDragController
 {
   readonly dropMimeTypes: string[] = [_.MIME, URLS];
   readonly dragMimeTypes: string[] = [_.MIME, URLS];
-
-  private readonly fileItemManager = new FileItemManager();
 
   constructor(
     private readonly commandRegistrator: CommandRegistrator,
@@ -79,7 +77,7 @@ export class FoldersDragController
     const wsf = vscode.workspace.workspaceFolders?.[0];
     const where = target ?? 
       (wsf !== undefined ?
-        this.fileItemManager.createFileItem(wsf.uri)
+        manager.createFileItem(wsf.uri)
       : undefined);
     const transferItems = dataTransfer.get(_.MIME);
     if (transferItems) {
@@ -97,7 +95,7 @@ export class FoldersDragController
       return;
     }
     const uris = urisFromDataTransfer();
-    const items = await this.fileItemManager.createFileItems(uris);
+    const items = await manager.createFileItems(uris);
     await this.commandRegistrator.copyItems(items);
     await this.commandRegistrator.pasteItems(where);
     return;

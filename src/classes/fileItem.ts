@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
-import * as fpath from 'path';
-import { ExtensionBrandResolver
-} from "./extensionBrandResolver";
+import { asRelative, basename, getRootOf, getUri, resolveUri } from "./utilManager";
+import { ExtensionBrandResolver } from "./extensionBrandResolver";
 
 export const file = "file" as const;
 export const folder = "folder" as const;
@@ -12,24 +11,21 @@ export const rootFile = "rooting" as const;
 export const root = "root" as const;
 
 const empty = '' as const;
+const separator = '/';
 const timegap = 2500 as const;
 
 const name = () => ExtensionBrandResolver.command;
+const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
 
 export const command = {
-    get tryOpen() { return `${name()}.tryOpen`; }
+  get tryOpen() { return `${name()}.tryOpen`; }
 };
 
-export const asRelative = (uri: vscode.Uri | string | undefined) =>
-  uri ? vscode.workspace.asRelativePath(uri).replace(/\\/g, '/') : empty;
-
 export class FileItem extends vscode.TreeItem {
-  public static clickTolerance: number;
-  public static renameTolerance: number;
-
   public isFile: boolean;
   public lastClickTime: number;
   public relativePath!: string;
+  public override id!: string;
 
   constructor(
     label: string,
@@ -53,7 +49,8 @@ export class FileItem extends vscode.TreeItem {
       super(resourceUri, collapsibleState);
       this.label = label;
     } else {
-      super(asRelative(label), collapsibleState);
+      super(asRelative(getUri(label)), collapsibleState);
+      this.resourceUri = getUri(label);
     }
     this.isFile = isFile;
     this.lastClickTime = Date.now() - timegap;
@@ -62,36 +59,50 @@ export class FileItem extends vscode.TreeItem {
       title: "Try Open",
       arguments: [this]
     };
-    this.setUri(resourceUri, label);
+    this.setUri(resourceUri, true);
   }
-
-  setUri(resourceUri: vscode.Uri | undefined, fromLabel?: string) {
-    this.resourceUri = resourceUri ?? vscode.Uri.file(fromLabel ?? empty);
-    this.relativePath = asRelative(this.resourceUri);
-    this.contextValue = this.getContextType();
-    this.id = this.relativePath;
-
-    if (!fromLabel) { this.setLabel(); }
-  }
-
-  private setLabel() {
-    const label = this.label?.toString();
-    this.label = label ?
-      label.includes('/') ?
-        this.relativePath : fpath.basename(this.relativePath)
-    : label;
-  }
-
+  
   private getContextType() : string {
     const isInRoot = !/[\/\\]/.test(
       typeof this.label === "string" ? this.label : this.relativePath
     );
     return this.isFile ?
-      isInRoot ? rootFile : file
+      isInRoot ?
+        rootFile : file
     : folder;
   }
 
-  hasExpandedState(options?: {readonly changeTo: boolean}): boolean {
+  protected shiftId() { this.id = separator + this.id; }
+
+  public setUri(resourceUri: vscode.Uri | undefined, ctor?: boolean) {
+    this.resourceUri = ctor ? this.resourceUri : resourceUri;
+    this.relativePath = asRelative(this.resourceUri);
+    this.contextValue = this.getContextType();
+    this.id = (this.resourceUri ?? getUri(this.getLabel())).toString();
+
+    if (!ctor) { this.setLabel(); } /// switch relative to basename and back
+  }
+
+  public async getUri(): Promise<vscode.Uri> {
+    return this.resourceUri ?? await resolveUri(this.getLabel());
+  }
+
+  public setLabel(plain? : boolean, options?: { readonly sorted: boolean}) {
+    const label = this.label?.toString();
+    this.label = label ?
+      options ?
+        options.sorted ?
+          basename(this.relativePath) : this.relativePath
+      : label.includes(separator) || plain ?
+          this.relativePath : basename(this.relativePath)
+    : label;
+  }
+
+  public getLabel(): string {
+    return this.label! as string;
+  }
+
+  public hasExpandedState(options?: {readonly changeTo: boolean}): boolean {
     if (options) {
       this.collapsibleState = options.changeTo === true &&
         this.collapsibleState === vscode.TreeItemCollapsibleState.Collapsed ?
@@ -101,23 +112,23 @@ export class FileItem extends vscode.TreeItem {
             vscode.TreeItemCollapsibleState.Collapsed
           : this.collapsibleState;
     }
-    return this instanceof EmptyFolderItem && this.contextValue === folder ?
+    return this instanceof EmptyFolderItem && this.contextValue === emptyItem ?
       true
     : this.collapsibleState === vscode.TreeItemCollapsibleState.Expanded;
   }
 
-  like(anotherItem: vscode.TreeItem): boolean;
-  like(anotherItemPath: string): boolean;
-  like(anotherItemOrPath: vscode.TreeItem | string): boolean;
-  like(another: vscode.TreeItem | string): boolean {
+  public like(anotherItem: vscode.TreeItem): boolean;
+  public like(anotherItemPath: string): boolean;
+  public like(anotherItemOrPath: vscode.TreeItem | string): boolean;
+  public like(another: vscode.TreeItem | string): boolean {
     return typeof another === "string" ?
-      another === this.resourceUri?.fsPath
+      another === this.resourceUri?.toString()
     : another instanceof vscode.TreeItem ?
-        this.resourceUri?.fsPath === another.resourceUri?.fsPath
+        this.resourceUri?.toString() === another.resourceUri?.toString()
       : false;
   }
 
-  async isEmpty(): Promise<boolean> {
+  public async isEmpty(): Promise<boolean> {
     if (!this.resourceUri || this.isFile) { return false; }
   
     const files = await vscode.workspace.fs.readDirectory(this.resourceUri);
@@ -126,41 +137,43 @@ export class FileItem extends vscode.TreeItem {
 }
 
 export class RootFileItem extends FileItem {
-  constructor() {
+  constructor(folder: number = 0) {
     super(' ',
       vscode.TreeItemCollapsibleState.None,
       false,
-      vscode.workspace.workspaceFolders ?
-        vscode.workspace.workspaceFolders[0].uri
-      : vscode.Uri.file(fpath.parse(process.cwd()).root)
+      workspaceFolders().length > 0 ?
+        workspaceFolders()[folder].uri
+      : getUri(getRootOf(process.cwd()))
     );
     this.contextValue = root;
     this.label = ' ';
     this.iconPath = ' ';
     this.command = undefined;
+    this.shiftId();
   }
 }
 
 export class EmptyFolderItem extends FileItem {
-  constructor(anotherItem: vscode.Uri, expandable?: boolean);
-  constructor(anotherItem: vscode.TreeItem, expandable?: boolean);
-  constructor(another: vscode.TreeItem | vscode.Uri, expandable?: boolean);
-  constructor(another: vscode.TreeItem | vscode.Uri, expandable?: boolean) {
+  constructor(another: vscode.Uri);   /// purified item
+  constructor(another: vscode.TreeItem); /// plain item
+  constructor(another: vscode.TreeItem | vscode.Uri) {
     if (another instanceof vscode.TreeItem) {
-      super(`${fpath.basename(another.resourceUri?.fsPath ?? ' ')} `,
-        expandable ?
-          vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.None,
-        false);
+      super(another.label as string ?? asRelative(another.resourceUri),
+        vscode.TreeItemCollapsibleState.None,
+        false,
+        another.resourceUri ?? getUri(another.label as string)
+      );
+      this.contextValue = emptyItem;
+      this.shiftId(); this.shiftId();
     } else {
-      super(`${another.fsPath}`,
-        expandable ?
-          vscode.TreeItemCollapsibleState.Collapsed
-        : vscode.TreeItemCollapsibleState.None,
-        false);
+      super(`${basename(another)} `,
+        vscode.TreeItemCollapsibleState.Collapsed,
+        false,
+        another
+      );
+      this.contextValue = folder;
+      this.shiftId();
     }
-    this.contextValue = this.collapsibleState ===
-      vscode.TreeItemCollapsibleState.None ? emptyItem : root;
     this.iconPath = new vscode.ThemeIcon("folder");
     this.command = undefined;
   }
