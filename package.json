@@ -568,7 +568,7 @@
         {
           "command": "just-files.collapseFolder",
           "group": "inline",
-          "when": "view == filesView && viewItem != rooting && viewItem != root && viewItem != vac"
+          "when": "view == filesView && (just-files:isPlain || viewItem != file) && viewItem != rooting && viewItem != root && viewItem != vac"
         },
         {
           "command": "just-files.remark",

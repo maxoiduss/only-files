@@ -122,7 +122,9 @@ export class JustFiles {
   private changeFileItem(changed: FileItem | undefined, onUri: vscode.Uri) {
     if (this.foldersTreeView.visible) {
       this.foldersViewProvider.trySelectByUri(changed?.resourceUri || onUri);
-      if (changed) { this.foldersViewProvider.refresh(changed); }
+      if (changed) {
+        this.foldersViewProvider.changeTreeItem(changed, onUri).then((_) =>
+          this.foldersViewProvider.refresh(changed)); }
     } else {
       this.foldersViewProvider.refresh();
     }

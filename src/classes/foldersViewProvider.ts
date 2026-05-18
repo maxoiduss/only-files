@@ -123,14 +123,15 @@ export class FoldersViewProvider
   private async updateCollapsings(
     uri: vscode.Uri,
     collapses: TreeItemCollapsibleState,
-    isPlain: boolean ): Promise<void>
+    isPlain: boolean): Promise<void>
   { const dir = (await getFolder(uri)).toString();
     this.collapsingItems.set(dir, { isPlain: isPlain, collapses: collapses });
   }
 
   private async popFromCollapsings(
     uriOr: vscode.Uri | string ): Promise<boolean>
-  { const dir = (await getFolder(getUri(uriOr))).toString();
+  { const pathe = typeof uriOr === "string" ? uriOr : undefined;
+    const dir = pathe ?? (await getFolder(uriOr as vscode.Uri)).toString();
     return this.collapsingItems.delete(dir);
   }
   
@@ -154,22 +155,27 @@ export class FoldersViewProvider
   ): Promise<void> {
     const exist = this.collapsingItems.get(oldUri.toString());
     const newUri = fileItem.resourceUri;
-    if (!newUri) { return; }
+    if (fileItem.isFile || !newUri) { return; }
 
-    const changeCollapsingUri = async (target: vscode.Uri, state: State) =>
-    { const uri = manager.changeUri(undefined, newUri, target);
+    const changeCollapsingUri = (target: vscode.Uri, state: State) =>
+    { const uri = manager.changeUri(target, newUri, oldUri);
       if (uri) {
-        await this.popFromCollapsings(target);
-        await this.updateCollapsings(uri, state.collapses, state.isPlain);
+        updated.push({ target: target, state, new: uri });
       }
     };
-    if (exist) { await changeCollapsingUri(oldUri, exist); }
+    const updated: { target: vscode.Uri; state: State; new: vscode.Uri }[] = [];
 
+    if (exist) { changeCollapsingUri(oldUri, exist); }
     for (const [pathe, state] of this.collapsingItems) {
       const targetUri = getUri(pathe);
+      if (same(targetUri, oldUri)) { continue; }
       if (manager.check(targetUri).isChildOf(oldUri)) {
-        await changeCollapsingUri(targetUri, state);
+        changeCollapsingUri(targetUri, state);
       }
+    }
+    for (const u of updated) {
+      await this.popFromCollapsings(u.target.toString());
+      await this.updateCollapsings(u.new, u.state.collapses, u.state.isPlain);
     }
   }
 
@@ -479,15 +485,14 @@ export class FoldersViewProvider
     const filterItemsInPlainMode = async (rooted: boolean = true) =>
     { /* ----------------------------------------------------------------- */
       const getNestedComponentsArrays = async () =>
-        await Promise.all(collapsings.flatMap(async ([path, state]) => {
+        await Promise.all(collapsings.map(async ([path, state]) => {
           if (!state.isPlain) { return []; }
           /// get all nested files and folders excluding plain folders
           const collapsingUri = getUri(path);
-          let files: [string, vscode.FileType][];
-          try {
-            files = await vscode.workspace.fs.readDirectory(collapsingUri);
-          } catch (error) {
-            this.popFromCollapsings(path);
+          let  files: [string, vscode.FileType][];
+          try {files = await vscode.workspace.fs.readDirectory(collapsingUri); }
+          catch (error) {
+            this.popFromCollapsings(collapsingUri);
             files = [];
           } /// exclude plain folders
           const elements = await Promise.all(files.map(async ([file]) => {
@@ -499,12 +504,13 @@ export class FoldersViewProvider
                 return nestedState.isPlain; /// plain items shouldn't be created
               } return false; /// these items will be created and maybe expanded
             }) ?
-            [] : await helper.createTreeItem(uri, expanded);
+            [] : [await helper.createTreeItem(uri, expanded)];
           }));
-          return elements.flat();
+          return elements;
         })
-      );
-      if (uncollapsedModeNotSetButShould()) {
+      ).then((resolved) => resolved.flat(2).filter((it) => helper.real(it)));
+      /* ----------------------------------------------------------------- */
+      if (uncollapsedModeNotSetButShould()) { /// launches uncollapse-all mode
         if (this.selectedWorkspaceFolder >= 0) {
           await initCollapsingItemsByAllSubFoldersOf(
             this.selectedWorkspaceFolder

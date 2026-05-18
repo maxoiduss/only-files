@@ -79,6 +79,8 @@ const configuration    = () => ExtensionBrandResolver.configuration;
 const boolean1Property = () => ExtensionBrandResolver.boolean1Property;
 const boolean2Property = () => ExtensionBrandResolver.boolean2Property;
 
+export const real = (obj: any): obj is {} => obj !== undefined && obj !== null;
+
 export const isTimeToRefreshStates = (): boolean => {
   getChildrenRootCount++;
 
@@ -101,7 +103,7 @@ export const getFolder = async <T extends FileItem>(
   item: T
 ): Promise<vscode.Uri> => {
   const uri = await item.getUri();
-  return item.isFile ? vscode.Uri.joinPath(uri, "..") : uri;
+  return item.isFile ? vscode.Uri.joinPath(uri, '..') : uri;
 };
 
 export const createTreeItem = (

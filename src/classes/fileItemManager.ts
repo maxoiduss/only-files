@@ -137,19 +137,22 @@ export const check = (childFileItemOrUri: FileItem | vscode.Uri) => {
 };
 
 export const changeUri = (
-  onItem: FileItem | undefined, newUri: vscode.Uri, oldUri: vscode.Uri
+  on: FileItem | vscode.Uri, newUri: vscode.Uri, oldUri: vscode.Uri
 ): vscode.Uri | undefined => {
   const sep = '/';
-  const targetUri = onItem?.resourceUri ?? newUri;
+  const isFileItem = on instanceof FileItem;
+  const targetUri = isFileItem ? on.resourceUri : on;
+  if (!targetUri) { return undefined; }
+
   const targetPath = targetUri.path;
   const oldPath = oldUri.path;
-  if (targetPath.startsWith(oldPath)) {
+  if (same(targetPath, oldPath) || targetPath.startsWith(oldPath + sep)) {
     let relativePart = targetPath.substring(oldPath.length);
     if (relativePart.startsWith(sep)) {
-      relativePart = relativePart.replace(/^\/+/, '');
+      relativePart = relativePart.substring(1);
     }
     const uri = vscode.Uri.joinPath(newUri, relativePart);
-    onItem?.setUri(uri);
+    isFileItem ? on.setUri(uri) : {};
 
     return uri;
   }
