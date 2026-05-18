@@ -1,9 +1,10 @@
 import * as vscode from "vscode";
+import * as manager from "./fileItemManager";
 import { Location } from "vscode";
 import { FileItem } from "./fileItem";
 import { CommandRegistrator } from "./commandRegistrator";
-import * as manager from "./fileItemManager";
 import {
+  getNicePath,
   setNothingToExcludeTemporary,
   showProgressBar,
   showQuickInput
@@ -241,7 +242,15 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     if (plannedToAsk && ignorePattern !== empty) {
       const restoreSetting = await setNothingToExcludeTemporary();
       const ignoreFiles = await vscode.workspace.findFiles(ignorePattern);
-      this.gitignore = ignoreFiles.length > 0 ? ignoreFiles[0] : this.gitignore;
+      if (ignoreFiles.length > 1) {
+        const map = new Map(ignoreFiles.map((file) => [getNicePath(file), file]));
+        const file = await vscode.window.showQuickPick([...map.keys()], {
+          placeHolder: "The 1st will be used otherwise..", title: "Which one?"
+        });
+        this.gitignore = file ? map.get(file) : ignoreFiles[0];
+      } else {
+        this.gitignore = ignoreFiles.length > 0 ? ignoreFiles[0] : this.gitignore;
+      }
       await restoreSetting();
     } else if (ignorePattern === empty) {
       this.gitignore = undefined;

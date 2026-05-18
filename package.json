@@ -188,6 +188,14 @@
         }
       },
       {
+        "command": "just-files.ignoreback",
+        "title": "Switch between use/don't use ignore-files",
+        "icon": {
+          "light": "resources/light/ignorebackLight.svg",
+          "dark": "resources/dark/ignorebackDark.svg"
+        }
+      },
+      {
         "command": "just-files.collapseFolder",
         "title": "Collapse to/from folder",
         "icon": {
@@ -399,7 +407,12 @@
         },
         {
           "command": "just-files.ignore",
-          "when": "view == filesView",
+          "when": "view == filesView && !just-files:isIgnored",
+          "group": "navigation"
+        },
+        {
+          "command": "just-files.ignoreback",
+          "when": "view == filesView && just-files:isIgnored",
           "group": "navigation"
         },
         {

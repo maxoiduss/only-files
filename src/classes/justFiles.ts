@@ -87,6 +87,37 @@ export class JustFiles {
       didExpand1, didCollapse1, didExpand2, didCollapse2
     );
   }
+    
+  public subscribe() {
+    this.subscribeDecoratorAndRegister();
+    this.subscribeDidChangedTextEditor();
+    this.subscribeRegistrator();
+    this.subscribeRestore();
+    this.subscribeShowLogs();
+    this.subscribeShow();
+    this.subscribeHide();
+    this.subscribeAddFromTab();
+    this.subscribeRemoveFromTab();
+    this.subscribeAddFromCommand();
+    this.subscribeRemoveFromCommand();
+    this.subscribeAddFromExplorer();
+    this.subscribeCleanJustView();
+    this.subscribeChanges();
+    this.subscribeConfigurationChanges();
+    this.subscribeSwitchView();
+    this.subscribeSwitchIgnore();
+    this.subscribeRefreshFilesView();
+    this.subscribeRefreshJustFilesView();
+    this.subscribeSearchList();
+    this.subscribeRevealInExplorer();
+    this.subscribeCollapseToFolder();
+    this.subscribeUncollapseAll();
+    this.subscribeCollectAllMarked();
+    this.subscribeRefuseAllMarked();
+    this.subscribeOpenFolder();
+    this.subscribeCloseFolder();
+    this.subscribePreviewItemAndRegister();
+  }
 
   private changeFileItem(changed: FileItem | undefined, onUri: vscode.Uri) {
     if (this.foldersTreeView.visible) {
@@ -218,39 +249,8 @@ export class JustFiles {
     this.foldersViewProvider.refresh(item);
     this.justFilesViewProvider.refresh(item);
   };
-  
-  subscribe() {
-    this.subscribeDecoratorAndRegister();
-    this.subscribeDidChangedTextEditor();
-    this.subscribeRegistrator();
-    this.subscribeRestore();
-    this.subscribeShowLogs();
-    this.subscribeShow();
-    this.subscribeHide();
-    this.subscribeAddFromTab();
-    this.subscribeRemoveFromTab();
-    this.subscribeAddFromCommand();
-    this.subscribeRemoveFromCommand();
-    this.subscribeAddFromExplorer();
-    this.subscribeCleanJustView();
-    this.subscribeChanges();
-    this.subscribeConfigurationChanges();
-    this.subscribeSwitchView();
-    this.subscribeSwitchIgnore();
-    this.subscribeRefreshFilesView();
-    this.subscribeRefreshJustFilesView();
-    this.subscribeSearchList();
-    this.subscribeRevealInExplorer();
-    this.subscribeCollapseToFolder();
-    this.subscribeUncollapseAll();
-    this.subscribeCollectAllMarked();
-    this.subscribeRefuseAllMarked();
-    this.subscribeOpenFolder();
-    this.subscribeCloseFolder();
-    this.subscribePreviewItemAndRegister();
-  }
 
-  subscribeDecoratorAndRegister() {
+  private subscribeDecoratorAndRegister() {
     const registered = vscode.window.registerFileDecorationProvider(
       this.fileDecorator
     );
@@ -269,7 +269,7 @@ export class JustFiles {
     this.context.subscriptions.push(registered, remark);
   }
  
-  subscribeDidChangedTextEditor() {
+  private subscribeDidChangedTextEditor() {
     const did = vscode.window.onDidChangeActiveTextEditor(async (editor) => {
       if (!editor || !this.foldersTreeView.visible) { return; }
 
@@ -281,7 +281,7 @@ export class JustFiles {
     this.context.subscriptions.push(did);
   }
 
-  subscribeConfigurationChanges() {
+  private subscribeConfigurationChanges() {
     const did = vscode.workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration(ExtensionBrandResolver.configuration)) {
         ExtensionStaticService.updateTolerances();
@@ -292,7 +292,7 @@ export class JustFiles {
     this.context.subscriptions.push(did);
   }
 
-  subscribeRegistrator() {
+  private subscribeRegistrator() {
     this.commandRegistrator.registerCommands();
     this.commandRegistrator.registerEditor();
 
@@ -309,21 +309,21 @@ export class JustFiles {
     this.context.subscriptions.push(getSelection);
   }
 
-  subscribeRestore() {
+  private subscribeRestore() {
     const restore = vscode.commands.registerCommand(brand.restore,
       (fileItem: FileItem) => this.restoreFileItem(fileItem)
     );
     this.context.subscriptions.push(restore);
   }
 
-  subscribeShowLogs() {
+  private subscribeShowLogs() {
     const print = vscode.commands.registerCommand(brand.showLogs,
       () => LogService.print()
     );
     this.context.subscriptions.push(print);
   }
 
-  subscribeShow() {
+  private subscribeShow() {
     const show = vscode.commands.registerCommand(brand.show,
       async (fileItem) => {
         const isFileItemContainedInFilesSelectedItems =
@@ -342,7 +342,7 @@ export class JustFiles {
     this.context.subscriptions.push(show);
   }
 
-  subscribeHide() {
+  private subscribeHide() {
     const hide = vscode.commands.registerCommand(brand.hide,
       async (fileItem) => {
         const isFileItemContainedInJustFilesSelectedItems =
@@ -365,7 +365,7 @@ export class JustFiles {
     this.context.subscriptions.push(hide);
   }
 
-  subscribeAddFromTab() {
+  private subscribeAddFromTab() {
     const addFromTab = vscode.commands.registerCommand(
       brand.addItemFromTabMenu, async (uri) =>
         await this.addOrHideOnJustFiles(getUriFrom(uri), true)
@@ -373,7 +373,7 @@ export class JustFiles {
     this.context.subscriptions.push(addFromTab);
   }
 
-  subscribeRemoveFromTab() {
+  private subscribeRemoveFromTab() {
     const removeFromTab = vscode.commands.registerCommand(
       brand.removeItemFromTabMenu, async (uri) =>
         await this.addOrHideOnJustFiles(getUriFrom(uri), false)
@@ -381,7 +381,7 @@ export class JustFiles {
     this.context.subscriptions.push(removeFromTab);
   }
 
-  subscribeAddFromCommand() {
+  private subscribeAddFromCommand() {
     const addFromCommand = vscode.commands.registerCommand(
       brand.addItemFromCommand, async () => {
         const activeEditor = vscode.window.activeTextEditor;
@@ -393,7 +393,7 @@ export class JustFiles {
     this.context.subscriptions.push(addFromCommand);
   }
 
-  subscribeRemoveFromCommand() {
+  private subscribeRemoveFromCommand() {
     const removeFromCommand = vscode.commands.registerCommand(
       brand.removeItemFromCommand, async () => {
         const activeEditor = vscode.window.activeTextEditor;
@@ -405,7 +405,7 @@ export class JustFiles {
     this.context.subscriptions.push(removeFromCommand);
   }
 
-  subscribeAddFromExplorer() {
+  private subscribeAddFromExplorer() {
     const addFromExplorer = vscode.commands.registerCommand(
       brand.addItemFromExplorer, async (uri) =>
         await this.addOrHideOnJustFiles(getUriFrom(uri), true)
@@ -413,21 +413,21 @@ export class JustFiles {
     this.context.subscriptions.push(addFromExplorer);
   }
 
-  subscribeOpenFolder() {
+  private subscribeOpenFolder() {
     const openFolder = vscode.commands.registerCommand(brand.openFolder,
       () => vscode.commands.executeCommand(brand.vscode.openFolder)
     );
     this.context.subscriptions.push(openFolder);
   }
   
-  subscribeCloseFolder() {
+  private subscribeCloseFolder() {
     const closeFolder = vscode.commands.registerCommand(brand.closeFolder,
       () => vscode.commands.executeCommand(brand.workbench.action.closeFolder)
     );
     this.context.subscriptions.push(closeFolder);
   }
 
-  subscribeRevealInExplorer() {
+  private subscribeRevealInExplorer() {
     const reveal = vscode.commands.registerCommand(brand.revealInSidebar,
       async (fileItem) => {
         const uri: vscode.Uri = getUriFrom(fileItem);
@@ -440,14 +440,14 @@ export class JustFiles {
     this.context.subscriptions.push(reveal);
   }
 
-  subscribeRefuseAllMarked() {
+  private subscribeRefuseAllMarked() {
     const refuse = vscode.commands.registerCommand(brand.refuseMarked,
       () => this.fileDecorator.refuse()
     );
     this.context.subscriptions.push(refuse);
   }
 
-  subscribeCollectAllMarked() {
+  private subscribeCollectAllMarked() {
     const collect = vscode.commands.registerCommand(brand.collectMarked,
       async () => {
         const uris = await this.fileDecorator.getDecorationsAsUris();
@@ -457,7 +457,7 @@ export class JustFiles {
     this.context.subscriptions.push(collect);
   }
 
-  subscribeCollapseToFolder() {
+  private subscribeCollapseToFolder() {
     const collapseToFolder = vscode.commands.registerCommand(
       brand.collapseFolder, async (item) => {
         if (item instanceof FileItem) {
@@ -468,32 +468,31 @@ export class JustFiles {
     this.context.subscriptions.push(collapseToFolder);
   }
 
-  subscribeUncollapseAll() {
-    const uncollapseAll = vscode.commands.registerCommand(
-      brand.uncollapseAll, async (folderItem) => {
-        const projTooLarge = await isProjectTooLarge();
-        if (projTooLarge) {
+  private subscribeUncollapseAll() {
+    const uncollapseAll = vscode.commands.registerCommand(brand.uncollapseAll,
+      async (folderItem) => {
+        if (await isProjectTooLarge(folderItem)) {
           const yes = "Yes, use ignore file";
           const answer = await vscode.window.showWarningMessage(
             `You are switching to mode showing all files in the project.
             It could be very time-consuming to load.
             Didn't you forget to turn on skipping files
             by .gitignore in the project?`,
-            yes, "Cancel"
+            yes, "No"
           );
           if (answer === yes) {
+            this.foldersViewProvider.resetOrNotIgnoredItems();
             await this.fillIgnoredFiles();
           }
         }
         this.foldersViewProvider.setWorkspaceFolderFrom(folderItem);
         this.foldersViewProvider.couldUncollapseAll(true);
-        this.foldersViewProvider.switchPlainModeTag();
       }
     );
     this.context.subscriptions.push(uncollapseAll);
   }
 
-  subscribePreviewItemAndRegister() {
+  private subscribePreviewItemAndRegister() {
     const provider = window.registerWebviewViewProvider(
       ExtensionBrandResolver.webview,
       this.previewProvider
@@ -516,7 +515,7 @@ export class JustFiles {
     this.context.subscriptions.push(provider, preview);
   }
 
-  subscribeCleanJustView() {
+  private subscribeCleanJustView() {
     const cleanJustView = vscode.commands.registerCommand(brand.removeAll,
       () => {
         this.justFilesViewProvider.clean();
@@ -526,38 +525,38 @@ export class JustFiles {
     this.context.subscriptions.push(cleanJustView);
   }
 
-  subscribeSwitchIgnore() {
-    const switchIgnore = vscode.commands.registerCommand(
-      brand.ignore, async () => {
-        const wasSet = this.foldersViewProvider.resetIgnoredItems();
-        if (!wasSet) {
+  private subscribeSwitchIgnore() {
+    const switchIgnore = (command: string) => vscode.commands.registerCommand(
+      command, async () => {
+        const wasReset = this.foldersViewProvider.resetOrNotIgnoredItems();
+        if (!wasReset) {
           await this.fillIgnoredFiles();
         }
         this.foldersViewProvider.refresh();
       }
     );
-    this.context.subscriptions.push(switchIgnore);
+    this.context.subscriptions.push(switchIgnore(brand.ignore));
+    this.context.subscriptions.push(switchIgnore(brand.ignoreback));
   }
 
-  subscribeSwitchView() {
+  private subscribeSwitchView() {
     const switchView = (command: string) => vscode.commands.registerCommand(
       command, () => {
         this.foldersViewProvider.plainMode =
           !this.foldersViewProvider.plainMode;
-        
-        this.foldersViewProvider.switchPlainModeTag();
-        
+
         if (!this.foldersViewProvider.plainMode) {
           this.foldersViewProvider.couldUncollapseAll(false);
+        } else {
+          this.foldersViewProvider.refresh();
         }
-        this.foldersViewProvider.refresh();
       }
     );
     this.context.subscriptions.push(switchView(brand.switch));
     this.context.subscriptions.push(switchView(brand.switchback));
   }
     
-  subscribeSearchList() {
+  private subscribeSearchList() {
     const search = async (list: vzcode.Searchable, exec: () => Promise<void>) =>
     { await exec();
 
@@ -579,7 +578,7 @@ export class JustFiles {
     this.context.subscriptions.push(searchListFiles, searchListJustFiles);
   }
 
-  subscribeRefreshFilesView() {
+  private subscribeRefreshFilesView() {
     const refreshFilesView = vscode.commands.registerCommand(
       brand.refreshFiles, () => {
         if (this.foldersViewProvider.isEmpty) {
@@ -593,12 +592,11 @@ export class JustFiles {
     this.context.subscriptions.push(refreshFilesView);
   }
 
-  subscribeRefreshJustFilesView() {
+  private subscribeRefreshJustFilesView() {
     const refreshAndSwitchSortedMode = () => {
       this.justFilesViewProvider.sortedMode =
         !this.justFilesViewProvider.sortedMode;
-        
-      this.justFilesViewProvider.switchSortedModeTag();
+
       this.justFilesViewProvider.refresh();
     };
     const refreshJustFilesView = vscode.commands.registerCommand(
@@ -611,7 +609,7 @@ export class JustFiles {
     this.context.subscriptions.push(refreshSortedJustFilesView);
   }
 
-  subscribeChanges() {
+  private subscribeChanges() {
     const did1 = this.justFilesTreeView.onDidChangeSelection(async (e) => {
       if (!e.selection.some((i) => i instanceof PlaceholderItem)) {
         this.justFilesSelectedItems = e.selection;

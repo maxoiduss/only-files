@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { FileItem } from "./fileItem";
-import { autodebug, asRelative, basename, extname, getUri, isFile, isValidUri, same
+import { autodebug, basename, extname, getUri, isFile, isValidUri, same
 } from "./utilManager";
 import { ExtensionStaticService as Static
 } from "./extensionStaticService";
@@ -40,8 +40,7 @@ export const getNameWithoutExt = async (
 };
 
 export const getChildrenNames = async (
-  itemOr: FileItem | vscode.Uri | string | undefined,
-  asRelatives: boolean = false
+  itemOr: FileItem | vscode.Uri | string | undefined
 ): Promise<string[]> => {
   const currentUri = itemOr instanceof FileItem ?
     itemOr.isFile ? empty : itemOr.resourceUri ?? empty
@@ -52,14 +51,12 @@ export const getChildrenNames = async (
   try {
     const entries = await vscode.workspace.fs.readDirectory(currentUri);
     return entries.map(([name]) =>
-      asRelatives ?
-        asRelative(vscode.Uri.joinPath(currentUri, name))
-      : vscode.Uri.joinPath(currentUri, name).toString()
+      vscode.Uri.joinPath(currentUri, name).toString()
     );
   } catch (error) { return []; }
 };
 
-const getNewFileItem = (
+export const getNewFileItem = (
   uri: vscode.Uri | undefined,
   label: string,
   collapsibleState: vscode.TreeItemCollapsibleState,

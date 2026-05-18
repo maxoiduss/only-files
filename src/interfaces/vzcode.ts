@@ -1,5 +1,14 @@
 import * as vscode from "vscode";
 
+type Serializing = string | number | boolean | null | undefined;
+
+export type Serializable =
+  | Serializing
+  | { [key: string]: Serializable }
+  | Serializable[];
+
+/*-------------------------------------------------------------------------*/
+
 export interface Searchable {
   onSearch: boolean;
 }

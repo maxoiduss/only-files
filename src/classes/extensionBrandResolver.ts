@@ -40,6 +40,7 @@ interface Brand {
   removeAll: string;
   remark: string;
   ignore: string;
+  ignoreback: string;
   showLogs: string;
   switch: string;
   switchback: string;
@@ -49,6 +50,7 @@ interface Brand {
   refreshJustFiles: string;
   refreshSortedJustFiles: string;
   setContext: string;
+  isIgnored: string;
   isSorted: string;
   isPlain: string;
   restore: string;
@@ -100,7 +102,7 @@ export class ExtensionBrandResolver {
 
   private readonly filtration:
   (value: any, index: number, array: any[]) => unknown =
-        (value) => typeof value === "string"
+       (value) => typeof value === "string"
     &&  value.startsWith(ExtensionBrandResolver.command)
     && !value.includes(":");
   
@@ -137,6 +139,7 @@ export class ExtensionBrandResolver {
     brand.removeAll = `${name}.removeAll`;
     brand.remark = `${name}.remark`;
     brand.ignore = `${name}.ignore`;
+    brand.ignoreback = `${name}.ignoreback`;
     brand.showLogs = `${name}.showLogs`;
     brand.switch = `${name}.switch`;
     brand.switchback = `${name}.switchback`;
@@ -147,6 +150,7 @@ export class ExtensionBrandResolver {
     brand.refreshSortedJustFiles = `${name}.refreshSortedJustFiles`;
     brand.getSelected = `${name}:getSelected`;
     brand.setSelected = `${name}:setSelected`;
+    brand.isIgnored = `${name}:isIgnored`;
     brand.isSorted = `${name}:isSorted`;
     brand.isPlain = `${name}:isPlain`;
     brand.restore = `${name}.restore`;

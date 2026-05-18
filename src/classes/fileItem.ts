@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
-import { asRelative, basename, getRootOf, getUri, resolveUri } from "./utilManager";
+import * as vzcode from "../interfaces/vzcode";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
+import { asRelative, basename, getPathDepth, getTopRootOf, getUri, resolveUri
+} from "./utilManager";
 
 export const file = "file" as const;
 export const folder = "folder" as const;
@@ -20,6 +22,13 @@ const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
 export const command = {
   get tryOpen() { return `${name()}.tryOpen`; }
 };
+
+export type FileItemLike = { /// Serializable
+  id: string;
+  label: string;
+  state: vscode.TreeItemCollapsibleState;
+  file: boolean;
+} & vzcode.Serializable;
 
 export class FileItem extends vscode.TreeItem {
   public isFile: boolean;
@@ -63,13 +72,14 @@ export class FileItem extends vscode.TreeItem {
   }
   
   private getContextType() : string {
-    const isInRoot = !/[\/\\]/.test(
-      typeof this.label === "string" ? this.label : this.relativePath
-    );
+    const pathDepth = getPathDepth(this.relativePath);
+    const isMultiRoot = workspaceFolders().length > 1;
+    const isInRoot = isMultiRoot ? pathDepth === 1 : pathDepth === 0;
+    const isRoot = isMultiRoot && pathDepth === 0;
+
     return this.isFile ?
-      isInRoot ?
-        rootFile : file
-    : folder;
+      isInRoot ? rootFile : file
+    : isRoot ? rootFile : folder;
   }
 
   protected shiftId() { this.id = separator + this.id; }
@@ -141,9 +151,9 @@ export class RootFileItem extends FileItem {
     super(' ',
       vscode.TreeItemCollapsibleState.None,
       false,
-      workspaceFolders().length > 0 ?
+      workspaceFolders().length > folder ?
         workspaceFolders()[folder].uri
-      : getUri(getRootOf(process.cwd()))
+      : getUri(getTopRootOf(process.cwd()))
     );
     this.contextValue = root;
     this.label = ' ';

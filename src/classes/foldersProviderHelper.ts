@@ -30,18 +30,18 @@ import { getConfigurationFor, getConfigurationsFor, getUri
    - {@link vscode.Disposable} - standard vscode api disposable object
 
    Provider is based on linear arrays search on each *getChildren* step. 
-   It has collapsingItems: Map<string, State> where each entry of a map 
+   It has *collapsingItems: Map<string, State>* where each entry of a map 
    has {@link State} that describes is such folder uncollapsed to 'plain' 
    variant in the global Plain Mode or not and its 
    {@link TreeItemCollapsibleState} state. Only folders can be uncollapsed 
    and persist in the map.
 
    Each expand/collapse the folder in the TreeView adds/deletes the folder 
-   to/from collapsingItems.
+   to/from *collapsingItems*.
 
    Each *getChildren* call creates the items read from the directory and 
    filter or removes any part of them that are uncollapsed to 'plain' and 
-   synchronises its *TreeItemCollapsibleState* with collapsingItems elements.
+   synchronises its *TreeItemCollapsibleState* with *collapsingItems* elements.
 
    {@link EmptyFolderItem} uses purifing system and is used to:
    - create uncollapsed to 'plain' folder - in the Plain Mode
@@ -75,7 +75,7 @@ const collapsings = "collapsings"   as const;
 const plainModeOn = "plainModeOn"   as const;
 
 const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
-const configuration = () => ExtensionBrandResolver.configuration;
+const configuration    = () => ExtensionBrandResolver.configuration;
 const boolean1Property = () => ExtensionBrandResolver.boolean1Property;
 const boolean2Property = () => ExtensionBrandResolver.boolean2Property;
 
@@ -145,17 +145,17 @@ export const loadWorkspaceRoots = (
 
 export const loadWorkspaceContexts = (
   context: vscode.ExtensionContext,
-  setPlainMode: ( plainMode: boolean ) => void,
   updateCollapsings: (
     uri: vscode.Uri,
     collapses: TreeItemCollapsibleState,
-    isPlain: boolean ) => Promise<void>
+    isPlain: boolean ) => Promise<void>,
+  setPlainMode?: ( plainMode: boolean ) => void
 ) => {
   let collapsing = getConfigurationsFor<State>(context, collapsings);
   for (const [path, state] of collapsing) {
     updateCollapsings(getUri(path), state.collapses, state.isPlain);
   };
-  setPlainMode(
+  setPlainMode?.(
     getConfigurationFor<boolean>(context, plainModeOn) ?? Static.plainMode
   );
 };

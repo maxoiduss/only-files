@@ -13,6 +13,7 @@ const number3Property = () => ExtensionBrandResolver.number3Property;
 
 const normalize = true as const;
 const postfix = "hard_lock" as const;
+const slashes = /\\/g;
 const scheme = '://' as const;
 const empty = '' as const;
 const dot = '.' as const;
@@ -68,14 +69,14 @@ export const window = {
 
 export const asRelative = (
   uriOr: vscode.Uri | undefined,
-  root?: string
+  rootMask?: string
 ): string => {
   if (!uriOr) { return dot; }
 
   const folder = vscode.workspace.getWorkspaceFolder(uriOr);
   if (folder) {
     if (same(folder.uri, uriOr)) {
-      return root !== undefined ? root : folder.name;
+      return rootMask !== undefined ? rootMask : folder.name;
     }
     return vscode.workspace.asRelativePath(uriOr);
   }
@@ -87,7 +88,7 @@ export const basename = (pathOrUri: string | vscode.Uri): string => {
   const separator = '/';
   const pathOr = typeof pathOrUri === 'string' ? pathOrUri : pathOrUri.path;
   const pathe = normalize && typeof pathOrUri === 'string' ?
-    pathOr.replace(/\\/g, separator) : pathOr;
+    pathOr.replace(slashes, separator) : pathOr;
   const trimmedPath = pathe.length > 1 && pathe.endsWith(separator) ?
     pathe.replace(/\/+$/, '') : pathe;
   const lastIndex = trimmedPath.lastIndexOf(separator);
@@ -99,7 +100,7 @@ export const extname = (pathOrUri: string | vscode.Uri): string => {
   const separator = '/';
   const pathOr = typeof pathOrUri === 'string' ? pathOrUri : pathOrUri.path;
   const pathe = normalize && typeof pathOrUri === 'string' ?
-    pathOr.replace(/\\/g, separator) : pathOr;
+    pathOr.replace(slashes, separator) : pathOr;
   const trimmedPath = pathe.length > 1 && pathe.endsWith(separator) ?
     pathe.replace(/\/+$/, empty) : pathe;
   const base = trimmedPath.substring(trimmedPath.lastIndexOf(separator) + 1);
@@ -125,11 +126,11 @@ export const getNumeric = (): number => {
   return numeric < Number.MAX_SAFE_INTEGER - 1 ? ++numeric : (numeric = 1);
 };
 
-export const getRootOf = (path: string): string => {
+export const getTopRootOf = (path: string): string => {
   const separator = '/';
   const driveMatch = path.match(/^[a-zA-Z]:[\\/]/);
   if (driveMatch) {
-    return driveMatch[0].replace(/\\/g, separator);
+    return driveMatch[0].replace(slashes, separator);
   }
   if (path.startsWith(separator)) { return separator; }
 
@@ -148,7 +149,7 @@ export const getUri = (fromUriOr: vscode.Uri | string): vscode.Uri => {
     fromUriOr.includes(scheme) ?
       vscode.Uri.parse(fromUriOr)
     : vscode.Uri.file(
-        normalize ? fromUriOr.replace(/\\/g, separator) : fromUriOr
+        normalize ? fromUriOr.replace(slashes, separator) : fromUriOr
       )
   : fromUriOr;
 
@@ -207,8 +208,7 @@ export const getFoldersBy = (
 export const getPathDepth = (path: string): number => {
   let count = 0;
   const separator = '/';
-  const uri = getUri(path);
-  const pathe = asRelative(uri);
+  const pathe = path;
 
   for (const char of pathe) {
     if (char === separator) { ++count; }
@@ -221,6 +221,38 @@ export const getWorkspaceFolderIndex = (uri: vscode.Uri): number => {
   if (!folder) { return -1; }
 
   return vscode.workspace.workspaceFolders?.indexOf(folder) ?? -1;
+};
+
+export const getProjectName = (): string | undefined => {
+  return vscode.workspace.name ?? vscode.workspace.workspaceFolders?.[0]?.name;
+};
+
+export const getConfigurationFor = <T>(
+  ctx: vscode.ExtensionContext, key: string
+): T | undefined => {
+  return ctx.workspaceState.get<T>(key);
+};
+
+export const getConfigurationsFor = <T>(
+  ctx: vscode.ExtensionContext, key: string
+): [string, T][] => {
+  const as = <R>(target: any): R => known(target).as<R>();
+  const raw = ctx.workspaceState.get<any>(key);
+
+  if (Array.isArray(raw)) {
+    return as<[string, any][]>(raw.flatMap(
+      (record) => typeof record === "string" ? [[record, as<T>(undefined)]] : []
+    ));
+  }
+  if (raw && typeof raw === "object") {
+    return Object.entries(raw) as [string, T][];
+  }
+
+  return [];
+};
+
+export const known = (object: any) => {
+  return { as: <T>() => object as unknown as T };
 };
 
 export const resolveUri = async (
@@ -261,7 +293,7 @@ export const same = <
   T1 extends string | vscode.Uri,
   T2 extends string | vscode.Uri
   >(o1: T1, o2: T2): boolean =>
-{ return o1.toString() === o2.toString(); }
+{ return o1.toString() === o2.toString(); };
 
 export const hasNoName = (path: string): boolean => {
   return ["", "/", "\\", "\""].includes(path);
@@ -291,15 +323,18 @@ export const isValidUri = async (
   return (await isFolder(uriOr)) !== undefined;
 };
 
-export const largeProjectFilesAmount: number = 5555;
-export const useUnexcludeSystemConfig = true;
-
 export const isProjectTooLarge = async (
+  folderOrIndex: number = 0,
   foldersMax: number = 1111
 ): Promise<boolean> => {
-  const folders = await getAllFolders(undefined, {max: foldersMax });
+  const folderIndex = typeof folderOrIndex === "number" ?
+    folderOrIndex : getWorkspaceFolderIndex(getUriFrom(folderOrIndex));
+  const folders = await retrieveAllFolders(folderIndex, { max: foldersMax });
   return folders === null || folders.length > foldersMax;
 };
+
+export const largeProjectFilesAmount: number = 5555;
+export const useUnexcludeSystemConfig = true;
 
 export const setNothingToExcludeTemporary = async (
 ): Promise<() => Promise<void>> =>
@@ -313,7 +348,7 @@ export const setNothingToExcludeTemporary = async (
     } catch (error) {
       Log.error(`Failed to update files.${exclude} for ${target}: ${error}`);
     }
-  }
+  };
   if (!useUnexcludeSystemConfig) { return async () => {}; }
 
   const exclude = "exclude";
@@ -336,11 +371,7 @@ export const setNothingToExcludeTemporary = async (
   };
 };
 
-export const getProjectName = (): string | undefined => {
-  return vscode.workspace.name ?? vscode.workspace.workspaceFolders?.[0]?.name;
-};
-
-export const getAllFolders = async (
+export const retrieveAllFolders = async (
   workspaceFolderIndex?: number,
   options?: { max?: number }
 ): Promise<vscode.Uri[] | null> => {
@@ -496,28 +527,4 @@ export const showQuickInput = (
     }), run] : [run];
 
   return Promise.race(promises);
-};
-
-export const getConfigurationFor = <T>(
-  ctx: vscode.ExtensionContext, key: string
-): T | undefined => {
-  return ctx.workspaceState.get<T>(key);
-};
-
-export const getConfigurationsFor = <T>(
-  ctx: vscode.ExtensionContext, key: string
-): [string, T][] => {
-  const as = <R>(target: any): R => target as unknown as R;
-  const raw = ctx.workspaceState.get<any>(key);
-
-  if (Array.isArray(raw)) {
-    return as<[string, any][]>(raw.flatMap(
-      (record) => typeof record === "string" ? [[record, as<T>(undefined)]] : []
-    ));
-  }
-  if (raw && typeof raw === "object") {
-    return Object.entries(raw) as [string, T][];
-  }
-
-  return [];
 };

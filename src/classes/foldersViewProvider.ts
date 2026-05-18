@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import * as vzcode from "../interfaces/vzcode";
-import * as manager from "./fileItemManager";
 import * as helper from "./foldersProviderHelper";
+import * as manager from "./fileItemManager";
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
 import { brand } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
@@ -10,7 +10,7 @@ import { EmptyFolderItem, emptyRoot, FileItem, root, RootFileItem
 } from "./fileItem";
 import {
   asRelative,
-  getAllFolders,
+  retrieveAllFolders,
   getFolder,
   getFoldersBy,
   getUri,
@@ -44,13 +44,20 @@ export class FoldersViewProvider
   public onSearch: boolean = false;
   
   public get plainMode() { return ExtensionStaticService.plainMode; }
-  public set plainMode(val: boolean) { ExtensionStaticService.plainMode = val; }
-
+  public set plainMode(val: boolean) {
+    if (ExtensionStaticService.plainMode !== val) {
+      ExtensionStaticService.plainMode = val;
+      vscode.commands.executeCommand(
+        brand.setContext, brand.isPlain, this.plainMode
+      );
+    }
+  }
   private readonly collapsingItems: Map<string, State> = new Map();
   private readonly context: vscode.ExtensionContext;
   private readonly revealItem: (item: FileItem, expand?: boolean) => void;
-  private showingRoot: boolean = true;
+  /** Uncollapse-To-All mode. [A, B] : A - global, B - local */
   private uncollapsedMode: [boolean, boolean] = [false, false];
+  private showingRoot: boolean = true;
   private ignoredItems: Ignore | undefined;
   private focusedItem: FileItem | undefined;
   private expandedItem: FileItem | undefined;
@@ -79,36 +86,38 @@ export class FoldersViewProvider
   ) {
     this.context = context;
     this.revealItem = revealItem;
-    this.checkIgnoredItems = this.checkIgnoredItems.bind(this);
     helper.setShowEmptyUncollapsedFolders();
     helper.setShowUncollapsedPlainFolders();
     
     this.loadingWorkspaceFolders =
     helper.loadWorkspaceRoots(async (load) => this.roots = await load());
     helper.loadWorkspaceContexts(this.context,
-      (mode) => (this.plainMode = mode),
-      this.updateCollapsings.bind(this)
+      this.updateCollapsings.bind(this),
+      (mode) => (this.plainMode = mode)
     );
-
-    if (this.plainMode) { this.switchPlainModeTag(); }
   }
 
-  private checkIgnoredItems(itemOnly?: FileItem | undefined): boolean {
-    if (!this.ignoredItems) { return true; }
+  private check() { 
+    return {
+      ignored: (item: FileItem): boolean => {
+        if (!this.ignoredItems) { return true; }
+        if (item) {
+          const rel = item.relativePath;
+          return !this.ignoredItems.folderRules.some((expr) => expr.test(rel))
+              && !this.ignoredItems.fileRules.some((expr) => expr.test(rel));
+        }
+        return false;
+      },
+      ignoredItems: async (): Promise<void> => {
+        if (!this.ignoredItems) { return; }
 
-    if (itemOnly) {
-      const rel = itemOnly.relativePath;
-      return !this.ignoredItems.folderRules.some((expr) => expr.test(rel))
-          && !this.ignoredItems.fileRules.some((expr) => expr.test(rel));
-    }
-    
-    for (const [pathe] of this.collapsingItems) {
-      const folder = asRelative(getUri(pathe));
-      if (this.ignoredItems.folderRules.some((expr) => expr.test(folder))) {
-        this.popFromCollapsings(pathe);
+        for (const [pathe] of this.collapsingItems) {
+          const folder = asRelative(getUri(pathe));
+          if (this.ignoredItems.folderRules.some((expr) => expr.test(folder)))
+          { await this.popFromCollapsings(pathe); }
+        }
       }
-    }
-    return false;
+    };
   }
 
   private async updateCollapsings(
@@ -178,12 +187,6 @@ export class FoldersViewProvider
     }
   }
 
-  public switchPlainModeTag() {
-    vscode.commands.executeCommand(
-      brand.setContext, brand.isPlain, this.plainMode
-    );
-  }
-
   public prepareState(fileItem: FileItem) {
     helper.refreshStatesFor(fileItem, this.collapsingItems);
   }
@@ -248,10 +251,14 @@ export class FoldersViewProvider
     };
   }
 
-  public resetIgnoredItems(): boolean {
-    const wasSet = this.ignoredItems !== undefined;
+  public resetOrNotIgnoredItems(): boolean {
+    const restored = this.ignoredItems !== undefined;
     this.ignoredItems = undefined;
-    return wasSet;
+    vscode.commands.executeCommand(
+      brand.setContext, brand.isIgnored, !restored
+    );
+
+    return restored;
   }
 
   public addCollapsingElement(element: FileItem) {
@@ -279,13 +286,15 @@ export class FoldersViewProvider
       }
     }
   }
-
+  
   public refresh(element?: FileItem): void {
     this.didChangeTreeData.fire(element);
 
-    helper.saveWorkspaceContexts(
-      this.context, this.plainMode, this.collapsingItems
-    );
+    if (!this.uncollapsedMode[1]) {
+      helper.saveWorkspaceContexts(
+        this.context, this.plainMode, this.collapsingItems
+      );
+    }
   }
 
   public getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
@@ -297,7 +306,12 @@ export class FoldersViewProvider
   }
 
   public couldUncollapseAll(value: boolean) {
-    if (value){
+    if (value) {
+      if (!this.uncollapsedMode[1]) {
+        helper.saveWorkspaceContexts(
+          this.context, this.plainMode, this.collapsingItems
+        );
+      }
       this.plainMode = true;
       this.uncollapsedMode = [true, true];
       this.collapsingItems.clear();
@@ -305,6 +319,9 @@ export class FoldersViewProvider
       if (this.uncollapsedMode[1]) {
         this.uncollapsedMode = [false, false];
         this.collapsingItems.clear();
+        helper.loadWorkspaceContexts(this.context,
+          this.updateCollapsings.bind(this)
+        );
       }
     }
     this.refresh();
@@ -351,12 +368,14 @@ export class FoldersViewProvider
     const clearItemsOfEmptyElements = () =>
       items = items.filter((item) => !(item instanceof EmptyFolderItem));
     const filterItemsOfIgnoredElements = () =>
-      items = items.filter(this.checkIgnoredItems);
+      items = items.filter(this.check().ignored);
     const addFileItem = async (uri: vscode.Uri) =>
       items.push(await helper.createTreeItem(
         uri, helper.getExpandingStateFor(uri, this.collapsingItems)));
+    const uncollapsedModeNotSetButShould = () =>
+      this.uncollapsedMode[0] && this.collapsingItems.size <= 0;
     const initCollapsingItemsByAllSubFoldersOf = async (wsFolder: number) =>
-      await Promise.all((await getAllFolders(wsFolder))!.map((uri) =>
+      await Promise.all((await retrieveAllFolders(wsFolder))!.map((uri) =>
         this.updateCollapsings(uri, TreeItemCollapsibleState.Collapsed, true)));
     const isWorkspaceFolder = (item: FileItem) =>
       this.workspaceFolders.some((f) => item.like(f.uri.toString()));
@@ -447,8 +466,18 @@ export class FoldersViewProvider
         });
       }
     };
-    const filterItemsInPlainMode = async (rooted: boolean = true) =>
+    const hideFoldersIfDontNeedThem = () =>
     {
+      if (this.uncollapsedMode[0]) {
+        if (!this.showEmptyUncollapsedFolders) {
+          if (this.selectedWorkspaceFolder >= 0) {
+            hideEmptyFoldersOnSelectedWorkspace();
+          }
+        } else { this.selectedWorkspaceFolder = -1; }
+      }
+    };
+    const filterItemsInPlainMode = async (rooted: boolean = true) =>
+    { /* ----------------------------------------------------------------- */
       const getNestedComponentsArrays = async () =>
         await Promise.all(collapsings.flatMap(async ([path, state]) => {
           if (!state.isPlain) { return []; }
@@ -475,15 +504,15 @@ export class FoldersViewProvider
           return elements.flat();
         })
       );
-      if (this.uncollapsedMode[0] && this.collapsingItems.size <= 0) {
+      if (uncollapsedModeNotSetButShould()) {
         if (this.selectedWorkspaceFolder >= 0) {
           await initCollapsingItemsByAllSubFoldersOf(
             this.selectedWorkspaceFolder
           );
         }
       }
-      this.checkIgnoredItems();
-      
+      /* ----------------------------------------------------------------- */
+      await this.check().ignoredItems();
       await excludeOrEmptifyNestedPlainItems(
         [...this.collapsingItems.entries()]
       );
@@ -496,15 +525,8 @@ export class FoldersViewProvider
       items.push(...components.filter(
         (item) => element ? manager.check(item).isChildOf(element) : true)
       );
-      filterItemsOfIgnoredElements;
-
-      if (this.uncollapsedMode[0]) {
-        if (!this.showEmptyUncollapsedFolders) {
-          if (this.selectedWorkspaceFolder >= 0) {
-            hideEmptyFoldersOnSelectedWorkspace();
-          }
-        } else { this.selectedWorkspaceFolder = -1; }
-      }
+      filterItemsOfIgnoredElements();
+      hideFoldersIfDontNeedThem();
     };
     const withRoot = (sorted: FileItem[], rootIndex: number = 0): FileItem[] =>
     {
@@ -514,7 +536,7 @@ export class FoldersViewProvider
       }
       return sorted;
     };
-
+    /*-----------------------------------------------------------------------*/
     let items: FileItem[] = [];
     await this.loadingWorkspaceFolders;
 
@@ -555,6 +577,7 @@ export class FoldersViewProvider
     const rootIndex = this.roots.findIndex((root) => root.like(element));
     const sorted = manager.sortItems(items);
 
-    return rootIndex >= 0 ? withRoot(sorted, rootIndex) : sorted; 
+    return rootIndex >= 0 ? withRoot(sorted, rootIndex) : sorted;
+    /*-----------------------------------------------------------------------*/
   }
 }
