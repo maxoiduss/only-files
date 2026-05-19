@@ -12,7 +12,6 @@ export default [
       'node_modules',
       "out/",
       "dist/",
-      "**/*.d.ts",
       "src/tests/**/*.test.ts"
     ],
   },
@@ -26,7 +25,7 @@ export default [
       parserOptions: {
         project: fpath.join(__dirname, 'tsconfig.json'),
         tsconfigRootDir: __dirname,
-        ecmaVersion: 2020,
+        ecmaVersion: 2024,
         sourceType: "module"
       }
     },
@@ -38,15 +37,18 @@ export default [
       "curly": "warn",
       "eqeqeq": "warn",
       "no-throw-literal": "warn",
-      "semi": "warn",
+      "semi": [
+        "warn",
+        "always"
+      ],
       "no-unused-vars": "off",
       "no-unused-private-class-members": "warn",
-      "@typescript-eslint/semi": "warn",
       "@typescript-eslint/naming-convention": "warn",
       "@typescript-eslint/no-unused-vars": [
         "warn", { 
           "vars": "all",
           "ignoreRestSiblings": false,
+          "caughtErrors": "none",
           "varsIgnorePattern": "^_",
           "argsIgnorePattern": "^_"
         }

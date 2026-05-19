@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 import { getRegistratorCommands } from "./commandRegistrator";
 
 const resolver = "just-files" as const;

@@ -1,5 +1,4 @@
-import * as vscode from "vscode";
-import * as vzcode from "../interfaces/vzcode";
+import * as vscodes from "../types";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
 import { asRelative, basename, getPathDepth, getTopRootOf, getUri, resolveUri
 } from "./utilManager";
@@ -28,13 +27,14 @@ export type FileItemLike = { /// Serializable
   label: string;
   state: vscode.TreeItemCollapsibleState;
   file: boolean;
-} & vzcode.Serializable;
+} & vscodes.Serializable;
 
 export class FileItem extends vscode.TreeItem {
   public isFile: boolean;
   public lastClickTime: number;
   public relativePath!: string;
-  public override id!: string;
+  
+  declare public id: string;
 
   constructor(
     label: string,

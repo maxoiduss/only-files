@@ -1,6 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as vzcode from "../interfaces/vzcode";
-import * as vscode from "vscode";
+import * as vscodes from "../extension";
 import * as manager from "./fileItemManager";
 import { TreeItemCollapsibleState } from "vscode";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
@@ -13,19 +12,19 @@ import { getConfigurationFor, getConfigurationsFor, getUri
 
 /**
  * ```
- * class FoldersViewProvider
-   implements vscode.TreeDataProvider<FileItem>,
-   vzcode.Changable<FileItem>,
-   vzcode.Searchable,
-   vscode.Disposable
+ * class FoldersViewProvider implements 
+ *  vscode.TreeDataProvider<FileItem>,
+    vscodes.Changable<FileItem>,
+    vscodes.Searchable,
+    vscode.Disposable
    ```
 
    Provides {@link FileItem} elements such as 
    {@link FileItem}, {@link EmptyFolderItem}, {@link RootFileItem}
    for a TreeView registered in JustFiles main class.
-   - {@link vzcode.Changable<T>} - provides changeTreeItem method 
+   - {@link vscodes.Changable<T>} - provides changeTreeItem method 
    of change to TreeItem element in cases like move/remove/rename file
-   - {@link vzcode.Searchable} - provides flag to detect the view-list 
+   - {@link vscodes.Searchable} - provides flag to detect the view-list 
    search is on/off
    - {@link vscode.Disposable} - standard vscode api disposable object
 

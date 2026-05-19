@@ -1,17 +1,16 @@
-import * as vscode from "vscode";
-import * as vzcode from "../interfaces/vzcode";
+import * as vscodes from "../types";
 import * as manager from "./fileItemManager";
 import { TreeItemCollapsibleState } from "vscode";
 import { FileItem, FileItemLike } from "./fileItem";
-import { getConfigurationFor, getUri, isFolder, known, same
+import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
 } from "./utilManager";
 
 /**
  * ```
  * class JustFilesViewProvider
    implements vscode.TreeDataProvider<FileItem | PlaceholderItem>,
-   vzcode.Changable<FileItem>,
-   vzcode.Searchable,
+   vscodes.Changable<FileItem>,
+   vscodes.Searchable,
    vscode.Disposable
    ```
 
@@ -31,7 +30,7 @@ type VertexLike = { /// Serializable
   id: string;
   parent: string;
   item: FileItemLike
-} & vzcode.Serializable;
+} & vscodes.Serializable;
 
 export class Vertex {
   private id!: string;
@@ -63,7 +62,7 @@ export class Vertex {
   }
 
   public async validateItem(): Promise<boolean> {
-    const exist = await isFolder(getUri(this.id));
+    const exist = await isValidUri(getUri(this.id));
     
     return exist !== undefined;
   }
@@ -71,10 +70,10 @@ export class Vertex {
   public async validateState(): Promise<void> {
     if (!this.item) { await this.createItem(); }
 
-    let amFolder = this.isFolder();
-    if (amFolder === undefined) { amFolder = await isFolder(getUri(this.id)); }
-    if (!amFolder) { return; }
-    if (this.getState() === TreeItemCollapsibleState.None && amFolder) {
+    let aFolder = this.isFolder();
+    if (aFolder === undefined) { aFolder = await isFolder(getUri(this.id)); }
+    if (aFolder === undefined) { return; }
+    if (this.getState() === TreeItemCollapsibleState.None && aFolder) {
       this.state = TreeItemCollapsibleState.Collapsed;
       this.item!.collapsibleState = this.state;
     }

@@ -1,4 +1,3 @@
-import * as vscode from 'vscode';
 import { ThemeColor } from 'vscode';
 import { getConfigurationsFor, getPathDepth, getUri, isValidUri
 } from './utilManager';

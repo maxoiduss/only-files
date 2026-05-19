@@ -1,10 +1,9 @@
-import * as vscode from "vscode";
-import {
-  CancellationTokenSource as CTS, TreeItem, WebviewViewProvider
-} from "vscode";
-import { HasDefaults } from "../interfaces/vzcode";
+import { HasDefaults } from "../types";
 import { ExtensionBrandResolver
 } from "./extensionBrandResolver";
+import { CancellationTokenSource as CTS,
+  TreeItem, WebviewViewProvider
+} from "vscode";
 import { LogService as Log
 } from "./logService";
 

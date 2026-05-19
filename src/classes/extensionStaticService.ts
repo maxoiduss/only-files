@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
 import { JustFiles } from "./justFiles";
 

@@ -1,7 +1,6 @@
-import * as vscode from "vscode";
-import * as vzcode from "../interfaces/vzcode";
-import * as helper from "./foldersProviderHelper";
+import * as vscodes from "../types";
 import * as manager from "./fileItemManager";
+import * as helper from "./foldersProviderHelper";
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
 import { brand } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
@@ -29,10 +28,9 @@ type Ignore = {
 typeof FoldersProviderHelper;
 /** @see Docs on {@link FoldersProviderHelper} */
 
-export class FoldersViewProvider
-  implements vscode.TreeDataProvider<FileItem>,
-  vzcode.Changable<FileItem>,
-  vzcode.Searchable,
+export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
+  vscodes.Changable<FileItem>,
+  vscodes.Searchable,
   vscode.Disposable
 {
   private didChangeTreeData: vscode.EventEmitter<FileItemOr> =
@@ -49,9 +47,13 @@ export class FoldersViewProvider
       ExtensionStaticService.plainMode = val;
       vscode.commands.executeCommand(
         brand.setContext, brand.isPlain, this.plainMode
-      );
+      );}
     }
-  }
+  public didChangeWorkspaceFolders: () => Promise<any> | undefined = async () =>
+  { this.loadingWorkspaceFolders = await helper.loadWorkspaceRoots(
+      async (load) => this.roots = await load());
+  };
+
   private readonly collapsingItems: Map<string, State> = new Map();
   private readonly context: vscode.ExtensionContext;
   private readonly revealItem: (item: FileItem, expand?: boolean) => void;
@@ -63,14 +65,8 @@ export class FoldersViewProvider
   private expandedItem: FileItem | undefined;
   private selectedItem: (FileItem | string | undefined)[] = [];
   private roots!: RootFileItem[];
-
   private selectedWorkspaceFolder: number = -1;
   private loadingWorkspaceFolders: Promise<any> | undefined;
-  private didChangedWorkspaceFolders = 
-    vscode.workspace.onDidChangeWorkspaceFolders(async () => {
-      this.loadingWorkspaceFolders = helper.loadWorkspaceRoots(async (load) =>
-        this.roots = await load());
-      });
   
   private get root() { return this.roots[this.roots.length - 1]; }
   private get workspaceFolders() {
@@ -180,7 +176,7 @@ export class FoldersViewProvider
   }
 
   public dispose() {
-    this.didChangedWorkspaceFolders.dispose();
+    this.didChangeWorkspaceFolders = () => undefined;
     this.didChangeTreeData.dispose();
   }
 

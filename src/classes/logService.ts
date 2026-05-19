@@ -56,7 +56,7 @@ export class LogService {
     }
   }
 
-  static log(...args: any[]): void {
+  public static log(...args: any[]): void {
     const message = args.map((arg) => 
       typeof arg === 'object' ? stringify(arg) : String(arg)
     ).join(joiner);
@@ -66,7 +66,7 @@ export class LogService {
     this.printIfIsMaxOrNotify();
   }
 
-  static error(...args: any[]): void {
+  public static error(...args: any[]): void {
     const message = args.map((arg) => 
       typeof arg === 'object' ? stringify(arg) : String(arg)
     ).join(joiner);
@@ -76,7 +76,7 @@ export class LogService {
     this.printIfIsMaxOrNotify();
   }
 
-  static print() {
+  public static print() {
     this.logs.forEach((log) => console.log(
       `${formatDate(log.time)} ${log.type} ${label}: ${log.message}`
     ));

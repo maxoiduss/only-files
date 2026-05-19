@@ -1,13 +1,10 @@
-import * as vscode from "vscode";
-import { command, FileItem } from "./fileItem";
-import {
-  FoldersReferenceProvider, getPositionSafelyFrom
-} from "./foldersReferenceProvider";
-import {
-  brand as brand, ExtensionBrandResolver
-} from "./extensionBrandResolver";
-import { ExtensionStaticService } from "./extensionStaticService";
 import * as manager from "./fileItemManager";
+import { command, FileItem } from "./fileItem";
+import { FoldersReferenceProvider, getPositionSafelyFrom
+} from "./foldersReferenceProvider";
+import { ExtensionStaticService } from "./extensionStaticService";
+import { brand as brand,
+  ExtensionBrandResolver } from "./extensionBrandResolver";
 import {
   basename,
   extname,
@@ -15,6 +12,7 @@ import {
   getNicePath,
   getNumeric,
   getUriFrom,
+  isValidUri,
   same,
   showQuickInput,
   workspace
@@ -149,11 +147,14 @@ export class CommandRegistrator {
       
     if (uri && postfix.length > 0) {
       const extn = extname(uri);
-      const name = manager.getNameWithoutExt(fileItem) + `_${postfix}`;
+      const name = await manager.getNameWithoutExt(fileItem) + `_${postfix}`;
       const folder = await getFolder(uri);
-      const duplicate = vscode.Uri.joinPath(folder, name + extn);
-      await workspace.fs.copy(uri, duplicate);
-      this.refreshViewsState();
+
+      if (await isValidUri(folder)) {
+        const duplicate = vscode.Uri.joinPath(folder, `${name}.${extn}`);
+        await workspace.fs.copy(uri, duplicate);
+        this.refreshViewsState();
+      }
     }
   }
 

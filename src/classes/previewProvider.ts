@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 import * as marked from "marked";
 import * as helper from "./previewProviderHelper";
 import { brand } from "./extensionBrandResolver";
@@ -25,22 +24,27 @@ const enum PreviewType {
 }
 
 export class PreviewProvider implements vscode.WebviewViewProvider {
+  private readonly context: vscode.ExtensionContext;
+
   private view: WebviewView | undefined;
   private title: vscode.Uri | string = empty;
   private cspSourceDefault!: string;
   private lastViewVisibleValue: boolean = false;
   private lastWebviewLoaded: boolean = false;
-  private toBeResolved: Promise<void> = new Promise<void>(
-    (resolved) => this.resolved = resolved
-  );
+  private toBeResolved: Promise<void>;
   private resolved!: () => void;
 
-  constructor(private readonly context: vscode.ExtensionContext) { }
+  constructor(context: vscode.ExtensionContext) {
+    this.context = context;
+    this.toBeResolved = new Promise<void>((resolve) => {
+      this.resolved = resolve;
+    });
+  }
 
-  resolveWebviewView(
+  public async resolveWebviewView(
     webviewView: WebviewView,
     context: vscode.WebviewViewResolveContext<unknown>, 
-    token: vscode.CancellationToken): Thenable<void> | void
+    token: vscode.CancellationToken): Promise<void | undefined>
   {
     if (token.isCancellationRequested) { return; }
 
@@ -86,11 +90,11 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     LogService.log("webview resolved with state:", context.state);
   }
 
-  canBeShownAsWebView(): boolean {
+  public canBeShownAsWebView(): boolean {
     return this.view !== undefined;
   }
 
-  async showAsWebView(uriOr: vscode.Uri | string): Promise<void> {
+  public async showAsWebView(uriOr: vscode.Uri | string): Promise<void> {
     await this.toBeResolved;
 
     const bad = empty;
@@ -112,7 +116,7 @@ export class PreviewProvider implements vscode.WebviewViewProvider {
     this.view?.show(true);
   }
 
-  async setDefaults(): Promise<void> {
+  public async setDefaults(): Promise<void> {
     await this.toBeResolved;
 
     this.updateDefaults();

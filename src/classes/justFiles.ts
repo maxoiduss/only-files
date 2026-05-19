@@ -1,5 +1,4 @@
-import * as vscode from "vscode";
-import * as vzcode from "../interfaces/vzcode";
+import * as vscodes from "../types";
 import * as manager from "./fileItemManager";
 import * as folders from "./foldersProviderHelper";
 import { CommandRegistrator } from "./commandRegistrator";
@@ -558,7 +557,7 @@ export class JustFiles {
   }
     
   private subscribeSearchList() {
-    const search = async (list: vzcode.Searchable, exec: () => Promise<void>) =>
+    const search = async (list: vscodes.Searchable, exec: () => Promise<void>) =>
     { await exec();
 
       list.onSearch = !list.onSearch;
@@ -634,9 +633,11 @@ export class JustFiles {
     this.context.subscriptions.push(did1, did2);
 
     const change1 = vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      this.refreshAllViews();
+      this.foldersViewProvider.didChangeWorkspaceFolders()?.then(() =>
+        this.refreshAllViews());
     });
-    const rename = vscode.workspace.onDidRenameFiles(() => {
+    const rename = vscode.workspace.onDidRenameFiles((e) => {
+      console.log(`Renamed: ${e.files.map((f) => f.oldUri.path + " -> " + f.newUri.path)}`);
       this.refreshAllViews();
     });
     const change2 = vscode.workspace.onDidChangeTextDocument(() => {

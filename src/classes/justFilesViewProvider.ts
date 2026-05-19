@@ -1,14 +1,14 @@
-import * as vscode from "vscode";
-import * as vzcode from "../interfaces/vzcode";
-import * as helper from "./justFilesProviderHelper";
+import * as vscodes from "../types";
 import * as manager from "./fileItemManager";
+import * as helper from "./justFilesProviderHelper";
 import { JustFilesProviderHelper } from "./justFilesProviderHelper";
 import { ExtensionStaticService } from "./extensionStaticService";
-import { FileItem, PlaceholderItem } from "./fileItem";
-import { getFoldersBy, getPathDepth, /* getUri, */ isValidUri } from "./utilManager";
 import { LogService } from "./logService";
 import { Vertex } from "./justFilesProviderHelper";
 import { brand } from "./extensionBrandResolver";
+import { FileItem, PlaceholderItem } from "./fileItem";
+import { autodebug, getFoldersBy, getPathDepth, getUri, isValidUri
+} from "./utilManager";
 
 const dot = '.' as const;
 //const empty = ''  as const;
@@ -23,8 +23,8 @@ typeof JustFilesProviderHelper;
 
 export class JustFilesViewProvider
   implements vscode.TreeDataProvider<FileItem | PlaceholderItem>,
-  vzcode.Changable<FileItem>,
-  vzcode.Searchable,
+  vscodes.Changable<FileItem>,
+  vscodes.Searchable,
   vscode.Disposable
 {
   private didChangeTreeData: vscode.EventEmitter<JustFilesItemOr> =
@@ -63,13 +63,25 @@ export class JustFilesViewProvider
 
   constructor(context: vscode.ExtensionContext) {
     this.cleanupTimer = setTimeout(() => this.cleanupTask(), cleanupInterval);
-    this.context = context; console.log(this.context);
+    this.context = context;
     this.pushing = getPathDepth;
     helper.loadWorkspaceContexts(this.context,
       (heads) => this.vertices = heads,
       (hidden) => this.hidden = hidden,
       (mode) => this.sortedMode = mode
     );
+    this.removeNotHeads();
+  }
+  
+  private removeNotHeads() {
+    const heads = new Set(
+      this.heads.map((h) => h.item?.id).filter((i) => helper.real(i))
+    );
+    for (const id of this.vertices.keys()) {
+      if (id && heads.has(id)) {
+        this.deleteFromVertices(id);
+      }
+    }
   }
 
   private cleanupTask() {
@@ -227,15 +239,22 @@ export class JustFilesViewProvider
     }
   }
 
-  private async validateHeads(): Promise<void> {
-    for (const vertex of this.heads) {
+  private async validateHidden(): Promise<void> {
+    for (const pathe of this.hidden) {
+      const exist = await isValidUri(getUri(pathe));
+      if (!exist) { this.hidden.delete(pathe); }
+    }
+  }
+
+  private async validateVertices(): Promise<void> {
+    for (const [id, vertex] of this.vertices) {
       const exist = await vertex.validateItem();
       if (!exist) {
-        const id = await vertex.getId();
         this.deleteFromVertices(id);
         this.removeById(id);
       }
     }
+    await this.validateHidden();
   }
 
   public async addFileItem(fileItem: FileItem): Promise<void> {
@@ -297,10 +316,15 @@ export class JustFilesViewProvider
   }
 
   public refresh(element?: FileItem) {
-    this.validateHeads().then(() => {
-      const vertex = this.vertices.get(element?.id ?? '_');
-      if (vertex) { this.setupChildrenFor(vertex, true); }
+    const prepare = this.sortedMode ?
+      this.validateVertices.bind(this) : () => Promise.resolve();
 
+    prepare().then(() => {
+      if (autodebug[4]) { debugger; }
+      const vertex = this.vertices.get(element?.id ?? '_');
+      if (vertex) {
+        this.setupChildrenFor(vertex, true);
+      }
       this.didChangeTreeData.fire(element);
 
       helper.saveWorkspaceContexts(

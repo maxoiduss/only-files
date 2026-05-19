@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 import * as manager from "./fileItemManager";
 import { Location } from "vscode";
 import { FileItem } from "./fileItem";

@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 import { FileItem } from "./fileItem";
 import { autodebug, basename, extname, getUri, isFile, isValidUri, same
 } from "./utilManager";

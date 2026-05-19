@@ -1,6 +1,5 @@
-import * as vscode from "vscode";
-import { TreeDragAndDropController } from "vscode";
 import * as manager from "./fileItemManager";
+import { TreeDragAndDropController } from "vscode";
 import { CommandRegistrator } from "./commandRegistrator";
 import { emptyItem, root, FileItem } from "./fileItem";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";

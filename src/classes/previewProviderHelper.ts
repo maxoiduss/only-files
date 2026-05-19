@@ -1,5 +1,3 @@
-import * as vscode from "vscode";
-
 const container = "container" as const;
 const placeholder = "placeholder" as const;
 const dropAreaMask = 'dropzone' as const;

@@ -1,13 +1,12 @@
-import * as vscode from "vscode";
 import { TreeDragAndDropController } from "vscode";
 import { placeholder, FileItem } from "./fileItem";
 import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 
 const URLS = "text/uri-list" as const;
 const _ = {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    get MIME () {
-      return `application/${ExtensionBrandResolver.command}.fileitem`;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  get MIME () {
+    return `application/${ExtensionBrandResolver.command}.fileitem`;
   }
 };
 const empty = '' as const;
