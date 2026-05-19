@@ -3,5 +3,6 @@
   "search.exclude": {
     "out": true, // set this to false to include "out" folder in search results
     "dist": true
-  }
+  },
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib"
 }
