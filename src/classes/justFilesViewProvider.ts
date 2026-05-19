@@ -92,7 +92,15 @@ export class JustFilesViewProvider
       }
     }
     res.sort((a, b) => b[1] - a[1]);
-    res.forEach(([id]) => this.vertices.delete(id));
+    res.forEach(([id]) => this.deleteFromVertices(id));
+  }
+
+  private addToVertices(id: string, vertex: Vertex) {
+    this.vertices.set(id, vertex);
+  }
+
+  private deleteFromVertices(id: string) {
+    this.vertices.delete(id);
   }
 
   private async createHiddenChildren(vert: Vertex, id: string): Promise<void> {
@@ -110,7 +118,7 @@ export class JustFilesViewProvider
     
     if (parentId === dot) { return; }
     if (!this.vertices.has(parentId)) {
-      this.vertices.set(parentId, parentVert);
+      this.addToVertices(parentId, parentVert);
       const id = await vert.getId();
 
       if (hiddenId) {
@@ -153,7 +161,7 @@ export class JustFilesViewProvider
     }));
     if (!unchanged) {
       for (const childVertex of children) {
-        this.vertices.set(await childVertex.getId(), childVertex);
+        this.addToVertices(await childVertex.getId(), childVertex);
       }
     }
   }
@@ -161,7 +169,7 @@ export class JustFilesViewProvider
   private removeDistantDescendantsOf(id: string) {
     for (const [vertexId, vertex] of this.vertices) {
       if (vertex.parent !== id && vertex.parent.startsWith(id)) {
-        this.vertices.delete(vertexId);
+        this.deleteFromVertices(vertexId);
       }
     }
   }
@@ -190,7 +198,7 @@ export class JustFilesViewProvider
       for (const childId of vertex.children) {
         this.removeById(childId);
       };
-      this.vertices.delete(id);
+      this.deleteFromVertices(id);
     }
     this.hidden.delete(id);
   }
@@ -231,7 +239,7 @@ export class JustFilesViewProvider
         this.removeDistantDescendantsOf(rootId);
       }
       this.unhideById(rootId);
-      this.vertices.set(rootId, root);
+      this.addToVertices(rootId, root);
       
       await this.setupChildrenFor(root, !exist);
     });

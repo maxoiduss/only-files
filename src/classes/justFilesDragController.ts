@@ -15,10 +15,10 @@ const empty = '' as const;
 export class JustFilesDragController
   implements TreeDragAndDropController<FileItem>
 {
-  readonly dropMimeTypes: string[] = [_.MIME, URLS];
-  readonly dragMimeTypes: string[] = [_.MIME];
+  public readonly dropMimeTypes: string[] = [_.MIME, URLS];
+  public readonly dragMimeTypes: string[] = [_.MIME];
 
-  async handleDrag?(
+  public async handleDrag?(
     source: readonly FileItem[],
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
@@ -41,7 +41,7 @@ export class JustFilesDragController
     dataTransfer.set(URLS, dataFirst);
   }
 
-  async handleDrop?(
+  public async handleDrop?(
     target: FileItem | undefined,
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken

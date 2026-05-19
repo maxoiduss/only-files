@@ -436,7 +436,7 @@ export const showProgressBar = (withMessage: string): CTS => {
 
         const stop = () => {
           clearInterval(interval);
-          try { cts.dispose(); } catch {}
+          try { cts.dispose(); } catch { }
           resolve();
         };
         const ctstoken = cts.token.onCancellationRequested(() => {

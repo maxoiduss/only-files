@@ -120,21 +120,20 @@ export class JustFiles {
   }
 
   private changeFileItem(changed: FileItem | undefined, onUri: vscode.Uri) {
-    if (this.foldersTreeView.visible) {
-      this.foldersViewProvider.trySelectByUri(changed?.resourceUri || onUri);
-      if (changed) {
-        this.foldersViewProvider.changeTreeItem(changed, onUri).then((_) =>
-          this.foldersViewProvider.refresh(changed)); }
-    } else {
-      this.foldersViewProvider.refresh();
-    }
     if (changed) {
+      this.foldersViewProvider.changeTreeItem(changed, onUri).then((_) =>
+        this.foldersViewProvider.refresh(changed));
       changed.resourceUri ?
         this.fileDecorator.handleUri(changed.resourceUri, onUri) : {};
       this.justFilesViewProvider.changeTreeItem(changed, onUri);
     } else {
       this.justFilesViewProvider.refreshIfExistsFileItemByUri(onUri);
     }
+
+    if (this.foldersTreeView.visible) {
+      this.foldersViewProvider.trySelectByUri(changed?.resourceUri || onUri); }
+    else if (!changed) {
+      this.foldersViewProvider.refresh(); }
   }
 
   private revealFilesTreeViewItem(element: FileItem, expand?: boolean) {

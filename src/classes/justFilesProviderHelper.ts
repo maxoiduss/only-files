@@ -18,7 +18,7 @@ import { getConfigurationFor, getUri, isFolder, known, same
    Provides ...
  */
 // JustFilesProviderHelper module defines some helper types, funcs and docs
-export class JustFilesProviderHelper {}
+export class JustFilesProviderHelper { }
 
 const dot   = '.' as const;
 const empty = ''  as const;

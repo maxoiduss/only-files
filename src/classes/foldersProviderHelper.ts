@@ -59,7 +59,7 @@ import { getConfigurationFor, getConfigurationsFor, getUri
    acting like project root folder of a such workspace folder.
  */
 // FoldersProviderHelper module defines some helper types, funcs and docs
-export class FoldersProviderHelper {}
+export class FoldersProviderHelper { }
 
 type StateOr = State | TreeItemCollapsibleState | undefined;
 
@@ -74,10 +74,10 @@ const refreshStatesFrequency = 0.05 as const;
 const collapsings = "collapsings"   as const;
 const plainModeOn = "plainModeOn"   as const;
 
-const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
 const configuration    = () => ExtensionBrandResolver.configuration;
 const boolean1Property = () => ExtensionBrandResolver.boolean1Property;
 const boolean2Property = () => ExtensionBrandResolver.boolean2Property;
+const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
 
 export const real = (obj: any): obj is {} => obj !== undefined && obj !== null;
 
