@@ -24,7 +24,7 @@ export default [
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        project: fpath.join(__dirname, 'tsconfig.json'),
+        EXPERIMENTAL_useProjectService: true,
         tsconfigRootDir: __dirname,
         ecmaVersion: 2020,
         sourceType: "module"

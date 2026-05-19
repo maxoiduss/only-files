@@ -1,3 +1,4 @@
+/// <reference types="vscode" />
 import * as vscode from "vscode";
 import { JustFiles } from "./classes/justFiles";
 import { ExtensionBrandResolver } from "./classes/extensionBrandResolver";

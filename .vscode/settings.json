@@ -3,5 +3,10 @@
   "search.exclude": {
     "out": true, // set this to false to include "out" folder in search results
     "dist": true
-  }
+  },
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+  "js/ts.implicitProjectConfig.target": "ES2020",
+  "js/ts.suggest.autoImports": true,
+  "js/ts.suggest.completeFunctionCalls": true,
+  "js/ts.preferences.importModuleSpecifier": "non-relative"
 }

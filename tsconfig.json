@@ -1,7 +1,11 @@
 {
 	"compilerOptions": {
-		"types": ["node"],
-		"module": "commonjs",
+		"types": [
+			"vscode",
+			"node"
+		],
+		"module": "nodenext",
+		"moduleResolution": "nodenext",
 		"target": "ES2020",
 		"outDir": "out",
 		"rootDir": "src",
@@ -11,8 +15,10 @@
 		"strict": true,   						/* enable all strict type-checking options */
 		"noUnusedLocals": true,
     "noUnusedParameters": false   /* Report errors on unused parameters. */
-		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
 	},
+	"include": [
+    "src/**/*"
+  ],
 	"exclude": [
     "src/tests/**/*.test.ts",
     "out",
