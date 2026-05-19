@@ -5,12 +5,13 @@ import * as manager from "./fileItemManager";
 import { JustFilesProviderHelper } from "./justFilesProviderHelper";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { FileItem, PlaceholderItem } from "./fileItem";
-import { getFoldersBy, getPathDepth, isValidUri } from "./utilManager";
+import { getFoldersBy, getPathDepth, /* getUri, */ isValidUri } from "./utilManager";
 import { LogService } from "./logService";
 import { Vertex } from "./justFilesProviderHelper";
 import { brand } from "./extensionBrandResolver";
 
 const dot = '.' as const;
+//const empty = ''  as const;
 
 const cleanupInterval = 60000 as const;
 
@@ -226,6 +227,17 @@ export class JustFilesViewProvider
     }
   }
 
+  private async validateHeads(): Promise<void> {
+    for (const vertex of this.heads) {
+      const exist = await vertex.validateItem();
+      if (!exist) {
+        const id = await vertex.getId();
+        this.deleteFromVertices(id);
+        this.removeById(id);
+      }
+    }
+  }
+
   public async addFileItem(fileItem: FileItem): Promise<void> {
     this.addonQueue = this.addonQueue.then(async () => {
       const exist = this.vertices.get(fileItem.id);
@@ -285,14 +297,16 @@ export class JustFilesViewProvider
   }
 
   public refresh(element?: FileItem) {
-    const vertex = this.vertices.get(element?.id ?? '_');
-    if (vertex) { this.setupChildrenFor(vertex, true); }
+    this.validateHeads().then(() => {
+      const vertex = this.vertices.get(element?.id ?? '_');
+      if (vertex) { this.setupChildrenFor(vertex, true); }
 
-    this.didChangeTreeData.fire(element);
+      this.didChangeTreeData.fire(element);
 
-    helper.saveWorkspaceContexts(
-      this.context, this.sortedMode, this.heads, [...this.hidden]
-    );
+      helper.saveWorkspaceContexts(
+        this.context, this.sortedMode, this.heads, [...this.hidden]
+      );
+    });
   }
 
   public getTreeItem(element: FileItem): JustFilesItem {
@@ -303,8 +317,7 @@ export class JustFilesViewProvider
     return element;
   }
 
-  public async getChildren(element?: FileItem): Promise<JustFilesItem[]>
-  {
+  public async getChildren(element?: FileItem): Promise<JustFilesItem[]> {
     if (!element?.id) {
       if (this.heads.length === 0) {
         return Promise.resolve([new PlaceholderItem()]);
@@ -329,7 +342,7 @@ export class JustFilesViewProvider
     return manager.sortItems(items, this.sortedMode);
   }
 
-  public changeTreeItem(fileItem: FileItem, oldUri: vscode.Uri) {
+  /*public changeTreeItem(fileItem: FileItem, oldUri: vscode.Uri) {
     const newUri = fileItem.resourceUri;
     if (!newUri) { return; }
 
@@ -359,6 +372,35 @@ export class JustFilesViewProvider
     }
     if (toRefresh.length > 1) { this.refresh(); }
     else if (toRefresh.length === 1) { this.refresh(toRefresh[0]); }
+  }*/
+
+  public changeTreeItem(fileItem: FileItem, _oldUri: vscode.Uri) {
+    const newUri = fileItem.resourceUri;
+    if (!newUri) { return; }
+
+    /*const changed: [string, vscode.Uri | undefined][] = [];
+    for (const vertex of this.heads) {
+      if (vertex.item && manager.check(vertex.item).isChildOf(oldUri, true)) {
+        const id = vertex.item.id;
+        manager.changeUri(vertex.item, newUri, oldUri);
+        this.removeById(id);
+        this.addToVertices(vertex.item.id, vertex);
+        changed[0] = [empty, undefined];
+      } }
+    for (const pathe of this.hidden) {
+      const uri = getUri(pathe);
+      if (manager.check(uri).isChildOf(oldUri, true)) {
+        changed.push([pathe, manager.changeUri(uri, newUri, oldUri)]);
+      } }
+    if (changed.length > 0) {
+      if (changed[0][0] === empty) { changed[0] = changed.pop()!; }
+
+      changed.forEach(([key, uri]) => {
+        this.hidden.delete(key);
+        uri ? this.hidden.add(uri.toString()) : {};
+      });
+      this.refresh(fileItem);
+    }*/
   }
 
   public async refreshIfExistsFileItemByUri(uri: vscode.Uri): Promise<void> {

@@ -61,6 +61,12 @@ export class Vertex {
       setState(); setParent();
     }
   }
+
+  public async validateItem(): Promise<boolean> {
+    const exist = await isFolder(getUri(this.id));
+    
+    return exist !== undefined;
+  }
   
   public async validateState(): Promise<void> {
     if (!this.item) { await this.createItem(); }
@@ -88,7 +94,7 @@ export class Vertex {
     if (this.id === dot) { return; }
 
     const uri = getUri(this.id);
-    this.item ??= await manager.createFileItem(uri,
+    this.item = await manager.createFileItem(uri,
       this.state === TreeItemCollapsibleState.Expanded
     );
   }
