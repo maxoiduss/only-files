@@ -1,6 +1,19 @@
 const esbuild = require('esbuild');
+const fs = require('fs');
 
 const outDir = 'dist';
+const metaFile = 'out/meta.json';
+
+const metaPlugin = {
+  name: 'meta-generator',
+  setup(build) {
+    build.onEnd((result) => {
+      if (result.metafile) {
+        fs.writeFileSync(metaFile, JSON.stringify(result.metafile, null, 2));
+      }
+    });
+  },
+};
 
 esbuild.build({
   entryPoints: [
@@ -14,6 +27,8 @@ esbuild.build({
   external: [
     'vscode',                         // keep VS Code API external
   ],
+  plugins: [metaPlugin],
+  metafile: true,                     // generate metadata for analysis
   mainFields: ['main'],
   conditions: ['node'],               // ensure node-specific code is used
   packages: 'bundle',                 // force bundling of all packages
