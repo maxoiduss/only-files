@@ -1,4 +1,4 @@
-import { HasDefaults } from "../types";
+import { HasDefaults } from "../types/vscodes";
 import { ExtensionBrandResolver
 } from "./extensionBrandResolver";
 import { CancellationTokenSource as CTS,

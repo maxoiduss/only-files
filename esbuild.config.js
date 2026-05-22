@@ -14,7 +14,6 @@ esbuild.build({
   external: [
     'vscode',                         // keep VS Code API external
   ],
-  inject: ['src/injections.js'],      // injects 'vscode' globally
   mainFields: ['main'],
   conditions: ['node'],               // ensure node-specific code is used
   packages: 'bundle',                 // force bundling of all packages

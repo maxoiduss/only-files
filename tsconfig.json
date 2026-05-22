@@ -1,21 +1,26 @@
 {
   "compilerOptions": {
-    "types": ["vscode", "node"],
+    "types": ["node"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "es2024",
-    "lib": ["ESNext"],
+    "lib": ["ES2024"],
+    "noLib": false,
     "outDir": "out",
     "rootDir": "src",
+    "strict": true,               /* enable all strict type-checking options */
+    "removeComments": true,
     "sourceMap": true,
     "inlineSources": true,
-    "strict": true,               /* enable all strict type-checking options */
-    "noUnusedLocals": true,
     "noUnusedParameters": false,  /* Report errors on unused parameters.     */
+    "noUnusedLocals": true,
+    "noUncheckedSideEffectImports": true,
+    "allowSyntheticDefaultImports": true,
+    "typeRoots": [
+      "./node_modules/@types",
+      "./src/types"
+    ]
   },
-  "include": [
-    "src/**/*"
-  ],
   "exclude": [
     "src/tests/**/*.test.ts",
     "out",

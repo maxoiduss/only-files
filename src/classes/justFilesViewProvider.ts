@@ -1,4 +1,4 @@
-import * as vscodes from "../types";
+import * as vscodes from "../types/vscodes";
 import * as manager from "./fileItemManager";
 import * as helper from "./justFilesProviderHelper";
 import { JustFilesProviderHelper } from "./justFilesProviderHelper";

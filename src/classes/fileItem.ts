@@ -1,4 +1,4 @@
-import * as vscodes from "../types";
+import * as vscodes from "../types/vscodes";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
 import { asRelative, basename, getPathDepth, getTopRootOf, getUri, resolveUri
 } from "./utilManager";
