@@ -11,11 +11,13 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--enable-source-maps"
+        "--enable-source-maps",
+        //"--disable-extensions"
       ],
       "preLaunchTask": "npm-run",
       "sourceMaps": true,
-      "smartStep": true
+      "smartStep": true,
+      "showAsyncStacks": true
     },
     {
       "name": "Run Extension Tests",
@@ -29,6 +31,17 @@
         "${workspaceFolder}/out/test/**/*.js"
       ],
       "preLaunchTask": "${defaultBuildTask}"
+    },
+    {
+      "name": "Attach to VS Code",
+      "type": "node",
+      "request": "attach",
+      "port": 5870,
+      "restart": true,
+      "sourceMaps": true,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "${workspaceFolder}"
     }
   ]
 }

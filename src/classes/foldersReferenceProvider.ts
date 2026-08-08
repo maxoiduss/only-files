@@ -3,11 +3,12 @@ import { Location } from "vscode";
 import { FileItem } from "./fileItem";
 import { CommandRegistrator } from "./commandRegistrator";
 import {
-  getNicePath,
-  setNothingToExcludeTemporary,
-  showProgressBar,
-  showQuickInput
+  getNicePath, setNothingToExcludeTemporary, showProgressBar, showQuickInput
 } from "./utilManager";
+
+const empty = '' as const;
+const ignoreDefaultFileName = ".gitignore" as const;
+const gitignoreResetDelay = 60000 as const;
 
 const EXCLUDES = [
   "jar",
@@ -27,12 +28,14 @@ const EXCLUDES = [
   "gz",
   "mp3",
   "mp4",
-  "vsix"
-] as const;
-const ignoreDefaultFileName = ".gitignore" as const;
-const empty = '' as const;
+  "vsix"         ] as const;
 
+type UriOr = vscode.Uri | undefined;
 type TextDocumentOr = vscode.TextDocument | undefined;
+
+const isNotEmptyOrNull = (value: string | undefined): boolean => {
+  return value !== undefined && value.trim() !== empty;
+};
 
 export const getPositionSafelyFrom = async (
   file: vscode.Uri
@@ -56,17 +59,24 @@ async function openTextDocument(doc: vscode.Uri | FileItem)
 : Promise<TextDocumentOr | string> {
   if (doc instanceof FileItem) {
     if (!doc.resourceUri) { return empty; }
+
     try {
-      return (await vscode.workspace.openTextDocument(doc.resourceUri)).getText();
-    } catch (error) {
-      await vscode.window.showWarningMessage(String(error ?? `Failed to open file: ${doc}`));
+      return (
+        await vscode.workspace.openTextDocument(doc.resourceUri)
+      ).getText(); }
+    catch (error) {
+      await vscode.window.showWarningMessage(
+        String(error ?? `Failed to open file: ${doc}`));
+
       return empty;
-    }
-  } else {
+    } }
+  else {
     try {
-      return await vscode.workspace.openTextDocument(doc);
-    } catch (error) {
-      await vscode.window.showWarningMessage(String(error ?? `Failed to open file: ${doc}`));
+      return await vscode.workspace.openTextDocument(doc); }
+    catch (error) {
+      await vscode.window.showWarningMessage(
+        String(error ?? `Failed to open file: ${doc}`));
+
       return undefined;
     }
   }
@@ -74,16 +84,30 @@ async function openTextDocument(doc: vscode.Uri | FileItem)
 
 export class FoldersReferenceProvider implements vscode.ReferenceProvider {
   private readonly patternSeparator = ',*.';
-  private gitignore: vscode.Uri | undefined;
+
+  private gitignoreResetTimer: ReturnType<typeof setTimeout> | undefined;
+  private gitignoreName: string | undefined;
+  private gitignore: UriOr;
+
+  private resetGitignoreTimer(): void {
+    if (this.gitignoreResetTimer) {
+      clearTimeout(this.gitignoreResetTimer);
+    }
+    this.gitignoreResetTimer = setTimeout(() => {
+      this.gitignore = undefined;
+      this.gitignoreResetTimer = undefined;
+    }, gitignoreResetDelay);
+  }
 
   async provideReferences(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    context: vscode.ReferenceContext,
+    _document: vscode.TextDocument,
+    _position: vscode.Position,
+    _context: vscode.ReferenceContext,
     token: vscode.CancellationToken
   ): Promise<Location[]> {
     const registrator = new CommandRegistrator();
     const item = await registrator.getAnySelectedIfBad();
+
     return await this.provideReferencesFor(item, token);
   }
 
@@ -93,22 +117,27 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
   ): Promise<Location[]> {
     const currentItem = fileItem;
     const progressBar = showProgressBar("Searching references");
-    const entireSearch = await this.findTextInFiles(currentItem, undefined, token);
-    const classSearch = await this.findTextInFiles(currentItem, "class", token);
-    entireSearch.push(...classSearch);
+    const entreSearch = await this.findTextInFiles(currentItem, undefined, token);
+    const classSearch = await this.findTextInFiles(currentItem, "class",  token);
+    const strctSearch = await this.findTextInFiles(currentItem, "struct", token);
+    entreSearch.push(...classSearch, ...strctSearch);
     progressBar.cancel();
     progressBar.dispose();
+
+    this.gitignoreName = undefined;
     
-    return entireSearch;
+    return entreSearch;
   }
 
   private stripComments(source: string): string {
-    /// (//.*$) : Matches single line comments starting with // until the end of the line.
-    /// (| : OR
-    /// (/\*[\s\S]*?\*/) : Matches multiline comments starting with /* and ending with */.
-    /// | : OR
-    /// (\s*\#.*$) : Matches python/hash comments if they start a line
-    /// (optional based on your request).
+    ///  (//.*$) : Matches single line comments starting
+    ///  with // until the end of the line.
+    ///  (| : OR
+    ///  (/\*[\s\S]*?\*/) : Matches multiline comments starting 
+    ///  with /* and ending with */.
+    ///  | : OR
+    ///  (\s*\#.*$) : Matches python/hash comments if they start a line
+    ///  (optional based on your request).
     const commentRegex = /(\/\/.*$)|(\/\*[\s\S]*?\*\/)|(\s*\#.*$)/gm;
 
     return source.replace(commentRegex, ' ');
@@ -141,7 +170,7 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     const mask = pattern ?
       this.createSearchMatchFromPattern(pattern, maskDoc) : null;
     const searchText = mask ? mask[1] : undefined;
-    const searchPattern = searchText ?? manager.getNameWithoutExt(fileItem);
+    const searchPattern = searchText ?? await manager.getNameWithoutExt(fileItem);
     const locations: Location[] = [];
     const gitignore = await this.readIgnoreFile({ showDialog: false });
     const antipatternList = await this.createAntipattern(gitignore);
@@ -163,7 +192,9 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
       if (!doc || token?.isCancellationRequested) { break; }
 
       const text = doc.getText();
-      const regex = new RegExp(`(?:^|[^A-Za-z])(${searchPattern})(?:$|[^A-Za-z])`, "g");
+      const regex = new RegExp(
+        `(?:^|[^A-Za-z])(${searchPattern})(?:$|[^A-Za-z])`, "g"
+      );
       let match: RegExpExecArray | null;
 
       while ((match = regex.exec(text)) !== null) {
@@ -176,10 +207,10 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
   }
 
   private skipEmptyOrNegationAndLineIsComment(line: string): boolean {
-    return line.trim() !== empty && !line.startsWith('!') && !line.startsWith('#'); 
+    return line.trim() !== empty && !line.startsWith('!')&& !line.startsWith('#'); 
   }
   
-  private async createAntipattern(gitignore: vscode.Uri | undefined): Promise<string[]> {
+  private async createAntipattern(gitignore: UriOr): Promise<string[]> {
     return gitignore ? ((await openTextDocument(gitignore))
       ?.getText() ?? empty)
       .split(/[\r\n]+/)
@@ -222,36 +253,38 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     return [isFileRule, new RegExp(regexStr, 'i')];
   }
 
-  async createRegexFrom(file: vscode.Uri | undefined): Promise<[boolean, RegExp][]> {
+  async createRegexFrom(file: UriOr): Promise<[boolean, RegExp][]> {
     const antipatternList = await this.createAntipattern(file);
     const ignoreRegexes = antipatternList.map(this.patternToRegex);
+    
     return ignoreRegexes;
   }
   
-  async readIgnoreFile(can: { showDialog: boolean }): Promise<vscode.Uri | undefined>
-  {
-    const plannedToAsk = can.showDialog || !this.gitignore;
-    const ignorePattern: string = plannedToAsk ?
-      await showQuickInput(
-        "What file should be used as ignore list?",
-        ignoreDefaultFileName
-      )
-    : ignoreDefaultFileName;
+  async readIgnoreFile(can: { showDialog: boolean }): Promise<UriOr> {
+    this.resetGitignoreTimer();
 
-    if (plannedToAsk && ignorePattern !== empty) {
+    const plannedToAsk = can.showDialog || !this.gitignoreName;
+
+    this.gitignoreName = plannedToAsk ?
+      await showQuickInput("What file should be used as ignore list?",
+        ignoreDefaultFileName)
+    : this.gitignoreName;
+
+    if (plannedToAsk && isNotEmptyOrNull(this.gitignoreName)) {
       const restoreSetting = await setNothingToExcludeTemporary();
-      const ignoreFiles = await vscode.workspace.findFiles(ignorePattern);
+      const ignoreFiles = await vscode.workspace.findFiles(this.gitignoreName!);
+      
       if (ignoreFiles.length > 1) {
         const map = new Map(ignoreFiles.map((file) => [getNicePath(file), file]));
         const file = await vscode.window.showQuickPick([...map.keys()], {
-          placeHolder: "The 1st will be used otherwise..", title: "Which one?"
+          placeHolder: "The 1-st will be used otherwise..", title: "Which one?"
         });
-        this.gitignore = file ? map.get(file) : ignoreFiles[0];
-      } else {
+        this.gitignore = file ? map.get(file) : ignoreFiles[0]; }
+      else {
         this.gitignore = ignoreFiles.length > 0 ? ignoreFiles[0] : this.gitignore;
       }
-      await restoreSetting();
-    } else if (ignorePattern === empty) {
+      await restoreSetting(); }
+    else if (this.gitignoreName === empty) {
       this.gitignore = undefined;
     }
     return this.gitignore;

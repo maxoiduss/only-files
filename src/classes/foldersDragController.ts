@@ -1,9 +1,11 @@
 import * as manager from "./fileItemManager";
 import { TreeDragAndDropController } from "vscode";
 import { CommandRegistrator } from "./commandRegistrator";
-import { emptyItem, root, FileItem } from "./fileItem";
+import { emptyItem, root, FileItem, FileItemOr } from "./fileItem";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
-import { getPathDepth, getUri } from "./utilManager";
+import { delimeters, getPathDepth, getUri } from "./utilManager";
+
+const empty = '' as const;
 
 const URLS = "text/uri-list" as const;
 const _ = {
@@ -12,11 +14,14 @@ const _ = {
       return `application/${ExtensionBrandResolver.command}.fileitem`;
   }
 };
-const empty = '' as const;
 
 export class FoldersDragController
   implements TreeDragAndDropController<FileItem>
 {
+  private readonly commandRegistrator: CommandRegistrator;
+  private readonly draggedFromJustFilesAction:
+  (uri: vscode.Uri) => Promise<void>;
+
   public readonly dropMimeTypes: string[] = [_.MIME, URLS];
   public readonly dragMimeTypes: string[] = [_.MIME, URLS];
 
@@ -25,10 +30,12 @@ export class FoldersDragController
   }
 
   constructor(
-    private readonly commandRegistrator: CommandRegistrator,
-    private readonly draggedFromJustFilesAction:
-    (uri: vscode.Uri) => Promise<void>
-  ) { }
+    commandRegistrator: CommandRegistrator,
+    draggedFromJustFilesAction: (uri: vscode.Uri) => Promise<void>
+  ) {
+    this.commandRegistrator = commandRegistrator;
+    this.draggedFromJustFilesAction = draggedFromJustFilesAction;
+   }
 
   public async handleDrag?(
     source: readonly FileItem[],
@@ -53,11 +60,12 @@ export class FoldersDragController
     dataTransfer.set(URLS, dataFirst);
 
     const items: FileItem[] = [...source];
+
     await this.commandRegistrator.cutOrCopyItems(items);
   }
 
   public async handleDrop?(
-    target: FileItem | undefined,
+    target: FileItemOr,
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
   ): Promise<void> {
@@ -67,9 +75,9 @@ export class FoldersDragController
       let uris: vscode.Uri[] = [];
       const uriList = dataTransfer.get(URLS);
 
-      if (typeof uriList?.value === "string") {
+      if (typeof uriList?.value === 'string') {
         uris = uriList.value
-          .split(/[\r\n]+/)
+          .split(delimeters)
           .map((path) => getUri(path));
       }
       return uris;
@@ -82,7 +90,7 @@ export class FoldersDragController
     if (!where) { return; }
     
     const transferItems = dataTransfer.get(_.MIME);
-    if (transferItems) {
+    if   (transferItems) {
       const value = transferItems.value as string;
 
       if (value === empty) {
@@ -105,8 +113,10 @@ export class FoldersDragController
     }
     const uris = urisFromDataTransfer();
     const items = await manager.createFileItems(uris);
+
     await this.commandRegistrator.copyItems(items);
     await this.commandRegistrator.pasteItems(where);
+
     return;
   }
 }

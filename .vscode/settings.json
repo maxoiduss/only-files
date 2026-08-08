@@ -1,8 +1,8 @@
 // Place your settings in this file to overwrite default and user settings.
 {
   "search.exclude": {
-    "out": true, // set this to false to include "out" folder in search results
-    "dist": true
+    "dist": true,
+    "out": true
   },
   "js/ts.tsdk.path": "node_modules\\typescript\\lib"
 }

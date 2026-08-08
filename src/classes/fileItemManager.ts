@@ -1,14 +1,17 @@
 import { FileItem } from "./fileItem";
-import { autodebug, basename, extname, getUri, isFile, isValidUri, same
-} from "./utilManager";
 import { ExtensionStaticService as Static
 } from "./extensionStaticService";
+import {
+  autodebug, basename, extname, getUri, getUriFrom, isFile, isValidUri, same
+} from "./utilManager";
 
 const empty = '' as const;
 
+type UriOrString = vscode.Uri | string;
+
 export function getParent(itemOr: string): string;
 export function getParent(itemOr: FileItem | vscode.Uri): vscode.Uri;
-export function getParent(itemOr: FileItem | vscode.Uri | string): vscode.Uri | string {
+export function getParent(itemOr: FileItem | UriOrString): UriOrString {
   if (!itemOr) { return empty; }
   if (typeof itemOr === 'object') {
     const uri = itemOr instanceof FileItem ?
@@ -24,7 +27,7 @@ export function getParent(itemOr: FileItem | vscode.Uri | string): vscode.Uri | 
 }
 
 export const getNameWithoutExt = async (
-  fileItemOr: FileItem | vscode.Uri | string
+  fileItemOr: FileItem | UriOrString
 ): Promise<string> => {
   const pathOr = fileItemOr instanceof FileItem ?
     await fileItemOr.getUri()
@@ -33,13 +36,13 @@ export const getNameWithoutExt = async (
   const ext = extname(pathOr);
 
   if (ext && base.endsWith(ext) && base !== ext) {
-    return base.slice(0, -ext.length);
+    return base.slice(0, ext.length > 0 ? -ext.length -1 : 0);
   }
   return base;
 };
 
 export const getChildrenNames = async (
-  itemOr: FileItem | vscode.Uri | string | undefined
+  itemOr: FileItem | UriOrString | undefined
 ): Promise<string[]> => {
   const currentUri = itemOr instanceof FileItem ?
     itemOr.isFile ? empty : itemOr.resourceUri ?? empty
@@ -51,8 +54,8 @@ export const getChildrenNames = async (
     const entries = await vscode.workspace.fs.readDirectory(currentUri);
     return entries.map(([name]) =>
       vscode.Uri.joinPath(currentUri, name).toString()
-    );
-  } catch (error) { return []; }
+    ); }
+  catch (error) { return []; }
 };
 
 export const getNewFileItem = (
@@ -73,7 +76,7 @@ export const createFileItems = async (
 };
 
 export const createFileItem = async (
-  uriOr: vscode.Uri | string,
+  uriOr: UriOrString,
   expanded?: boolean
 ): Promise<FileItem> => {
   const uri = getUri(uriOr);
@@ -109,18 +112,15 @@ export const createFileItem = async (
 export const check = (childFileItemOrUri: FileItem | vscode.Uri) => {
   return {
     isChildOf: (
-      parentFileItemOrUriOrPath: FileItem | vscode.Uri | string,
+      parentFileItemOrUriOrPath: FileItem | UriOrString,
       canBeEqualToParent?: boolean
     ): boolean => {
       const sep = '/';
-      const childUri = childFileItemOrUri instanceof FileItem ?
-        childFileItemOrUri.resourceUri : childFileItemOrUri;
+      const childUri = getUriFrom(childFileItemOrUri);
       const parentUri = typeof parentFileItemOrUriOrPath === "string" ?
         getUri(parentFileItemOrUriOrPath)
-      : parentFileItemOrUriOrPath instanceof FileItem ?
-          parentFileItemOrUriOrPath.resourceUri : parentFileItemOrUriOrPath;
-      if (!childUri || !parentUri) { return false; }
-      if (autodebug[1]) { debugger; }
+      : getUriFrom(parentFileItemOrUriOrPath);
+
       if (childUri.scheme !== parentUri.scheme
        || childUri.authority !== parentUri.authority) { return false; }
       
@@ -151,7 +151,7 @@ export const changeUri = (
       relativePart = relativePart.substring(1);
     }
     const uri = vscode.Uri.joinPath(newUri, relativePart);
-    isFileItem ? on.setUri(uri) : {};
+    if (isFileItem) { on.setUri(uri); }
 
     return uri;
   }
@@ -162,7 +162,7 @@ export const changeUri = (
 export const findThen = (
   item: FileItem | string,
   inArray: FileItem[],
-  then: (found: number) => any): boolean =>
+  then: (found: number) => unknown): boolean =>
 { const foundIndex = inArray.findIndex((it) => it.like(item));
   if (foundIndex >= 0) {
     then(foundIndex);
@@ -174,16 +174,18 @@ export const findThen = (
 export const findAnyThen = async (
   items: (FileItem | string)[],
   inArray: FileItem[],
-  then: (foundElem: number, foundItem: number) => Promise<any>
+  then: (foundElem: number, foundItem: number) => Promise<unknown>
 ): Promise<boolean> => {
   let foundPosition: number = -1;
-  const foundIndex = inArray.findIndex((it) => items.some((element, i) => {
+  const foundIndex = inArray.findIndex((it) => items.some((element, i) =>
+  {
     if (it.like(element)) {
       foundPosition = i;
       return true;
     }
     return false;
   }));
+
   if (foundIndex >= 0 && foundPosition >= 0) {
     await then(foundIndex, foundPosition);
     return true;

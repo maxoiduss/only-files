@@ -14,48 +14,48 @@ import { getConfigurationFor, getConfigurationsFor, getUri
  * ```
  * class FoldersViewProvider implements 
  *  vscode.TreeDataProvider<FileItem>,
-    vscodes.Changable<FileItem>,
-    vscodes.Searchable,
-    vscode.Disposable
-   ```
-
-   Provides {@link FileItem} elements such as 
-   {@link FileItem}, {@link EmptyFolderItem}, {@link RootFileItem}
-   for a TreeView registered in JustFiles main class.
-   - {@link vscodes.Changable<T>} - provides changeTreeItem method 
-   of change to TreeItem element in cases like move/remove/rename file
-   - {@link vscodes.Searchable} - provides flag to detect the view-list 
-   search is on/off
-   - {@link vscode.Disposable} - standard vscode api disposable object
-
-   Provider is based on linear arrays search on each *getChildren* step. 
-   It has *collapsingItems: Map<string, State>* where each entry of a map 
-   has {@link State} that describes is such folder uncollapsed to 'plain' 
-   variant in the global Plain Mode or not and its 
-   {@link TreeItemCollapsibleState} state. Only folders can be uncollapsed 
-   and persist in the map.
-
-   Each expand/collapse the folder in the TreeView adds/deletes the folder 
-   to/from *collapsingItems*.
-
-   Each *getChildren* call creates the items read from the directory and 
-   filter or removes any part of them that are uncollapsed to 'plain' and 
-   synchronises its *TreeItemCollapsibleState* with *collapsingItems* elements.
-
-   {@link EmptyFolderItem} uses purifing system and is used to:
-   - create uncollapsed to 'plain' folder - in the Plain Mode
-   - create temporary folder to collapse the folder and removed by new
-   created one - in the Basic Mode, because vs code api can't obtain the 
-   folder-collapse constality so removal then recreation is the only 
-   real option.
-
-   Purifing system as any other system in the class remembers the item to 
-   focus/expand/select in the future when system calls *getChildren* after 
-   the refresh, it looks for this item on every *getChildren* step and 
-   provides appropriate action.
-
-   {@link RootFileItem} is used to show empty cell below all files and is 
-   acting like project root folder of a such workspace folder.
+ *  vscodes.Changable<FileItem>,
+ *  vscodes.Searchable,
+ *  vscodes.Disposable
+ * ```
+ *
+ * Provides {@link FileItem} elements such as 
+ * {@link FileItem}, {@link EmptyFolderItem}, {@link RootFileItem}
+ * for a TreeView registered in JustFiles main class.
+ * - {@link vscodes.Changable<T>} - provides changeTreeItem method 
+ * of change to TreeItem element in cases like move/remove/rename file
+ * - {@link vscodes.Searchable} - provides flag to detect the view-list 
+ * search is on/off
+ * - {@link vscode.Disposable} - standard vscode api disposable object
+ *
+ * Provider is based on linear arrays search on each *getChildren* step. 
+ * It has *collapsingItems: Map<string, State>* where each entry of a map 
+ * has {@link State} that describes is such folder uncollapsed to 'plain' 
+ * variant in the global Plain Mode or not and its 
+ * {@link TreeItemCollapsibleState} state. Only folders can be uncollapsed 
+ * and persist in the map.
+ *
+ * Each expand/collapse the folder in the TreeView adds/deletes the folder 
+ * to/from *collapsingItems*.
+ *
+ * Each *getChildren* call creates the items read from the directory and 
+ * filter or removes any part of them that are uncollapsed to 'plain' and 
+ * synchronises its *TreeItemCollapsibleState* with *collapsingItems* elements.
+ *
+ * {@link EmptyFolderItem} uses purifing system and is used to:
+ * - create uncollapsed to 'plain' folder - in the Plain Mode
+ * - create temporary folder to collapse the folder and removed by new
+ * created one - in the Basic Mode, because vs code api can't obtain the 
+ * folder-collapse constality so removal then recreation is the only 
+ * real option.
+ *
+ * Purifing system as any other system in the class remembers the item to 
+ * focus/expand/select in the future when system calls *getChildren* after 
+ * the refresh, it looks for this item on every *getChildren* step and 
+ * provides appropriate action.
+ *
+ * {@link RootFileItem} is used to show empty cell below all files and is 
+ * acting like project root folder of a such workspace folder.
  */
 // FoldersProviderHelper module defines some helper types, funcs and docs
 export class FoldersProviderHelper { }
@@ -65,6 +65,11 @@ type StateOr = State | TreeItemCollapsibleState | undefined;
 export type State = {
   isPlain: boolean;
   collapses: TreeItemCollapsibleState;
+};
+
+export type Ignore = {
+  readonly fileRules: RegExp[];
+  readonly folderRules: RegExp[];
 };
 
 let getChildrenRootCount: number = 0;
@@ -77,6 +82,23 @@ const configuration    = () => ExtensionBrandResolver.configuration;
 const boolean1Property = () => ExtensionBrandResolver.boolean1Property;
 const boolean2Property = () => ExtensionBrandResolver.boolean2Property;
 const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
+
+export const cache: Map<string | undefined, WeakRef<FileItem> > = new Map();
+
+export const removeFromCache = (id: string) => { cache.delete(id); };
+export const addToCache = (id: string, item: FileItem) => {
+  cache.set(id, new WeakRef(item));
+};
+export const clearTheCache = () => { cache.clear(); };
+export const refreshTheCache = (items: FileItem[]): FileItem[] => {
+  return items = items.map((item) => {
+    const cached  = cache.get(item.id)?.deref();
+    if  (!cached){ addToCache(item.id, item); }
+    else {cached.label = item.label;
+          cached.collapsibleState = item.collapsibleState; }
+   return cached ?? cache.get(item.id)!.deref()!;
+  });
+};
 
 export const real = (obj: any): obj is {} => obj !== undefined && obj !== null;
 
@@ -91,7 +113,7 @@ export const isTimeToRefreshStates = (): boolean => {
 };
 
 export const isExpanded = (state: StateOr): boolean => {
-  return (typeof state === "number") ?
+  return (typeof state === 'number') ?
     state === TreeItemCollapsibleState.Expanded
   : state !== undefined ?
       (state as State).collapses === TreeItemCollapsibleState.Expanded
@@ -125,12 +147,12 @@ export const createTreeItem = (
 
 export const setShowEmptyUncollapsedFolders = () => {
   const config = vscode.workspace.getConfiguration(configuration());
-  Static.showEmptyUncollapsedFolders = config.get(boolean2Property(), true);
+  Static.showEmptyUncollapsedFolders = config.get(boolean1Property(), true);
 };
 
 export const setShowUncollapsedPlainFolders = () => {
   const config = vscode.workspace.getConfiguration(configuration());
-  Static.showUncollapsedPlainFolders = config.get(boolean1Property(), true);
+  Static.showUncollapsedPlainFolders = config.get(boolean2Property(), true);
 };
 
 export const loadWorkspaceRoots = (

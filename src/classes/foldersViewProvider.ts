@@ -4,8 +4,9 @@ import * as helper from "./foldersProviderHelper";
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
 import { brand } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
+import { LogService } from "./logService";
 import { State, FoldersProviderHelper } from "./foldersProviderHelper";
-import { EmptyFolderItem, emptyRoot, FileItem, root, RootFileItem
+import { EmptyFolderItem, emptyRoot, FileItem, FileItemOr, root, RootFileItem
 } from "./fileItem";
 import {
   asRelative,
@@ -15,23 +16,24 @@ import {
   getUri,
   getWorkspaceFolderIndex,
   resolveUri,
-  same
+  same,
+  getUriFrom,
+  isValidUri
 } from "./utilManager";
 
-type FileItemOr = FileItem | undefined | void;
-
-type Ignore = {
-  readonly fileRules: RegExp[];
-  readonly folderRules: RegExp[];
+export const little = {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  get 0() { return 70 as const; }, get 1() { return 150 as const; }
 };
 
 typeof FoldersProviderHelper;
 /** @see Docs on {@link FoldersProviderHelper} */
 
-export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
+export class FoldersViewProvider implements
+  vscode.TreeDataProvider<FileItem>,
   vscodes.Changable<FileItem>,
   vscodes.Searchable,
-  vscode.Disposable
+  vscodes.Disposable
 {
   private didChangeTreeData: vscode.EventEmitter<FileItemOr> =
     new vscode.EventEmitter<FileItemOr>();
@@ -40,6 +42,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
 
   public isEmpty: boolean = false;
   public onSearch: boolean = false;
+  public isDisposed: boolean | undefined;
   
   public get plainMode() { return ExtensionStaticService.plainMode; }
   public set plainMode(val: boolean) {
@@ -49,10 +52,10 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
         brand.setContext, brand.isPlain, this.plainMode
       );}
     }
-  public didChangeWorkspaceFolders: () => Promise<any> | undefined = async () =>
-  { this.loadingWorkspaceFolders = await helper.loadWorkspaceRoots(
+  public didChangeWorkspaceFolders: (() => Promise<unknown>) | undefined =
+    async ()=> { this.loadingWorkspaceFolders = await helper.loadWorkspaceRoots(
       async (load) => this.roots = await load());
-  };
+    };
 
   private readonly collapsingItems: Map<string, State> = new Map();
   private readonly context: vscode.ExtensionContext;
@@ -60,13 +63,15 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
   /** Uncollapse-To-All mode. [A, B] : A - global, B - local */
   private uncollapsedMode: [boolean, boolean] = [false, false];
   private showingRoot: boolean = true;
-  private ignoredItems: Ignore | undefined;
-  private focusedItem: FileItem | undefined;
-  private expandedItem: FileItem | undefined;
+  private ignoredItems: helper.Ignore | undefined;
+  private focusedItem: FileItemOr;
+  private expandedItem: FileItemOr;
   private selectedItem: (FileItem | string | undefined)[] = [];
+  private savingTimer;
+
   private roots!: RootFileItem[];
   private selectedWorkspaceFolder: number = -1;
-  private loadingWorkspaceFolders: Promise<any> | undefined;
+  private loadingWorkspaceFolders: Promise<unknown> | undefined;
   
   private get root() { return this.roots[this.roots.length - 1]; }
   private get workspaceFolders() {
@@ -80,8 +85,11 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
     context: vscode.ExtensionContext,
     revealItem: (item: FileItem, expand?: boolean) => void
   ) {
+    helper satisfies vscodes.HelperContract<FileItem>;
     this.context = context;
     this.revealItem = revealItem;
+    this.savingTimer = setTimeout(() => {}, 0);
+    ExtensionStaticService.cacheRemoval = helper.removeFromCache;
     helper.setShowEmptyUncollapsedFolders();
     helper.setShowUncollapsedPlainFolders();
     
@@ -126,7 +134,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
 
   private async popFromCollapsings(
     uriOr: vscode.Uri | string ): Promise<boolean>
-  { const pathe = typeof uriOr === "string" ? uriOr : undefined;
+  { const pathe = typeof uriOr === 'string' ? uriOr : undefined;
     const dir = pathe ?? (await getFolder(uriOr as vscode.Uri)).toString();
     return this.collapsingItems.delete(dir);
   }
@@ -145,13 +153,16 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
     this.refresh();
   }
 
-  public async changeTreeItem(
-    fileItem: FileItem,
+  private async changeItem(
+    item: FileItem | vscode.Uri,
     oldUri: vscode.Uri
   ): Promise<void> {
+    const style = "background: yellow; color: black; font-weight: bold;";
+    LogService.console.warn(style, `FolderProvider`, 
+      ` :: `, style, `new`, `: ${item.toString()}`, ` :: `, style, `old`, `: ${oldUri.toString()}`);
     const exist = this.collapsingItems.get(oldUri.toString());
-    const newUri = fileItem.resourceUri;
-    if (fileItem.isFile || !newUri) { return; }
+    const newUri = getUriFrom(item);
+    if (('isFile' in item && item.isFile) || !newUri) { return; }
 
     const changeCollapsingUri = (target: vscode.Uri, state: State) =>
     { const uri = manager.changeUri(target, newUri, oldUri);
@@ -175,14 +186,26 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
     }
   }
 
+  public async changeTreeItem(
+    item: FileItem | vscode.Uri,
+    oldUri: vscode.Uri
+  ): Promise<void> {
+    await this.changeItem(item, oldUri);
+
+    const parent = manager.getParent(item);
+    const fileItem = await manager.createFileItem(parent);
+    this.refresh(fileItem);
+  }
+
   public dispose() {
-    this.didChangeWorkspaceFolders = () => undefined;
+    if (this.isDisposed) { return; } else { this.isDisposed = true; }
+    this.loadingWorkspaceFolders = undefined;
+    this.didChangeWorkspaceFolders = undefined;
     this.didChangeTreeData.dispose();
   }
 
   public setWorkspaceFolderFrom(itemOr: FileItem | vscode.Uri | string) {
-    const uri = itemOr instanceof FileItem ?
-      itemOr.resourceUri! : getUri(itemOr);
+    const uri = typeof itemOr === 'string' ? getUri(itemOr) :getUriFrom(itemOr);
     const number = getWorkspaceFolderIndex(uri);
     if (number >= 0) {
       this.selectedWorkspaceFolder = number;
@@ -198,8 +221,9 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
   }
 
   public canBeCreated(withUri: vscode.Uri | undefined) {
-    if (withUri) {
+    if (this.plainMode && withUri instanceof vscode.Uri) {
       const plain = this.collapsingItems.get(withUri.toString())?.isPlain;
+
       return plain !== true;
     }
     return true;
@@ -207,9 +231,13 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
 
   public releaseSelection() {
     const item = this.selectedItem[0];
-    if (item instanceof FileItem) {
+    if   (item instanceof FileItem) {
       this.selectedItem[0] = undefined;
-      this.revealItem(item);
+      try {
+        this.revealItem(item);
+      } catch (error) {
+        debugger;
+      }
     }
   }
 
@@ -244,7 +272,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
     return this.showingRoot;
   }
 
-  public revealRoot() { this.revealItem(this.root, true); }
+  public focusRoot() { this.revealItem(this.root, true); } /// forces refresh
 
   public setIgnoredItems(items: [boolean, RegExp][]) {
     this.ignoredItems = {
@@ -290,13 +318,39 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
   }
   
   public refresh(element?: FileItem): void {
-    this.didChangeTreeData.fire(element);
+    const checkTheCacheFor = (item: FileItem) => {
+      const exist = helper.cache.get(item.id);
+      const obj  = exist?.deref();
+      if  (!obj && exist) {
+        helper.removeFromCache(element!.id); }
+      
+      return obj;
+    };
+    let item: FileItemOr;
+    const parent = element ? manager.getParent(element) : undefined;
 
-    if (!this.uncollapsedMode[1]) {
-      helper.saveWorkspaceContexts(
-        this.context, this.plainMode, this.collapsingItems
-      );
-    }
+    if (element) { item = checkTheCacheFor(element); }
+    else { helper.clearTheCache(); }
+
+    if (parent) {
+      manager.createFileItem(parent)
+             .then((it) => checkTheCacheFor(it))
+             .then((cached) => cached ?? item)
+             .then(async (it) =>
+                   await isValidUri(it?.resourceUri) ? it : undefined)
+             .then((it) => this.didChangeTreeData.fire(it)); }
+    else {
+      this.didChangeTreeData.fire(undefined); }
+
+    clearTimeout(this.savingTimer);
+
+    this.savingTimer = setTimeout(() => {
+      if (!this.uncollapsedMode[1]) {
+        helper.saveWorkspaceContexts(
+          this.context, this.plainMode, this.collapsingItems
+        );
+      }
+    }, little[0] );
   }
 
   public getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
@@ -359,7 +413,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
 
   public async getChildren(element?: FileItem): Promise<FileItem[]>
   {
-    const purify = <T extends FileItem>(item: T, then?: () => any) =>
+    const purify = <T extends FileItem>(item: T, then?: () => unknown) =>
       manager.findAnyThen([item], items, async (replacing) => {
         const replaced = items[replacing];
         items[replacing] = await helper.createTreeItem(replaced, true);
@@ -384,11 +438,11 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
     const hideEmptyFoldersOnSelectedWorkspace = () =>
     {
       let checked = false;
-      const check = (item: FileItem) => {
-        if (manager.check(item).isChildOf(folder.uri)) {
-          checked = true; return item.isFile;
-        } else { return true; }
-      };
+      const check = (item: FileItem) => item.isFile
+                 || (manager.check(item).isChildOf(folder.uri) ?
+                      (checked = true) && (item instanceof EmptyFolderItem)
+                    : true);
+
       let  folder = this.workspaceFolders[this.selectedWorkspaceFolder];
       if  (folder) { items = items.filter(check); }
       if (checked) { this.selectedWorkspaceFolder = -1; }
@@ -409,7 +463,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
     };
     const revealSelectedItem = () =>
     {
-      const toSelect = this.selectedItem[1]; /// the first is undefined
+      let toSelect = this.selectedItem[1]; /// the first is undefined
       if (toSelect) {
         const pathes = this.selectedItem.filter((i) => i !== undefined);
         manager.findAnyThen(pathes, items,
@@ -457,6 +511,7 @@ export class FoldersViewProvider implements vscode.TreeDataProvider<FileItem>,
       if (!this.showUncollapsedPlainFolders) {
         clearItemsOfEmptyElements();
       }
+      items = helper.refreshTheCache(items);
     };
     const collapseExpandedItem = async () =>
     {

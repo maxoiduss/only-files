@@ -1,70 +1,23 @@
-import { HasDefaults } from "../types/vscodes";
-import { ExtensionBrandResolver
-} from "./extensionBrandResolver";
-import { CancellationTokenSource as CTS,
-  TreeItem, WebviewViewProvider
-} from "vscode";
-import { LogService as Log
-} from "./logService";
+import { MayBeBusy } from "../types/vscodes";
+import { ExtensionBrandResolver } from "./extensionBrandResolver";
+import { ExtensionStaticService } from "./extensionStaticService";
+import { CancellationTokenSource as CTS } from "vscode";
+import { LogService as Log } from "./logService";
+
+const normalize = true as const;
+const dot = '.'        as const;
+const empty = ''       as const;
+const scheme = '://'   as const;
+const slashes = /\\/g;
 
 const configuration = () => ExtensionBrandResolver.configuration;
 const number3Property = () => ExtensionBrandResolver.number3Property;
 
-const normalize = true as const;
-const postfix = "hard_lock" as const;
-const slashes = /\\/g;
-const scheme = '://' as const;
-const empty = '' as const;
-const dot = '.' as const;
+let numeric: number  = 0;
 
-let numeric = 0;
+export const delimeters = /[;\r\n]+/;
 
 export let autodebug: boolean[] = [];
-
-export const workspace = {
-  fsh: {
-    async copy(
-      source: vscode.Uri,
-      target: vscode.Uri,
-      options?: { useTrash?: boolean | undefined; }
-    ): Promise<void> {
-      const filename = basename(target);
-      const parent = vscode.Uri.joinPath(source, '..');
-      const retarget = vscode.Uri.joinPath(parent,
-        `${filename}_${postfix}`
-      );
-      await vscode.workspace.fs.copy(source, retarget,
-        { overwrite: false });
-      await vscode.workspace.fs.delete(source,
-        { recursive: true, useTrash: options?.useTrash });
-      await vscode.workspace.fs.rename(retarget, target,
-        { overwrite: true });
-    }
-  },
-  fs: {
-    copy(
-      source: vscode.Uri,
-      target: vscode.Uri,
-      options?: { overwrite?: boolean; }
-    ): Thenable<void> {
-      return vscode.workspace.fs.copy(source, target, options);
-    }
-  }
-};
-
-export const window = {
-  registerWebviewViewProvider(
-    viewId: string,
-    provider: WebviewViewProvider & HasDefaults
-  ): vscode.Disposable {
-    const registered = vscode.window.registerWebviewViewProvider(
-      viewId, provider
-    );
-    provider.setDefaults();
-
-    return registered;
-  }
-};
 
 export const asRelative = (
   uriOr: vscode.Uri | undefined,
@@ -89,7 +42,7 @@ export const basename = (pathOrUri: string | vscode.Uri): string => {
   const pathe = normalize && typeof pathOrUri === 'string' ?
     pathOr.replace(slashes, separator) : pathOr;
   const trimmedPath = pathe.length > 1 && pathe.endsWith(separator) ?
-    pathe.replace(/\/+$/, '') : pathe;
+    pathe.replace(/\/+$/, empty) : pathe;
   const lastIndex = trimmedPath.lastIndexOf(separator);
 
   return lastIndex === -1 ? trimmedPath : trimmedPath.substring(lastIndex + 1);
@@ -137,7 +90,7 @@ export const getTopRootOf = (path: string): string => {
 };
 
 export const getNicePath = (fromUriOr: vscode.Uri | string): string => {
-  const uri = typeof fromUriOr === "string" ? getUri(fromUriOr) : fromUriOr;
+  const uri = typeof fromUriOr === 'string' ? getUri(fromUriOr) : fromUriOr;
 
   return uri.scheme === 'file' ? uri.fsPath : uri.path;
 };
@@ -154,20 +107,21 @@ export const getUri = (fromUriOr: vscode.Uri | string): vscode.Uri => {
 
   if (uri instanceof vscode.Uri) { return uri; }
 
-  const raw = uri as any;
+  const raw = uri as unknown;
   if (raw && typeof raw === 'object' && 'external' in raw) {
-    return vscode.Uri.parse(raw.external);
+    if (typeof raw.external === 'string') {
+      return vscode.Uri.parse(raw.external); }
   }
-  
-  return vscode.Uri.parse(raw.toString());
+
+  return vscode.Uri.parse(known(raw).as<{ toString(): string }>().toString());
 };
 
 export const getUriFrom = (
-  uriOrItem: vscode.Uri | TreeItem | any
+  uriOrItem: vscode.Uri | vscode.TreeItem | unknown
 ): vscode.Uri => {
-  return uriOrItem instanceof TreeItem ?
+  return uriOrItem instanceof vscode.TreeItem ?
     (uriOrItem.resourceUri || vscode.window.activeTextEditor?.document.uri)!
-  : typeof uriOrItem === "string" || uriOrItem instanceof vscode.Uri ?
+  : typeof uriOrItem === 'string' || uriOrItem instanceof vscode.Uri ?
       getUri(uriOrItem)
     : vscode.window.activeTextEditor?.document.uri || vscode.Uri.file(empty);
 };
@@ -223,35 +177,84 @@ export const getWorkspaceFolderIndex = (uri: vscode.Uri): number => {
 };
 
 export const getProjectName = (): string | undefined => {
-  return vscode.workspace.name ?? vscode.workspace.workspaceFolders?.[0]?.name;
+  let n = vscode.workspace.name ?? vscode.workspace.workspaceFolders?.[0]?.name;
+  let name = n?.replace(/\{.*?\}|\[.*?\]|\(.*?\)/g, '');
+
+  return name ?? "none";
 };
 
 export const getConfigurationFor = <T>(
-  ctx: vscode.ExtensionContext, key: string
+  context: vscode.ExtensionContext,
+  key: string
 ): T | undefined => {
-  return ctx.workspaceState.get<T>(key);
+  return context.workspaceState.get<T>(key);
 };
 
 export const getConfigurationsFor = <T>(
-  ctx: vscode.ExtensionContext, key: string
+  context: vscode.ExtensionContext,
+  key: string
 ): [string, T][] => {
-  const as = <R>(target: any): R => known(target).as<R>();
-  const raw = ctx.workspaceState.get<any>(key);
+  const as = <R>(target: unknown): R => known(target).as<R>();
+  const raw = context.workspaceState.get<unknown>(key);
 
   if (Array.isArray(raw)) {
     return as<[string, any][]>(raw.flatMap(
-      (record) => typeof record === "string" ? [[record, as<T>(undefined)]] : []
+      (record) => typeof record === 'string' ? [[record, as<T>(undefined)]] : []
     ));
   }
-  if (raw && typeof raw === "object") {
+  if (raw && typeof raw === 'object') {
     return Object.entries(raw) as [string, T][];
   }
 
   return [];
 };
 
-export const known = (object: any) => {
+export const getKeyByValue = <
+  TObj extends Record<string, unknown>,
+  TVal extends TObj[keyof TObj]
+>(obj: TObj, value: TVal): keyof TObj | undefined =>
+{ return Object.keys(obj).find(
+    (key) => obj[key as keyof TObj] === value
+  ) as keyof TObj | undefined;
+};
+
+export const getStaticName = (v: keyof typeof ExtensionStaticService): string =>
+{
+  return v as string;
+};
+
+export const hasNoName = (path: string): boolean => {
+  return ["", "/", "\\", "\""].includes(path);
+};
+
+export const known = (object: unknown) => {
   return { as: <T>() => object as unknown as T };
+};
+
+export const erase = async (
+  config: vscode.WorkspaceConfiguration,
+  section: string,
+  onTarget: vscode.ConfigurationTarget
+): Promise<void> => {
+  await config.update(section, undefined, onTarget);
+};
+
+export const inspect = <T>(
+  configuration: vscode.WorkspaceConfiguration,
+  section: string,
+  onTarget: vscode.ConfigurationTarget
+): T | undefined => {
+  const inspection = configuration.inspect<T>(section);
+  switch (onTarget) {
+    case vscode.ConfigurationTarget.WorkspaceFolder:
+      return inspection?.workspaceFolderValue;
+    case vscode.ConfigurationTarget.Workspace:
+      return inspection?.workspaceValue;
+    case vscode.ConfigurationTarget.Global:
+      return inspection?.globalValue;
+    default:
+      return inspection?.defaultValue;
+  }
 };
 
 export const resolveUri = async (
@@ -291,11 +294,43 @@ export const resolveUri = async (
 export const same = <
   T1 extends string | vscode.Uri,
   T2 extends string | vscode.Uri
-  >(o1: T1, o2: T2): boolean =>
-{ return o1.toString() === o2.toString(); };
+>(o1: T1, o2: T2): boolean =>
+{
+  return o1.toString() === o2.toString();
+};
 
-export const hasNoName = (path: string): boolean => {
-  return ["", "/", "\\", "\""].includes(path);
+export const stopGlobalChanges = async (
+  configurtion: string,
+  section: string
+): Promise<void> => {
+  const config = vscode.workspace.getConfiguration(configurtion);
+  const inspection = config.inspect<boolean>(section);
+  if (inspection?.globalValue !== undefined) {
+    await erase(config, section, vscode.ConfigurationTarget.Global);
+    vscode.window.showInformationMessage(
+      `This setting has no effect in Global User settings. 
+      Apply this configuration exclusively under the Workspace or Folder tabs.`
+    );
+  }
+};
+
+export const saveGlobalValues = (
+  context: vscode.ExtensionContext, 
+  ...keyValues: [string, unknown][]) => { 
+  Promise.all(keyValues.map(([k, v]) => context.globalState.update(k, v)));
+};
+
+export const getGlobalValue = (context: vscode.ExtensionContext, key: string) =>
+{
+  return context.globalState.get(key); 
+};
+
+export const setBusy = (watcherOr: MayBeBusy | undefined, value: boolean) => {
+  if (watcherOr) { watcherOr.busy = value; }
+};
+
+export const isBusy = (obj: MayBeBusy | undefined) => {
+  return (value: boolean) => setBusy(obj, value);
 };
 
 export const isFile = async (
@@ -326,7 +361,7 @@ export const isProjectTooLarge = async (
   folderOrIndex: number = 0,
   foldersMax: number = 1111
 ): Promise<boolean> => {
-  const folderIndex = typeof folderOrIndex === "number" ?
+  const folderIndex = typeof folderOrIndex === 'number' ?
     folderOrIndex : getWorkspaceFolderIndex(getUriFrom(folderOrIndex));
   const folders = await retrieveAllFolders(folderIndex, { max: foldersMax });
   return folders === null || folders.length > foldersMax;
@@ -336,23 +371,23 @@ export const largeProjectFilesAmount: number = 5555;
 export const useUnexcludeSystemConfig = true;
 
 export const setNothingToExcludeTemporary = async (
-): Promise<() => Promise<void>> =>
+): Promise<() => Promise<void> > =>
 { const updateConfig = async (
-    target: vscode.ConfigurationTarget, empty?: boolean) =>
+    onTarget: vscode.ConfigurationTarget, empty?: boolean) =>
   {
     try {
-      if (previous[target]) {
-        await config.update(exclude, empty ? {} : previous[target], target);
+      if (previous[onTarget]) {
+        await config.update(exclude, empty ? {} : previous[onTarget], onTarget);
       }
     } catch (error) {
-      Log.error(`Failed to update files.${exclude} for ${target}: ${error}`);
+      Log.error(`Failed to update files.${exclude} for ${onTarget}: ${error}`);
     }
   };
   if (!useUnexcludeSystemConfig) { return async () => {}; }
 
   const exclude = "exclude";
   const config = vscode.workspace.getConfiguration("files", null);
-  const values = config.inspect<Record<string, boolean>>(exclude);
+  const values = config.inspect< Record<string, boolean> >(exclude);
   const previous:
     Record<vscode.ConfigurationTarget, Record<string, boolean> | undefined> = {
       [vscode.ConfigurationTarget.Global]: values?.globalValue,
@@ -476,6 +511,7 @@ export const showQuickInput = (
     };
     pick.buttons = [okButton, cancelButton];
 
+    const runError = (text: string) => `🚫 ${text}`;
     const runAccept = async (value: string) =>
     {
       if (isResolved) { return; }
@@ -484,13 +520,13 @@ export const showQuickInput = (
       clearInterval(timer);
 
       pick.busy = true;
-      pick.enabled = false as any;
+      pick.enabled = false;
       try {
         pick.hide();
-        resolve(value);
-      } catch(error) {
-        resolve(empty);
-      } finally {
+        resolve(value); }
+      catch(errors) {
+        resolve(empty); }
+      finally {
         pick.busy = false;
       }
     };
@@ -503,11 +539,28 @@ export const showQuickInput = (
           runAccept(pick.value);
         }
       }, 1000) : undefined;
-    const clearTimer = (time: NodeJS.Timeout | undefined, value?: any) => {
-      if (value && value !== option) { timer ? clearInterval(timer) : {}; }
+    const clearTimer = (time: {} | undefined, value?: unknown) => {
+      if (value && value !== option) { timer && clearInterval(timer); }
     };
-    pick.onDidChangeValue((value) => clearTimer(timer, value));
-    pick.onDidAccept(() => { void runAccept(pick.value); });
+    pick.onDidChangeValue((value) => {
+      clearTimer(timer, value);
+      
+      const validation = validate().rename(value);
+      pick.title = validation ? runError(validation) : withText;
+      pick.buttons = validation ?
+        [cancelButton]
+      : [okButton, cancelButton];
+    });
+    pick.onDidAccept(() => {
+      const value = pick.value;
+      const validation = validate().rename(value);
+      if (validation) {
+        pick.title = runError(validation);
+
+        return;
+      }
+      else { void runAccept(pick.value); }
+    });
     pick.onDidTriggerButton((button) => {
       if (button === okButton) { void runAccept(pick.value); }
       else if (button === cancelButton) { void runAccept(empty); }
@@ -515,6 +568,7 @@ export const showQuickInput = (
     pick.onDidHide(() => {
       clearInterval(timer);
       pick.dispose();
+
       if (!isResolved) { resolve(empty); }
     });
     pick.show();
@@ -522,8 +576,53 @@ export const showQuickInput = (
   const promises: Promise<string>[] = stop ?
     [stop.then(() => {
       pick.hide();
+
       return empty;
     }), run] : [run];
 
   return Promise.race(promises);
+};
+
+export const validate = () => { return {
+  exclude: (input: string): string | undefined => {
+    const trimmed = input.trim();
+    if  (!trimmed) { return "Pattern cannot be empty or just spaces."; }
+    if   (trimmed.includes("\\")) { return `Use forward slashes (/) for glob 
+      paths instead of backslashes (\\)`; }
+    if (/^[a-zA-Z]:/i.test(trimmed) || trimmed.startsWith('/')) { return `Paths 
+      must be relative to the workspace root. Do not use absolute paths`; }
+    if (/["'`><~]/.test(trimmed)) {
+      return `Pattern contains illegal path characters: ", ', \`, <, >, ~`; }
+
+    const openBraces = (trimmed.match(/\{/g) || []).length;
+    const closeBraces = (trimmed.match(/\}/g) || []).length;
+    if (openBraces !== closeBraces) { return `Pattern contains unbalanced 
+      curly braces { }. Please close all open braces`; }
+
+    const openBrackets = (trimmed.match(/\[/g) || []).length;
+    const closeBrackets = (trimmed.match(/\]/g) || []).length;
+    if (openBrackets !== closeBrackets) { return `Pattern contains unbalanced 
+      brackets [ ]. Please close all open brackets`; }
+
+    return undefined;
+  },
+  rename: (input: string): string | undefined => {
+    if (!input || input.trim().length === 0) {
+      return "Name cannot be empty or consist only of spaces"; }
+    if (input.length > 255) {
+      return "Name is too long. Maximum length is 255 characters"; }
+
+    const forbiddenCharsRegex = /[<>:"\/\\|?*\x00-\x1F]/;
+    if (forbiddenCharsRegex.test(input)) {
+      return `Name cannot contain control characters or ` +
+             `any of these symbols: <, >, :, ", /, \\, |, ?, *`; }
+    if (input.endsWith('.') || input.endsWith(' ')) {
+      return "Name cannot end with a space or a period"; }
+
+    return undefined;
+  } };
+};
+
+export const sleep = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };

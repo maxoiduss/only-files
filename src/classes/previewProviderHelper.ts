@@ -205,6 +205,7 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
             if (useScroll) {
               await waitForLayout();
               requestAnimationFrame(() => {
+                if (!center) { return; } 
                 const targetX = center.x * scale - window.innerWidth/2;
                 const targetY = center.y * scale - window.innerHeight/2;
                 const doc = document.scrollingElement || document.documentElement;

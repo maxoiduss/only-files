@@ -1,13 +1,28 @@
 import { ThemeColor } from 'vscode';
-import { getConfigurationsFor, getPathDepth, getUri, isValidUri
+import { ExtensionBrandResolver } from './extensionBrandResolver';
+import { getConfigurationsFor, getPathDepth, getUri, isValidUri, same
 } from './utilManager';
 
-const decorMap = "decorations" as const;
+const decorMap   = "decorations" as const;
+const colorMain  = "justFilesViewColor" as const;
+const colorMinor = "foldersViewColor" as const;
+const colorModif = "list.focusHighlightForeground" as const;
 
+const configuration = () => ExtensionBrandResolver.configuration;
+const highlightProperty = () => ExtensionBrandResolver.boolean5Property;
+const hasHighlighing = (): boolean => {
+  const config = vscode.workspace.getConfiguration(configuration());
+
+  return config.get<boolean>(highlightProperty(), true);
+};
+
+type UriOr  = undefined | vscode.Uri;
 type UrisOr = undefined | vscode.Uri | vscode.Uri[];
 
 export class FilesViewDecorator
-implements vscode.FileDecorationProvider, vscode.Disposable {
+  implements vscode.FileDecorationProvider,
+  vscode.Disposable
+{
   private itDidChangeFileDecorations: vscode.EventEmitter<UrisOr> =
     new vscode.EventEmitter<UrisOr>();
   readonly onDidChangeFileDecorations: vscode.Event<UrisOr> =
@@ -15,10 +30,17 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
   
   private readonly context: vscode.ExtensionContext;
   private readonly decorations: Map<string, vscode.Uri> = new Map();
-  private readonly color: ThemeColor = new ThemeColor("justFilesViewColor");
+  private readonly highlighting: Set<string> = new Set();
+  private readonly color: ThemeColor = new ThemeColor(colorMain);
+  private readonly tone: ThemeColor = new ThemeColor(colorMinor);
+  
+  private targeted: [UriOr, ThemeColor] = [
+    undefined, new ThemeColor(colorModif)
+  ];
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
+
     const decorations =
       getConfigurationsFor<vscode.Uri>(this.context, decorMap);
 
@@ -26,7 +48,9 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     this.validateDecorations();
   }
 
-  public dispose() { this.itDidChangeFileDecorations.dispose(); }
+  public dispose() {
+    this.itDidChangeFileDecorations.dispose();
+  }
 
   public provideFileDecoration(
     uri: vscode.Uri
@@ -37,7 +61,22 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
         propagate: false
       };
     }
-    
+    if (hasHighlighing()) {
+      if (this.highlighting.has(uri.toString())) {
+        return {
+          color: this.tone,
+          propagate: false
+        };
+      }
+    }
+    if (this.targeted[0]) {
+      if (same(this.targeted[0], uri)) {
+        return {
+          color: this.targeted[1],
+          propagate: false
+        };
+      }
+    }
     return undefined;
   }
 
@@ -61,6 +100,41 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
 
     this.decorations.set(uri.toString(), uri);
     this.refresh(uri);
+  }
+
+  public hasHighlight(uri: UriOr | string) {
+    return uri ? this.highlighting.has(uri.toString()) : false;
+  }
+
+  public addHighlights(uris: (vscode.Uri | string)[] | undefined) {
+    if (uris) {
+      uris.forEach((uri) => this.highlighting.add(uri.toString()));
+      this.refresh(undefined, true);
+    }
+  }
+
+  public removeHighlight(uri: UriOr | string, refresh: boolean = true)
+  { if (!uri) { return; }
+
+    this.highlighting.delete(uri.toString());
+
+    if (refresh) {
+      this.refresh(undefined, true); }
+  }
+
+  public clearHighlights() {
+    this.highlighting.clear();
+    this.refresh(undefined, true);
+  }
+
+  public setTargeted(uri: UriOr) {
+    this.targeted[0] = uri;
+    this.refresh(undefined, true);
+  }
+
+  public resetTargeted() {
+    this.targeted[0] = undefined;
+    this.refresh(undefined, true);
   }
   
   public refuse() {
@@ -91,6 +165,15 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
             )
       );
     invalid.flat().forEach((key) => this.decorations.delete(key));
+
+    const wrong = await Promise.all(
+      Array.from(this.highlighting)
+           .flatMap(async (path) =>
+              await isValidUri(getUri(path)) ? [] : [path] 
+            )
+      );
+    wrong.flat().forEach((key) => this.highlighting.delete(key));
+
     this.updateConfiguration();
   }
 
@@ -104,8 +187,10 @@ implements vscode.FileDecorationProvider, vscode.Disposable {
     this.context.workspaceState.update(decorMap, map);
   }
 
-  private refresh(uriOr?: vscode.Uri | undefined) {
-    this.updateConfiguration();
+  private refresh(uriOr?: UriOr, update: boolean = true) {
+    if (update) {
+      this.updateConfiguration();
+    }
     this.itDidChangeFileDecorations.fire(uriOr);
   }
 }

@@ -26,6 +26,7 @@ esbuild.build({
   outfile: `${outDir}/extension.js`,  // output file
   external: [
     'vscode',                         // keep VS Code API external
+    '@vscode/test-electron'
   ],
   plugins: [metaPlugin],
   metafile: true,                     // generate metadata for analysis

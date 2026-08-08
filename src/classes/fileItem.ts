@@ -3,24 +3,29 @@ import { ExtensionBrandResolver } from "./extensionBrandResolver";
 import { asRelative, basename, getPathDepth, getTopRootOf, getUri, resolveUri
 } from "./utilManager";
 
-export const file = "file" as const;
-export const folder = "folder" as const;
-export const emptyRoot = "vac" as const;
-export const placeholder = "dummy" as const;
-export const emptyItem = "empty" as const;
-export const rootFile = "rooting" as const;
-export const root = "root" as const;
-
-const empty = '' as const;
-const separator = '/';
-const timegap = 2500 as const;
+const empty = ''      as const;
+const separator = '/' as const;
+const timegap = 2500  as const;
 
 const name = () => ExtensionBrandResolver.command;
 const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];
 
+export const file = "file"         as const;
+export const folder = "folder"     as const;
+export const emptyRoot = "vac"     as const;
+export const placeholder = "dummy" as const;
+export const emptyItem = "empty"   as const;
+export const rootFile = "rooting"  as const;
+export const root = "root"         as const;
+
 export const command = {
   get tryOpen() { return `${name()}.tryOpen`; }
 };
+
+export type FileItemOr = FileItem | undefined;
+export type FileItemOrUriOr = FileItem | vscode.Uri | undefined;
+export type JustFilesItem = FileItem | PlaceholderItem;
+export type JustFilesItemOr = JustFilesItem | undefined;
 
 export type FileItemLike = { /// Serializable
   id: string;
@@ -33,7 +38,8 @@ export class FileItem extends vscode.TreeItem {
   public isFile: boolean;
   public lastClickTime: number;
   public relativePath!: string;
-  
+  public highlighted: boolean;
+
   declare public id: string;
 
   constructor(
@@ -47,7 +53,7 @@ export class FileItem extends vscode.TreeItem {
     isFile: boolean,
     resourceUri: vscode.Uri
   );
-
+  /*-------------------------------------------------------------------------*/
   constructor(
     label: string,
     collapsibleState: vscode.TreeItemCollapsibleState,
@@ -62,6 +68,7 @@ export class FileItem extends vscode.TreeItem {
       this.resourceUri = getUri(label);
     }
     this.isFile = isFile;
+    this.highlighted = false;
     this.lastClickTime = Date.now() - timegap;
     this.command = {
       command: command.tryOpen,
@@ -98,18 +105,24 @@ export class FileItem extends vscode.TreeItem {
   }
 
   public setLabel(plain? : boolean, options?: { readonly sorted: boolean}) {
-    const label = this.label?.toString();
-    this.label = label ?
+    const setter = (val : string) => this.highlighted ?
+      { label: val, highlights: [[0, val.length]] as [number, number][] }
+    : val;
+    const label = this.getLabel();
+
+    this.label = setter((label !== undefined && label !== empty) ?
       options ?
         options.sorted ?
           basename(this.relativePath) : this.relativePath
       : label.includes(separator) || plain ?
           this.relativePath : basename(this.relativePath)
-    : label;
+    : label);
   }
 
   public getLabel(): string {
-    return this.label! as string;
+    return typeof this.label === 'string' || this.label === undefined ?
+      this.label ?? empty
+    : this.label!.label;
   }
 
   public hasExpandedState(options?: {readonly changeTo: boolean}): boolean {
@@ -131,7 +144,7 @@ export class FileItem extends vscode.TreeItem {
   public like(anotherItemPath: string): boolean;
   public like(anotherItemOrPath: vscode.TreeItem | string): boolean;
   public like(another: vscode.TreeItem | string): boolean {
-    return typeof another === "string" ?
+    return typeof another === 'string' ?
       another === this.resourceUri?.toString()
     : another instanceof vscode.TreeItem ?
         this.resourceUri?.toString() === another.resourceUri?.toString()
@@ -144,6 +157,8 @@ export class FileItem extends vscode.TreeItem {
     const files = await vscode.workspace.fs.readDirectory(this.resourceUri);
     return files.length <= 0;
   }
+
+  public toString(): string { return this.id.toString(); }
 }
 
 export class RootFileItem extends FileItem {
@@ -174,7 +189,10 @@ export class EmptyFolderItem extends FileItem {
         another.resourceUri ?? getUri(another.label as string)
       );
       this.contextValue = emptyItem;
-      this.shiftId(); this.shiftId();
+      this.highlighted = true;
+      this.setLabel();
+      this.shiftId();
+      this.shiftId();
     } else {
       super(`${basename(another)} `,
         vscode.TreeItemCollapsibleState.Collapsed,
@@ -190,8 +208,11 @@ export class EmptyFolderItem extends FileItem {
 }
 
 export class PlaceholderItem extends vscode.TreeItem {
+  declare public id: string;
+
   constructor() {
-      super(empty);
-      this.contextValue = placeholder;
+    super(empty);
+    this.contextValue = placeholder;
+    this.id = "PlaceholderItem";
   }
 }

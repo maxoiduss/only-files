@@ -1,27 +1,25 @@
 import * as vscodes from "../types/vscodes";
 import * as manager from "./fileItemManager";
 import { TreeItemCollapsibleState } from "vscode";
-import { FileItem, FileItemLike } from "./fileItem";
+import { FileItem, FileItemLike, FileItemOr } from "./fileItem";
 import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
 } from "./utilManager";
 
 /**
  * ```
  * class JustFilesViewProvider
-   implements vscode.TreeDataProvider<FileItem | PlaceholderItem>,
-   vscodes.Changable<FileItem>,
-   vscodes.Searchable,
-   vscode.Disposable
-   ```
-
-   Provides ...
+ * implements vscode.TreeDataProvider<FileItem | PlaceholderItem>,
+ * vscodes.Changable<FileItem>,
+ * vscodes.Searchable,
+ * vscodes.Disposable
+ * ```
+ *
+ * Provides ...
  */
 // JustFilesProviderHelper module defines some helper types, funcs and docs
 export class JustFilesProviderHelper { }
 
-const dot   = '.' as const;
-const empty = ''  as const;
-
+const empty = '' as const;
 const sorted = "sorted" as const;
 const heades = "heades" as const;
 const hidden = "hidden" as const;
@@ -32,6 +30,9 @@ type VertexLike = { /// Serializable
   item: FileItemLike
 } & vscodes.Serializable;
 
+export const dot  = '.' as const;
+export const cleanupInterval = 60000 as const;
+
 export class Vertex {
   private id!: string;
   private state: TreeItemCollapsibleState = TreeItemCollapsibleState.None;
@@ -39,7 +40,7 @@ export class Vertex {
   
   public parent!: string;
   public opened: number = 0;
-  public item: FileItem | undefined;
+  public item: FileItemOr;
   
   public get children() { return Array.from(this.childrenSet.values()); }
   
@@ -62,9 +63,7 @@ export class Vertex {
   }
 
   public async validateItem(): Promise<boolean> {
-    const exist = await isValidUri(getUri(this.id));
-    
-    return exist !== undefined;
+    return await isValidUri(getUri(this.id));
   }
   
   public async validateState(): Promise<void> {
@@ -93,15 +92,23 @@ export class Vertex {
     if (this.id === dot) { return; }
 
     const uri = getUri(this.id);
-    this.item = await manager.createFileItem(uri,
-      this.state === TreeItemCollapsibleState.Expanded
-    );
+    this.item = cache.get(uri.toString())?.deref();
+
+    if (!this.item) {
+      this.item = await manager.createFileItem(uri,
+        this.state === TreeItemCollapsibleState.Expanded
+      );
+    }
   }
 
   public async createChildren(): Promise<void> {
     const children = await manager.getChildrenNames(this.item || this.id);
     children.forEach((child) => this.childrenSet.add(child));
   };
+
+  public removeChild(child: string) {
+    this.childrenSet.delete(child);
+  }
 
   public isRootOn(leaves: Map<string, Vertex>): boolean {
     return !leaves.has(this.parent);
@@ -126,10 +133,28 @@ export class Vertex {
   }
 }
 
+export const cache: Map<string | undefined, WeakRef<FileItem> > = new Map();
+
+export const removeFromCache = (id: string) => { cache.delete(id); };
+export const addToCache = (id: string, item: FileItem) => {
+  cache.set(id, new WeakRef(item));
+};
+export const clearTheCache = () => { cache.clear(); };
+export const refreshTheCache = (items: FileItem[]): FileItem[] => {
+  return items = items.map((item) => {
+    const cached  = cache.get(item.id)?.deref();
+    if  (!cached){ addToCache(item.id, item); }
+    else {cached.label = item.label;
+          cached.collapsibleState = item.collapsibleState; }
+   return cached ?? cache.get(item.id)!.deref()!;
+  });
+};
+
 const convertTo = <T extends VertexLike>(
   vertex: Vertex
 ): T | undefined => {
-  if (!vertex.item || !real(vertex.item.collapsibleState)) { return undefined; }
+  if (!vertex.item || !real(vertex.item.collapsibleState)) {
+    return undefined; }
 
   const it = vertex.item;
   const s  = vertex.item.collapsibleState;
@@ -161,8 +186,8 @@ export const loadWorkspaceContexts = (
   updateHiddens: ( pathes: Set<string> ) => void,
   setSortedMode: ( plainMode: boolean ) => void
 ) => {
-  const heads = getConfigurationFor<Array<VertexLike>>(context, heades);
-  const hidds = getConfigurationFor<Array<string>>(context, hidden);
+  const heads = getConfigurationFor<Array<VertexLike> >(context, heades);
+  const hidds = getConfigurationFor<Array<string> >(context, hidden);
   if (heads) {
     let head = heads.map((v) => [v.id, convertFrom(v)] as const);
     updateHeads(new Map(head));

@@ -1,6 +1,11 @@
+import * as manager from "./fileItemManager";
 import { TreeDragAndDropController } from "vscode";
-import { placeholder, FileItem } from "./fileItem";
+import { CommandRegistrator } from "./commandRegistrator";
+import { placeholder, FileItem, FileItemOr } from "./fileItem";
 import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
+import { delimeters, getUri } from "./utilManager";
+
+const empty = '' as const;
 
 const URLS = "text/uri-list" as const;
 const _ = {
@@ -9,13 +14,22 @@ const _ = {
     return `application/${ExtensionBrandResolver.command}.fileitem`;
   }
 };
-const empty = '' as const;
 
 export class JustFilesDragController
   implements TreeDragAndDropController<FileItem>
 {
+  private readonly commandRegistrator: CommandRegistrator;
+  
   public readonly dropMimeTypes: string[] = [_.MIME, URLS];
   public readonly dragMimeTypes: string[] = [_.MIME];
+
+  private get workspaceFolders() {
+    return vscode.workspace.workspaceFolders ?? [];
+  }
+
+  constructor(commandRegistrator: CommandRegistrator) {
+    this.commandRegistrator = commandRegistrator;
+  }
 
   public async handleDrag?(
     source: readonly FileItem[],
@@ -41,24 +55,41 @@ export class JustFilesDragController
   }
 
   public async handleDrop?(
-    target: FileItem | undefined,
+    target: FileItemOr,
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
   ): Promise<void> {
     if (token.isCancellationRequested) { return; }
 
+    const transferItems = dataTransfer.get(_.MIME);
+    if   (transferItems && transferItems.value !== empty) {
+      const wsf = this.workspaceFolders.length > 1 ?
+          undefined : this.workspaceFolders[0];
+      const where = target ?? 
+        (wsf ? await manager.createFileItem(wsf.uri) : undefined);
+      if (where) {
+        const value = transferItems.value as string;
+        const uris = value
+          .split(delimeters)
+          .map((path) => getUri(path));
+        const items = await manager.createFileItems(uris);
+
+        await this.commandRegistrator.cutOrCopyItems(items);
+        await this.commandRegistrator.pasteItems(where);
+
+        return;
+      }
+    }
+
     const pathList = dataTransfer.get(URLS);
 
-    if (typeof pathList?.value === "string"
+    if (typeof pathList?.value === 'string'
             && pathList?.value !== empty)
-    {
-      const uris = pathList.value
-        .split(/[\r\n]+/)
-        .map((path) => vscode.Uri.parse(path));
+    { const uris = pathList.value
+        .split(delimeters)
+        .map((path) => getUri(path));
       uris.forEach((uri) =>
-        vscode.commands.executeCommand(
-          brand.addItemFromTabMenu, uri
-        )
+        vscode.commands.executeCommand(brand.addItemFromTabMenu, uri)
       );
       return;
     }
