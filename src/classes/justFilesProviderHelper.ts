@@ -1,20 +1,77 @@
 import * as vscodes from "../types/vscodes";
 import * as manager from "./fileItemManager";
-import { TreeItemCollapsibleState } from "vscode";
-import { FileItem, FileItemLike, FileItemOr } from "./fileItem";
+import { TreeItem, TreeItemCollapsibleState } from "vscode";
+import { FileItem, FileItemLike, FileItemOr, PlaceholderItem
+} from "./fileItem";
 import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
 } from "./utilManager";
 
 /**
  * ```
- * class JustFilesViewProvider
- * implements vscode.TreeDataProvider<FileItem | PlaceholderItem>,
+ * class JustFilesViewProvider implements
+ * vscode.TreeDataProvider<FileItem | PlaceholderItem>,
  * vscodes.Changable<FileItem>,
  * vscodes.Searchable,
  * vscodes.Disposable
  * ```
  *
- * Provides ...
+ * Provides {@link TreeItem} elements such as {@link FileItem}, 
+ * {@link PlaceholderItem} for a TreeView registered in the JustFiles 
+ * main class.
+ * - {@link vscodes.Changable<T>} - provides changeTreeItem method 
+ * of change to TreeItem element in cases like move/remove/rename file
+ * - {@link vscodes.Searchable} - provides flag to detect the view-list 
+ * search is on/off
+ * - {@link vscode.Disposable} - standard vscode api disposable object
+ * 
+ * Unlike *FoldersViewProvider*, the provider does not keep a tree
+ * that mirrors the workspace on its own. It keeps only the files and folders
+ * selected by the user, while creating the required parents and children
+ * around them.
+ * 
+ * Provider is based on inner tree-like custom logic provided by {@link Vertex} 
+ * class that is used in a mutable *Set/Map* of vertices. The selected items 
+ * are represented by *Vertex* objects. A vertex is a graph node 
+ * identified by the item's URI string:
+ * - {@link Vertex.item} is the materialised {@link FileItem}, when the item is
+ *   currently available.
+ * - {@link Vertex.parent} stores the parent URI string.
+ * - {@link Vertex.children} stores child URI strings and is populated lazily
+ *   by {@link Vertex.createChildren}.
+ * - {@link Vertex.opened} records the last expansion/collapse activity used by
+ *   *JustFilesViewProvider* to remove stale descendants.
+ *
+ * *JustFilesViewProvider* owns two related collections:
+ * - its `vertices` map contains the materialised graph nodes used to render
+ *   TreeView elements;
+ * - its `hidden` set contains descendant or bridge IDs that are retained by
+ *   the provider but must not be rendered as visible children.
+ *
+ * When a selected item is added, the provider restores its parent chain with
+ * {@link Vertex}, loads directory children on demand, and filters hidden
+ * entries before returning them from `getChildren`. When an item is removed,
+ * descendants may be moved to the hidden set so that tracked items remain
+ * associated with the visible graph while their current visual root is
+ * absent. The provider also validates URI existence during refresh and
+ * periodically cleans up inactive descendants using {@link cleanupInterval}.
+ * 
+ * `refreshOn` refreshes only the parent or item associated with the changed
+ * {@link FileItem}, while `refreshOnReload` clears and rebuilds the tracked
+ * vertex graph (inner tree) from its current roots. On move/rename, 
+ * `refreshOnReload` is called; otherwise `refreshOn` is used.
+ *
+ * The module-level {@link cache} keeps weak references to rendered
+ * {@link FileItem} instances. {@link refreshTheCache} reuses live instances
+ * so VS Code retains TreeItem identity while labels and collapsible states
+ * are refreshed; {@link removeFromCache}, {@link clearTheCache}, and
+ * {@link addToCache} maintain that cache as the graph changes.
+ *
+ * Workspace state is serialised through {@link loadWorkspaceContexts} and
+ * {@link saveWorkspaceContexts}. Vertices are converted to the serialisable
+ * {@link VertexLike} shape and restored with their item label, file/folder
+ * flag, collapsible state, and parent URI. The same state also persists the
+ * sorted-mode flag and hidden URI set, allowing the Just Files view to be
+ * reconstructed after reload without scanning the entire workspace.
  */
 // JustFilesProviderHelper module defines some helper types, funcs and docs
 export class JustFilesProviderHelper { }
@@ -29,6 +86,9 @@ type VertexLike = { /// Serializable
   parent: string;
   item: FileItemLike
 } & vscodes.Serializable;
+
+export type TreeItemOr = TreeItem | undefined;
+export type PlaceholderItemOr = PlaceholderItem | undefined;
 
 export const dot  = '.' as const;
 export const cleanupInterval = 60000 as const;

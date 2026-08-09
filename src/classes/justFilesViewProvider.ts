@@ -22,8 +22,8 @@ export const small = {
 typeof JustFilesProviderHelper;
 /** @see Docs on {@link JustFilesProviderHelper} */
 
-export class JustFilesViewProvider
-  implements vscode.TreeDataProvider<JustFilesItem>,
+export class JustFilesViewProvider implements
+  vscode.TreeDataProvider<JustFilesItem>,
   vscodes.Changable<FileItem>,
   vscodes.Searchable,
   vscodes.Disposable

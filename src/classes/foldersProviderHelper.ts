@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import * as vscodes from "../extension";
+import * as vscodes from "../types/vscodes";
 import * as manager from "./fileItemManager";
 import { TreeItemCollapsibleState } from "vscode";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
@@ -21,46 +20,59 @@ import { getConfigurationFor, getConfigurationsFor, getUri
  *
  * Provides {@link FileItem} elements such as 
  * {@link FileItem}, {@link EmptyFolderItem}, {@link RootFileItem}
- * for a TreeView registered in JustFiles main class.
- * - {@link vscodes.Changable<T>} - provides changeTreeItem method 
- * of change to TreeItem element in cases like move/remove/rename file
+ * for a TreeView registered in the JustFiles main class.
+ * - {@link vscodes.Changable<T>} - provides changeTreeItem method of 
+ *   change to TreeItem element in cases like move/remove/rename file
  * - {@link vscodes.Searchable} - provides flag to detect the view-list 
- * search is on/off
+ *   search is on/off
  * - {@link vscode.Disposable} - standard vscode api disposable object
  *
- * Provider is based on linear arrays search on each *getChildren* step. 
- * It has *collapsingItems: Map<string, State>* where each entry of a map 
+ * Provider is based on linear arrays search on each `getChildren` step. 
+ * It has `collapsingItems: Map<string, State>` where each entry of a map 
  * has {@link State} that describes is such folder uncollapsed to 'plain' 
  * variant in the global Plain Mode or not and its 
  * {@link TreeItemCollapsibleState} state. Only folders can be uncollapsed 
  * and persist in the map.
  *
  * Each expand/collapse the folder in the TreeView adds/deletes the folder 
- * to/from *collapsingItems*.
+ * to/from `collapsingItems`.
  *
- * Each *getChildren* call creates the items read from the directory and 
+ * Each `getChildren` call creates the items read from the directory and 
  * filter or removes any part of them that are uncollapsed to 'plain' and 
- * synchronises its *TreeItemCollapsibleState* with *collapsingItems* elements.
+ * synchronises its *TreeItemCollapsibleState* with `collapsingItems` elements.
  *
  * {@link EmptyFolderItem} uses purifing system and is used to:
  * - create uncollapsed to 'plain' folder - in the Plain Mode
  * - create temporary folder to collapse the folder and removed by new
- * created one - in the Basic Mode, because vs code api can't obtain the 
- * folder-collapse constality so removal then recreation is the only 
- * real option.
+ *   created one - in the Basic Mode, because vs code api can't obtain the 
+ *   folder-collapse constality so removal then recreation is the only 
+ *   real option.
  *
  * Purifing system as any other system in the class remembers the item to 
- * focus/expand/select in the future when system calls *getChildren* after 
- * the refresh, it looks for this item on every *getChildren* step and 
+ * focus/expand/select in the future when system calls `getChildren` after 
+ * the refresh, it looks for this item on every `getChildren` step and 
  * provides appropriate action.
  *
  * {@link RootFileItem} is used to show empty cell below all files and is 
  * acting like project root folder of a such workspace folder.
+ * 
+ * The module-level {@link cache} keeps weak references to rendered
+ * {@link FileItem} instances. {@link refreshTheCache} reuses live instances
+ * so VS Code retains TreeItem identity while labels and collapsible states
+ * are refreshed; {@link removeFromCache}, {@link clearTheCache}, and
+ * {@link addToCache} maintain that cache during full project folder reads.
+ * 
+ * Workspace state is serialised through {@link loadWorkspaceContexts} and
+ * {@link saveWorkspaceContexts}. An array of *State* elements 
+ * is loading and saving from/to context of a workspace allowing the Files 
+ * view to be reconstructed after reload without scanning the entire workspace.
  */
 // FoldersProviderHelper module defines some helper types, funcs and docs
 export class FoldersProviderHelper { }
 
 type StateOr = State | TreeItemCollapsibleState | undefined;
+
+export type SerializableOr = vscodes.Serializable;
 
 export type State = {
   isPlain: boolean;
@@ -107,6 +119,7 @@ export const isTimeToRefreshStates = (): boolean => {
 
   if (getChildrenRootCount * refreshStatesFrequency > 1) {
     getChildrenRootCount = 0;
+
     return true;
   }
   return false;
@@ -124,6 +137,7 @@ export const getFolder = async <T extends FileItem>(
   item: T
 ): Promise<vscode.Uri> => {
   const uri = await item.getUri();
+
   return item.isFile ? vscode.Uri.joinPath(uri, '..') : uri;
 };
 
@@ -198,6 +212,7 @@ export const getExpandingStateFor = (
   fromCollapsingItems: Map<string, State>
 ): boolean => {
   const state = fromCollapsingItems.get(uri.toString());
+  
   return isExpanded(state);
 };
 
