@@ -1,3 +1,46 @@
+/**
+ * ```
+ * class PreviewProvider implements
+ * vscode.WebviewViewProvider,
+ * vscodes.HasDefaults
+ * ```
+ *
+ * The module separates webview document construction and browser-side behavior
+ * from the provider's VS Code lifecycle. {@link getHtmlTemplate} wraps supplied
+ * content in the Preview webview document, applies the extension's Content
+ * Security Policy, and installs the client-side interaction protocol.
+ *
+ * The generated document supports:
+ * - context-menu requests through {@link contextCommand};
+ * - URI drops through {@link fileDropCommand};
+ * - a `contentLoaded` notification through {@link contentLoadedCommand};
+ * - zooming with Ctrl+wheel, constrained to 0.5x–2.0x;
+ * - restoration of the zoom scale and content center with `vscode.getState`
+ *   and `vscode.setState`;
+ * - reset and state-disable requests through {@link resetStateCommand} and
+ *   {@link disableStateCommand}.
+ *
+ * The webview posts protocol messages to {@link PreviewProvider}; it does not
+ * open files or update the preview itself. The provider handles those messages
+ * by selecting a URI, updating the webview, showing the view, or displaying a
+ * context menu. `fileDropCommand` carries the dropped URI in its `path`
+ * property, while the other commands carry no additional payload.
+ *
+ * {@link getPdfTemplate} creates the PDF-specific body used by the common HTML
+ * wrapper. It embeds the PDF as a base64 data URI and resolves PDF.js and its
+ * worker through `webview.asWebviewUri`, so the extension can load local
+ * resources under the configured webview roots. The `useModernLoad` option
+ * controls whether the worker is loaded directly or fetched and converted to a
+ * blob URL.
+ *
+ * The helper does not sanitize `content`: Markdown is parsed by
+ * *PreviewProvider* before it is passed here, while HTML is inserted as
+ * supplied. Callers must therefore choose the appropriate content path and
+ * keep the generated CSP and nonce intact. {@link emptyFrame} is the
+ * placeholder shown when the provider receives an unsupported preview type.
+ */
+export class PreviewProviderHelper { }
+
 const container = "container" as const;
 const placeholder = "placeholder" as const;
 const dropAreaMask = 'dropzone' as const;

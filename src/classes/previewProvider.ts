@@ -4,6 +4,7 @@ import * as helper from "./previewProviderHelper";
 import { brand } from "./extensionBrandResolver";
 import { WebviewView } from "vscode";
 import { KeybindingsService } from "./keybindingsService";
+import { ExtensionStaticService } from "./extensionStaticService";
 import { getNonce, getNicePath, getUri, hasNoName, extname
 } from "./utilManager";
 import {
@@ -11,9 +12,9 @@ import {
   contextCommand,
   disableStateCommand,
   fileDropCommand,
+  PreviewProviderHelper,
   resetStateCommand
 } from "./previewProviderHelper";
-import { ExtensionStaticService } from "./extensionStaticService";
 
 const empty = '' as const;
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -28,8 +29,11 @@ const byId = ExtensionStaticService.withId;
 
 type PreviewType = vscodes.EnumLike<typeof PreviewType>;
 
-export class PreviewProvider
-  implements vscode.WebviewViewProvider,
+typeof PreviewProviderHelper;
+/** @see Docs on {@link PreviewProviderHelper} */
+
+export class PreviewProvider implements
+  vscode.WebviewViewProvider,
   vscodes.HasDefaults
 {
   private readonly context: vscode.ExtensionContext;
