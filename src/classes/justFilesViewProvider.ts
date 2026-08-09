@@ -199,7 +199,10 @@ export class JustFilesViewProvider implements
   {
     const canCreate = vert.children.length === 0 || force;
     const shouldCreate = vert.isFolder() && canCreate;
-    if (shouldCreate) { await vert.createChildren(); }
+    if (shouldCreate) {
+      await vert.createChildren(); }
+
+    if (this.isDisposed) { return; }
 
     await this.cleanupQueue;
 
@@ -209,14 +212,19 @@ export class JustFilesViewProvider implements
       const exist = this.vertices.get(child);
       if (exist) {
         exist.parent = await vert.getId();
+
         return exist;
       }
       unchanged = false;
+
       return new Vertex(child);
     }));
     if (!unchanged) {
       for (const childVertex of children) {
-        this.add(await childVertex.getId(), childVertex).toVertices();
+        const id = await childVertex.getId();
+        if (this.isDisposed) { break; }
+        
+        this.add(id, childVertex).toVertices();
       }
     }
   }
@@ -300,6 +308,8 @@ export class JustFilesViewProvider implements
     await this.cleanupQueue;
 
     for (const [id, vertex] of this.vertices) {
+      if (this.isDisposed) { break; }
+
       let  exist = await vertex.validateItem();
       if (!exist) {
         this.removeById(id);
@@ -308,6 +318,8 @@ export class JustFilesViewProvider implements
       }
     }
     for (const vertex of toRefresh) {
+      if (this.isDisposed) { break; }
+
       await this.setupChildrenFor(vertex, true);
     }
     await this.validateHidden();
@@ -331,6 +343,8 @@ export class JustFilesViewProvider implements
     if  (!item && exist) {
       helper.removeFromCache(element!.id);
     }
+    if (this.isDisposed) { return; }
+
     isValidUri(item?.resourceUri)
       .then((valid) => valid ? item : undefined)
       .then((it) => this.didChangeTreeData.fire(it))
@@ -363,13 +377,13 @@ export class JustFilesViewProvider implements
       await root.validateState();
       const rootId = await root.getId();
 
-      if (!this.addonQueue) { return; }
+      if (!this.addonQueue || this.isDisposed) { return; }
       if (!exist) { await this.setupParentsFor(root); }
       if (root.isFolder()) {
         this.removeHiddenDescendantsOf(rootId);
         this.removeDistantDescendantsOf(rootId);
       }
-      if (!this.addonQueue) { return; }
+      if (!this.addonQueue || this.isDisposed) { return; }
       this.unhideById(rootId);
       this.add(rootId, root).toVertices();
       
@@ -446,7 +460,10 @@ export class JustFilesViewProvider implements
 
   public async refreshOn(element?: FileItem): Promise<void> {
     const checkIsValid = async (item: FileItem) => {
-      return item?.resourceUri ? await isValidUri(item.resourceUri) : false;
+      if (this.isDisposed) { 
+        return false; }
+      
+        return item?.resourceUri ? await isValidUri(item.resourceUri) : false;
     };
     await this.validateVertices();
 
@@ -496,9 +513,13 @@ export class JustFilesViewProvider implements
   }
   
   dispose() {
-    if (this.isDisposed) { return; } else { this.isDisposed = true; }
+    if (this.isDisposed) { return; }
+    else { this.isDisposed = true; }
 
     clearTimeout(this.cleanupTimer);
+    clearTimeout(this.reloadTimer);
+    clearTimeout(this.savingTimer);
+
     this.didChangeTreeData.dispose();
     this.addonQueue   = undefined;
     this.cleanupQueue = undefined;

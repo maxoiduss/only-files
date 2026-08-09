@@ -82,7 +82,10 @@ async function openTextDocument(doc: vscode.Uri | FileItem)
   }
 }
 
-export class FoldersReferenceProvider implements vscode.ReferenceProvider {
+export class FoldersReferenceProvider implements
+  vscode.ReferenceProvider,
+  vscode.Disposable
+{
   private readonly patternSeparator = ',*.';
 
   private gitignoreResetTimer: ReturnType<typeof setTimeout> | undefined;
@@ -111,7 +114,7 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     return await this.provideReferencesFor(item, token);
   }
 
-  async provideReferencesFor(
+  public async provideReferencesFor(
     fileItem: FileItem,
     token?: vscode.CancellationToken
   ): Promise<Location[]> {
@@ -253,14 +256,16 @@ export class FoldersReferenceProvider implements vscode.ReferenceProvider {
     return [isFileRule, new RegExp(regexStr, 'i')];
   }
 
-  async createRegexFrom(file: UriOr): Promise<[boolean, RegExp][]> {
+  dispose() { clearTimeout(this.gitignoreResetTimer); }
+
+  public async createRegexFrom(file: UriOr): Promise<[boolean, RegExp][]> {
     const antipatternList = await this.createAntipattern(file);
     const ignoreRegexes = antipatternList.map(this.patternToRegex);
     
     return ignoreRegexes;
   }
   
-  async readIgnoreFile(can: { showDialog: boolean }): Promise<UriOr> {
+  public async readIgnoreFile(can: { showDialog: boolean }): Promise<UriOr> {
     this.resetGitignoreTimer();
 
     const plannedToAsk = can.showDialog || !this.gitignoreName;

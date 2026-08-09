@@ -189,6 +189,8 @@ export class FoldersViewProvider implements
   dispose() {
     if (this.isDisposed) { return; }
     else { this.isDisposed = true; }
+
+    clearTimeout(this.savingTimer);
     
     this.loadingWorkspaceFolders = undefined;
     this.didChangeWorkspaceFolders = undefined;

@@ -1,5 +1,6 @@
 import { Brand, ViewX } from "../types/vscodes";
 import { getRegistratorCommands } from "./commandRegistrator";
+import { LogService } from "./logService";
 
 const resolver = "just-files" as const;
 
@@ -77,7 +78,10 @@ export class ExtensionBrandResolver {
 
   constructor() {
     if (ExtensionBrandResolver.instance) {
-      throw new Error("ALREADY RESOLVED"); }
+      LogService.error(`${ExtensionBrandResolver} - ALREADY RESOLVED`);
+
+      return;
+    }
 
     ExtensionBrandResolver.instance = this;
   }
@@ -417,8 +421,10 @@ export class ExtensionBrandResolver {
   }
 
   static dispose() {
+    /* /// not sure actually needed
     ExtensionBrandResolver.instance.configurationJSON = [];
     ExtensionBrandResolver.instance.commandsJSON      = [];
     ExtensionBrandResolver.instance.viewsJSON         = [];
+    */
   }
 }

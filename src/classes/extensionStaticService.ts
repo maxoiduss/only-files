@@ -66,9 +66,8 @@ export class ExtensionStaticService {
   }
 
   public static addDisposablesOnce(...disposables: vscode.Disposable[]) {
-    if (ExtensionStaticService.disposables.length === 0) {
-      ExtensionStaticService.disposables.push(...disposables);
-    }
+    ExtensionStaticService.disposables.length = 0;
+    ExtensionStaticService.disposables.push(...disposables);
   }
 
   public static dispose() {
