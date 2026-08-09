@@ -32,7 +32,6 @@ export const asRelative = (
     }
     return vscode.workspace.asRelativePath(uriOr);
   }
-
   return getNicePath(uriOr);
 };
 
@@ -57,6 +56,7 @@ export const extname = (pathOrUri: string | vscode.Uri): string => {
     pathe.replace(/\/+$/, empty) : pathe;
   const base = trimmedPath.substring(trimmedPath.lastIndexOf(separator) + 1);
   const lastDot = base.lastIndexOf(dot);
+
   if (lastDot <= 0) {
     return empty;
   }
@@ -112,7 +112,6 @@ export const getUri = (fromUriOr: vscode.Uri | string): vscode.Uri => {
     if (typeof raw.external === 'string') {
       return vscode.Uri.parse(raw.external); }
   }
-
   return vscode.Uri.parse(known(raw).as<{ toString(): string }>().toString());
 };
 
@@ -154,7 +153,6 @@ export const getFoldersBy = (
 
     actionOnStep?.(currentUri, isLast);
   }
-
   return itemUriStrings;
 };
 
@@ -171,7 +169,7 @@ export const getPathDepth = (path: string): number => {
 
 export const getWorkspaceFolderIndex = (uri: vscode.Uri): number => {
   const folder = vscode.workspace.getWorkspaceFolder(uri);
-  if (!folder) { return -1; }
+  if  (!folder) { return -1; }
 
   return vscode.workspace.workspaceFolders?.indexOf(folder) ?? -1;
 };
@@ -205,7 +203,6 @@ export const getConfigurationsFor = <T>(
   if (raw && typeof raw === 'object') {
     return Object.entries(raw) as [string, T][];
   }
-
   return [];
 };
 
@@ -287,15 +284,13 @@ export const resolveUri = async (
       return potentialUri;
     }
   }
-
   return getUri(relativePathOrUri);
 };
 
 export const same = <
   T1 extends string | vscode.Uri,
   T2 extends string | vscode.Uri
->(o1: T1, o2: T2): boolean =>
-{
+>(o1: T1, o2: T2): boolean => {
   return o1.toString() === o2.toString();
 };
 
@@ -345,14 +340,17 @@ export const isFolder = async (
   uri: vscode.Uri
 ): Promise<boolean | undefined> => {
   const dir = vscode.FileType.Directory;
-  try { return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
-  catch(error) { return undefined; }
+  try {
+    return ((await vscode.workspace.fs.stat(uri)).type & dir) === dir; }
+  catch(error) {
+    return undefined; }
 };
 
 export const isValidUri = async (
   uriOr: vscode.Uri | undefined
 ): Promise<boolean> => {
-  if (uriOr === undefined) { return false; }
+  if (uriOr === undefined) {
+    return false; }
 
   return (await isFolder(uriOr)) !== undefined;
 };
@@ -362,8 +360,10 @@ export const isProjectTooLarge = async (
   foldersMax: number = 1111
 ): Promise<boolean> => {
   const folderIndex = typeof folderOrIndex === 'number' ?
-    folderOrIndex : getWorkspaceFolderIndex(getUriFrom(folderOrIndex));
+    folderOrIndex
+  : getWorkspaceFolderIndex(getUriFrom(folderOrIndex));
   const folders = await retrieveAllFolders(folderIndex, { max: foldersMax });
+
   return folders === null || folders.length > foldersMax;
 };
 
@@ -371,8 +371,8 @@ export const largeProjectFilesAmount: number = 5555;
 export const useUnexcludeSystemConfig = true;
 
 export const setNothingToExcludeTemporary = async (
-): Promise<() => Promise<void> > =>
-{ const updateConfig = async (
+): Promise<() => Promise<void> > => {
+  const updateConfig = async (
     onTarget: vscode.ConfigurationTarget, empty?: boolean) =>
   {
     try {
@@ -383,7 +383,8 @@ export const setNothingToExcludeTemporary = async (
       Log.error(`Failed to update files.${exclude} for ${onTarget}: ${error}`);
     }
   };
-  if (!useUnexcludeSystemConfig) { return async () => {}; }
+  if (!useUnexcludeSystemConfig) {
+    return async () => {}; }
 
   const exclude = "exclude";
   const config = vscode.workspace.getConfiguration("files", null);
@@ -479,7 +480,6 @@ export const showProgressBar = (withMessage: string): CTS => {
         });
     });
   });
-
   return cts;
 };
 
@@ -540,7 +540,9 @@ export const showQuickInput = (
         }
       }, 1000) : undefined;
     const clearTimer = (time: {} | undefined, value?: unknown) => {
-      if (value && value !== option) { timer && clearInterval(timer); }
+      if (value && value !== option) {
+        timer && clearInterval(timer);
+      }
     };
     pick.onDidChangeValue((value) => {
       clearTimer(timer, value);

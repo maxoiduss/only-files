@@ -7,6 +7,7 @@ import { FilesViewDecorator } from "./filesViewDecorator";
 import { JustFilesDragController } from "./justFilesDragController";
 import { FoldersDragController } from "./foldersDragController";
 import { FoldersReferenceProvider } from "./foldersReferenceProvider";
+import { JustFilesViewProvider, small } from "./justFilesViewProvider";
 import { FoldersViewProvider } from "./foldersViewProvider";
 import { FileWatcherExcluder } from "./fileWatcherExcluder";
 import { FileSystemWatcher } from "./fileSystemWatcher";
@@ -14,14 +15,13 @@ import { PreviewProvider } from "./previewProvider";
 import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { LogService } from "./logService";
-import { JustFilesViewProvider, small } from "./justFilesViewProvider";
 import {
   EmptyFolderItem, FileItem, FileItemOrUriOr, JustFilesItem,
   PlaceholderItem, RootFileItem
 } from "./fileItem";
 import {
-  getNicePath, getProjectName, getUriFrom, isFolder, isProjectTooLarge, isValidUri, same, 
-  sleep
+  getNicePath, getProjectName, getUriFrom,
+  isFolder, isProjectTooLarge, isValidUri, same, sleep
 } from "./utilManager";
 
 export class JustFiles {
@@ -44,7 +44,6 @@ export class JustFiles {
   private justFilesSelectedItems: readonly (JustFilesItem)[] = [];
   private filesSelectedItems: readonly FileItem[] = [];
   private lastSelectedView: vscodes.ViewX = "Preview";
-  
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
