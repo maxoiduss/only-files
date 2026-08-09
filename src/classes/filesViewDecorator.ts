@@ -48,11 +48,11 @@ export class FilesViewDecorator
     this.validateDecorations();
   }
 
-  public dispose() {
+  dispose() {
     this.itDidChangeFileDecorations.dispose();
   }
 
-  public provideFileDecoration(
+  provideFileDecoration(
     uri: vscode.Uri
   ): vscode.FileDecoration | undefined {
     if (this.decorations.has(uri.toString())) {

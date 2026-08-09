@@ -50,7 +50,7 @@ export class PreviewProvider
     });
   }
 
-  public async resolveWebviewView(
+  async resolveWebviewView(
     webviewView: WebviewView,
     context: vscode.WebviewViewResolveContext<unknown>, 
     token: vscode.CancellationToken): Promise<void | undefined>

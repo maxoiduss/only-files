@@ -418,7 +418,7 @@ export class FileWatcherExcluder implements vscodes.Disposable {
     this.context.subscriptions.push(onGo, onWarn);
   }
 
-  public dispose(): void {
+  dispose(): void {
     if (this.isDisposed) { return; }
     else { this.isDisposed = true; }
 

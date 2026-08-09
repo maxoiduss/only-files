@@ -19,19 +19,19 @@ export class JustFilesDragController
   implements TreeDragAndDropController<FileItem>
 {
   private readonly commandRegistrator: CommandRegistrator;
-  
-  public readonly dropMimeTypes: string[] = [_.MIME, URLS];
-  public readonly dragMimeTypes: string[] = [_.MIME];
 
   private get workspaceFolders() {
     return vscode.workspace.workspaceFolders ?? [];
   }
+  
+  readonly dropMimeTypes: string[] = [_.MIME, URLS];
+  readonly dragMimeTypes: string[] = [_.MIME];
 
   constructor(commandRegistrator: CommandRegistrator) {
     this.commandRegistrator = commandRegistrator;
   }
 
-  public async handleDrag?(
+  async handleDrag?(
     source: readonly FileItem[],
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
@@ -54,7 +54,7 @@ export class JustFilesDragController
     dataTransfer.set(URLS, dataFirst);
   }
 
-  public async handleDrop?(
+  async handleDrop?(
     target: FileItemOr,
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken

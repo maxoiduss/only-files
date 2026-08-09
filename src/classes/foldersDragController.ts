@@ -22,8 +22,8 @@ export class FoldersDragController
   private readonly draggedFromJustFilesAction:
   (uri: vscode.Uri) => Promise<void>;
 
-  public readonly dropMimeTypes: string[] = [_.MIME, URLS];
-  public readonly dragMimeTypes: string[] = [_.MIME, URLS];
+  readonly dropMimeTypes: string[] = [_.MIME, URLS];
+  readonly dragMimeTypes: string[] = [_.MIME, URLS];
 
   private get workspaceFolders() {
     return vscode.workspace.workspaceFolders ?? [];
@@ -37,7 +37,7 @@ export class FoldersDragController
     this.draggedFromJustFilesAction = draggedFromJustFilesAction;
    }
 
-  public async handleDrag?(
+  async handleDrag?(
     source: readonly FileItem[],
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken
@@ -64,7 +64,7 @@ export class FoldersDragController
     await this.commandRegistrator.cutOrCopyItems(items);
   }
 
-  public async handleDrop?(
+  async handleDrop?(
     target: FileItemOr,
     dataTransfer: vscode.DataTransfer,
     token: vscode.CancellationToken

@@ -30,7 +30,7 @@ export class JustFilesViewProvider
 {
   private didChangeTreeData: vscode.EventEmitter<JustFilesItemOr> =
     new vscode.EventEmitter<JustFilesItemOr>();
-  public readonly onDidChangeTreeData: vscode.Event<JustFilesItemOr> =
+  readonly onDidChangeTreeData: vscode.Event<JustFilesItemOr> =
     this.didChangeTreeData.event;
 
   public onSearch: boolean = false;
@@ -428,15 +428,6 @@ export class JustFilesViewProvider
     this.refreshAndSave();
   }
 
-  public dispose() {
-    if (this.isDisposed) { return; } else { this.isDisposed = true; }
-
-    clearTimeout(this.cleanupTimer);
-    this.didChangeTreeData.dispose();
-    this.addonQueue   = undefined;
-    this.cleanupQueue = undefined;
-  }
-
   public async expandElement(element: FileItem): Promise<void> {
     const root = this.vertices.get(element.id);
     if (root) { await root.expand(); }
@@ -503,8 +494,17 @@ export class JustFilesViewProvider
     this.refreshAndSave(undefined);
     this.revealFileItem(item);
   }
+  
+  dispose() {
+    if (this.isDisposed) { return; } else { this.isDisposed = true; }
 
-  public getTreeItem(element: FileItem): JustFilesItem {
+    clearTimeout(this.cleanupTimer);
+    this.didChangeTreeData.dispose();
+    this.addonQueue   = undefined;
+    this.cleanupQueue = undefined;
+  }
+
+  getTreeItem(element: FileItem): JustFilesItem {
     if (element instanceof PlaceholderItem) {
       element.label = undefined; 
       element.command = undefined;
@@ -512,7 +512,7 @@ export class JustFilesViewProvider
     return element;
   }
   
-  public getParent(element: JustFilesItem): JustFilesItemOr {
+  getParent(element: JustFilesItem): JustFilesItemOr {
     if (element instanceof FileItem) {
       const parent = manager.getParent(element).toString();
 
@@ -521,7 +521,7 @@ export class JustFilesViewProvider
     return undefined;
   }
 
-  public async getChildren(element?: FileItem): Promise<JustFilesItem[]> {
+  async getChildren(element?: FileItem): Promise<JustFilesItem[]> {
     await this.cleanupQueue;
 
     if (!element?.id) {

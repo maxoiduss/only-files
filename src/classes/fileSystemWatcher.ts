@@ -305,17 +305,17 @@ export class FileSystemWatcher implements vscodes.Disposable {
   public unexcludeUri(uri: vscode.Uri | undefined) {
     uri && this.exclusions.popped.add(uri.toString());
   }
-    
-  public dispose() {
+
+  public watch() {
+    this.workspaceFolders.forEach((f) => this.watchFolder(f));
+  }
+
+  dispose() {
     if (this.isDisposed) { return; } else { this.isDisposed = true; }
     this.didChangeWorkspaceFolders = undefined;
     for (const queue of this.queues.values()) { queue.dispose(); }
 
     this.queues.clear();
     this.disposables.forEach((arr) => arr.forEach((obj) => obj.dispose()));
-  }
-
-  public watch() {
-    this.workspaceFolders.forEach((f) => this.watchFolder(f));
   }
 }

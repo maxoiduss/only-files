@@ -186,6 +186,15 @@ export class FoldersViewProvider implements
     }
   }
 
+  dispose() {
+    if (this.isDisposed) { return; }
+    else { this.isDisposed = true; }
+    
+    this.loadingWorkspaceFolders = undefined;
+    this.didChangeWorkspaceFolders = undefined;
+    this.didChangeTreeData.dispose();
+  }
+
   public async changeTreeItem(
     item: FileItem | vscode.Uri,
     oldUri: vscode.Uri
@@ -195,13 +204,6 @@ export class FoldersViewProvider implements
     const parent = manager.getParent(item);
     const fileItem = await manager.createFileItem(parent);
     this.refresh(fileItem);
-  }
-
-  public dispose() {
-    if (this.isDisposed) { return; } else { this.isDisposed = true; }
-    this.loadingWorkspaceFolders = undefined;
-    this.didChangeWorkspaceFolders = undefined;
-    this.didChangeTreeData.dispose();
   }
 
   public setWorkspaceFolderFrom(itemOr: FileItem | vscode.Uri | string) {
@@ -353,11 +355,11 @@ export class FoldersViewProvider implements
     }, little[0] );
   }
 
-  public getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
+  getTreeItem(element: FileItem): FileItem | Thenable<FileItem> {
     return element;
   }
 
-  public getParent?(_element: FileItem): ProviderResult<FileItem> {
+  getParent?(_element: FileItem): ProviderResult<FileItem> {
     return;
   }
 
@@ -411,7 +413,7 @@ export class FoldersViewProvider implements
     this.uncollapsedMode[0] = false;
   }
 
-  public async getChildren(element?: FileItem): Promise<FileItem[]>
+  async getChildren(element?: FileItem): Promise<FileItem[]>
   {
     const purify = <T extends FileItem>(item: T, then?: () => unknown) =>
       manager.findAnyThen([item], items, async (replacing) => {
