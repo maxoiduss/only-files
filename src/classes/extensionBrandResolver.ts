@@ -417,11 +417,14 @@ export class ExtensionBrandResolver {
     this.setupBrand();
   }
 
-  static dispose() {
-    /* /// not sure actually needed
-    ExtensionBrandResolver.instance.configurationJSON = [];
-    ExtensionBrandResolver.instance.commandsJSON      = [];
-    ExtensionBrandResolver.instance.viewsJSON         = [];
-    */
+  public static dispose() {
+    try {
+      ExtensionBrandResolver.instance.configurationJSON = [];
+      ExtensionBrandResolver.instance.commandsJSON      = [];
+      ExtensionBrandResolver.instance.viewsJSON         = [];
+    }
+    catch (error) { LogService.console.trace(error as string); }
+    const self = ExtensionBrandResolver as any;
+    { if (self) { self.instance = undefined; } }
   }
 }
