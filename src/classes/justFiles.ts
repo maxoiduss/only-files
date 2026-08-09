@@ -96,8 +96,9 @@ export class JustFiles {
       this.fileDecorator,
       this.fileExcluder,
       this.fileWatcher,
-      this.justFilesTreeView,
       this.foldersTreeView,
+      this.justFilesTreeView,
+      this.referenceProvider,
       this.foldersViewProvider,
       this.justFilesViewProvider
     );

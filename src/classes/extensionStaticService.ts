@@ -72,5 +72,6 @@ export class ExtensionStaticService {
 
   public static dispose() {
     ExtensionStaticService.disposables.forEach((obj) => obj.dispose());
+    ExtensionStaticService.disposables.length = 0;
   }
 }

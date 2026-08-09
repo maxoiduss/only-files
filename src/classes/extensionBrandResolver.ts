@@ -79,10 +79,7 @@ export class ExtensionBrandResolver {
   constructor() {
     if (ExtensionBrandResolver.instance) {
       LogService.error(`${ExtensionBrandResolver} - ALREADY RESOLVED`);
-
-      return;
     }
-
     ExtensionBrandResolver.instance = this;
   }
 
