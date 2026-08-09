@@ -20,6 +20,17 @@ Avoid wasting time looking for a file among a large number of files or directori
 - In Just Files, you can open the files. If you want to remove from the view click on hide icon
 - ✨ Enjoy your files ✨
 
+## Common terms
+
+- **Workspace**: The folder or set of folders currently open in VS Code.
+- **Explorer**: The VS Code area that shows the folders and files in your workspace.
+- **Files view**: The Just Files view that displays the files available in your workspace.
+- **Just Files view**: The focused list of files you selected for quick access.
+- **Tab**: An open editor tab in VS Code.
+- **Add**: Put a file into the Just Files view without moving it on disk.
+- **Remove**: Take a file out of the Just Files view without deleting it.
+- **Command**: An action that can be run from the Command Palette or a keyboard shortcut.
+
 ## Demo
 
 ```mermaid

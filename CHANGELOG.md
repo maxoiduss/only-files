@@ -2,6 +2,10 @@
 
 ## Release Notes
 
+## [1.0.8]
+
+- Updated the README with a plain-language explanation of common Just Files terms.
+- Clarified the difference between the workspace, Files view, Just Files view, Explorer, and tabs.
 
 ## [1.0.4]
 - Optimized extension package size by excluding documentation images from the package.
