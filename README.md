@@ -76,5 +76,3 @@ All changes made in your workspace will be reflected in `Files` and `JustFiles` 
 ## License
 
 MIT
-
-Icon designed by Freepik: www.freepik.com

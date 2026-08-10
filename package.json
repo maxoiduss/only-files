@@ -114,7 +114,7 @@
         {
           "id": "pre-view-container",
           "title": "Preview",
-          "icon": "resources/previewer.svg",
+          "icon": "resources/folder.svg",
           "order": 1
         }
       ]
