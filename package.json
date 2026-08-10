@@ -236,8 +236,8 @@
         "command": "just-files.removeAll",
         "title": "Remove all",
         "icon": {
-          "light": "resources/light/broomNotFilledLight.svg",
-          "dark": "resources/dark/broomNotFilledDark.svg"
+          "light": "resources/light/removeAllLight.svg",
+          "dark": "resources/dark/removeAllDark.svg"
         }
       },
       {
