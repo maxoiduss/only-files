@@ -184,7 +184,7 @@ export class FileWatcherExcluder implements vscodes.Disposable {
         const no = "No. Don't use";
         const ex = "Don't show again";
         const text = `${basename(folderUri)} project folder settings don't 
-          contain "${brand.files.watcherExclude}" exclusion list. Just Files 
+          contain "${brand.files.watcherExclude}" exclusion list. Only Files 
           extension uses it as extra exclusions from heavy file system 
           operation set per workspace folder. Use this list or not?`;
         const answer = await vscode.window.showWarningMessage(text, ye, no, ex);
@@ -207,7 +207,7 @@ export class FileWatcherExcluder implements vscodes.Disposable {
     const ye = "Yes, turn off";
     const answer = await vscode.window.showInformationMessage(
       `You are going to turn off some extension warnings. If you want to turn 
-      them on back use "Make Just Files Warnings Showable" command 
+      them on back use "Make Only Files Warnings Showable" command 
       (${commandWarning()}). Do you want to turn them off?`, ye, "No");
     if (answer === ye) {
       dontShow.value = true;

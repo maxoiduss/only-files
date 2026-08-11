@@ -24,8 +24,8 @@ export const command = {
 
 export type FileItemOr = FileItem | undefined;
 export type FileItemOrUriOr = FileItem | vscode.Uri | undefined;
-export type JustFilesItem = FileItem | PlaceholderItem;
-export type JustFilesItemOr = JustFilesItem | undefined;
+export type OnlyFilesItem = FileItem | PlaceholderItem;
+export type OnlyFilesItemOr = OnlyFilesItem | undefined;
 
 export type FileItemLike = { /// Serializable
   id: string;

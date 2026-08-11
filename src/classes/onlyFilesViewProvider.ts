@@ -1,14 +1,14 @@
 import * as vscodes from "../types/vscodes";
 import * as manager from "./fileItemManager";
-import * as helper from "./justFilesProviderHelper";
+import * as helper from "./onlyFilesProviderHelper";
 import { TreeItemCollapsibleState } from "vscode";
-import { JustFilesProviderHelper } from "./justFilesProviderHelper";
+import { OnlyFilesProviderHelper } from "./onlyFilesProviderHelper";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { LogService } from "./logService";
-import { Vertex } from "./justFilesProviderHelper";
+import { Vertex } from "./onlyFilesProviderHelper";
 import { brand } from "./extensionBrandResolver";
 import {
-  FileItem, FileItemOr, FileItemOrUriOr, JustFilesItem, JustFilesItemOr,
+  FileItem, FileItemOr, FileItemOrUriOr, OnlyFilesItem, OnlyFilesItemOr,
   PlaceholderItem
 } from "./fileItem";
 import { getFoldersBy, getPathDepth, getUri, isValidUri
@@ -19,18 +19,18 @@ export const small = {
   get 1() { return 100 as const; }, get 2() { return 170 as const; }
 } as const;
 
-typeof JustFilesProviderHelper;
-/** @see Docs on {@link JustFilesProviderHelper} */
+typeof OnlyFilesProviderHelper;
+/** @see Docs on {@link OnlyFilesProviderHelper} */
 
-export class JustFilesViewProvider implements
-  vscode.TreeDataProvider<JustFilesItem>,
+export class OnlyFilesViewProvider implements
+  vscode.TreeDataProvider<OnlyFilesItem>,
   vscodes.Changable<FileItem>,
   vscodes.Searchable,
   vscodes.Disposable
 {
-  private didChangeTreeData: vscode.EventEmitter<JustFilesItemOr> =
-    new vscode.EventEmitter<JustFilesItemOr>();
-  readonly onDidChangeTreeData: vscode.Event<JustFilesItemOr> =
+  private didChangeTreeData: vscode.EventEmitter<OnlyFilesItemOr> =
+    new vscode.EventEmitter<OnlyFilesItemOr>();
+  readonly onDidChangeTreeData: vscode.Event<OnlyFilesItemOr> =
     this.didChangeTreeData.event;
 
   public onSearch: boolean = false;
@@ -525,7 +525,7 @@ export class JustFilesViewProvider implements
     this.cleanupQueue = undefined;
   }
 
-  getTreeItem(element: FileItem): JustFilesItem {
+  getTreeItem(element: FileItem): OnlyFilesItem {
     if (element instanceof PlaceholderItem) {
       element.label = undefined; 
       element.command = undefined;
@@ -533,7 +533,7 @@ export class JustFilesViewProvider implements
     return element;
   }
   
-  getParent(element: JustFilesItem): JustFilesItemOr {
+  getParent(element: OnlyFilesItem): OnlyFilesItemOr {
     if (element instanceof FileItem) {
       const parent = manager.getParent(element).toString();
 
@@ -542,7 +542,7 @@ export class JustFilesViewProvider implements
     return undefined;
   }
 
-  async getChildren(element?: FileItem): Promise<JustFilesItem[]> {
+  async getChildren(element?: FileItem): Promise<OnlyFilesItem[]> {
     await this.cleanupQueue;
 
     if (!element?.id) {

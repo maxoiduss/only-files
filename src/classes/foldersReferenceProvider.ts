@@ -155,7 +155,7 @@ export class FoldersReferenceProvider implements
     };
     const cleanWhereToSearch = this.stripComments(whereToSearch);
     const mask = `${escapeRegExp(pattern)}\\b\\s*([A-Za-z0-9_$-]+)(?=[\\s<{(]|$)`;
-    const criteria = new RegExp(mask, "u");
+    const criteria = new RegExp(mask, 'u');
 
     return cleanWhereToSearch.match(criteria);
   }
@@ -196,7 +196,7 @@ export class FoldersReferenceProvider implements
 
       const text = doc.getText();
       const regex = new RegExp(
-        `(?:^|[^A-Za-z])(${searchPattern})(?:$|[^A-Za-z])`, "g"
+        `(?:^|[^A-Za-z])(${searchPattern})(?:$|[^A-Za-z])`, 'g'
       );
       let match: RegExpExecArray | null;
 
@@ -220,7 +220,7 @@ export class FoldersReferenceProvider implements
       .filter((line) => this.skipEmptyOrNegationAndLineIsComment(line))
       .map((str) => {
         if (str.startsWith('/')) { str = str.slice(1); }
-        return str.endsWith("/") ? `${str}**` : str;
+        return str.endsWith('/') ? `${str}**` : str;
       }) : [];
   }
 

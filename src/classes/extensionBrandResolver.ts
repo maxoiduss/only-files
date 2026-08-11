@@ -2,17 +2,17 @@ import { Brand, ViewX } from "../types/vscodes";
 import { getRegistratorCommands } from "./commandRegistrator";
 import { LogService } from "./logService";
 
-const resolver = "just-files" as const;
+const resolver = "only-files" as const;
 
-const branch = "mergeFromMaxoiduss-fixes" as const;
-const link168: string =
+const branch = "redesign" as const;
+const link175: string =
   "https://github.com/maxoiduss/just-files/" +
   `blob/${branch}/src/classes/`              +
-  "extensionBrandResolver.ts#L168";
-const link186: string =
+  "extensionBrandResolver.ts#L175";
+const link193: string =
   "https://github.com/maxoiduss/just-files/" +
   `blob/${branch}/src/classes/`              +
-  "extensionBrandResolver.ts#L186";
+  "extensionBrandResolver.ts#L193";
 
 const validate = (entries: string[], on: Set<string>): boolean => {
   return entries.every((entry) => on.has(entry));
@@ -114,12 +114,12 @@ export class ExtensionBrandResolver {
     brand.switch = `${name}.switch`;
     brand.switchback = `${name}.switchback`;
     brand.searchListFiles = `${name}.searchListFiles`;
-    brand.searchListJustFiles = `${name}.searchListJustFiles`;
+    brand.searchListOnlyFiles = `${name}.searchListOnlyFiles`;
     brand.searchListActiveFiles = `${name}.searchListActiveFiles`;
-    brand.searchListActiveJustFiles = `${name}.searchListActiveJustFiles`;
+    brand.searchListActiveOnlyFiles = `${name}.searchListActiveOnlyFiles`;
     brand.refreshFiles = `${name}.refreshFiles`;
-    brand.refreshJustFiles = `${name}.refreshJustFiles`;
-    brand.refreshSortedJustFiles = `${name}.refreshSortedJustFiles`;
+    brand.refreshOnlyFiles = `${name}.refreshOnlyFiles`;
+    brand.refreshSortedOnlyFiles = `${name}.refreshSortedOnlyFiles`;
     brand.manageWatcherExclude = `${name}.manageWatcherExclude`;
     brand.getSelected = `${name}:getSelected`;
     brand.setSelected = `${name}:setSelected`;
@@ -165,7 +165,7 @@ export class ExtensionBrandResolver {
     };
     brand.focus = (on) => on === "Files" ?
       `${ExtensionBrandResolver.treeview1}.${focus}`
-    : on === "Just Files" ?
+    : on === "Only Files" ?
         `${ExtensionBrandResolver.treeview2}.${focus}`
       : `${ExtensionBrandResolver.webview}.${focus}`;
     
@@ -184,7 +184,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if  (!validated) {
-      this.showError("validateSetup failed", link168);
+      this.showError("validateSetup failed", link175);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
@@ -197,13 +197,13 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...registration], on);
     if  (!validated) {
-      this.showError("validateCommandRegistration failed", link186);
+      this.showError("validateCommandRegistration failed", link193);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }
 
   private showError(detail: string, link: string) {
-    const jf: ViewX = "Just Files";
+    const jf: ViewX = "Only Files";
     const open = "Check on Github";
     const title = `Source: ${jf}`;
     vscode.window.showErrorMessage(title, {
@@ -425,6 +425,6 @@ export class ExtensionBrandResolver {
     }
     catch (error) { LogService.console.trace(error as string); }
     const self = ExtensionBrandResolver as any;
-    { if (self) { self.instance = undefined; } }
+    if (self) { self.instance = undefined; }
   }
 }

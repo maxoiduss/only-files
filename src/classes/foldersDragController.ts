@@ -19,7 +19,7 @@ export class FoldersDragController
   implements TreeDragAndDropController<FileItem>
 {
   private readonly commandRegistrator: CommandRegistrator;
-  private readonly draggedFromJustFilesAction:
+  private readonly draggedFromOnlyFilesAction:
   (uri: vscode.Uri) => Promise<void>;
 
   readonly dropMimeTypes: string[] = [_.MIME, URLS];
@@ -31,10 +31,10 @@ export class FoldersDragController
 
   constructor(
     commandRegistrator: CommandRegistrator,
-    draggedFromJustFilesAction: (uri: vscode.Uri) => Promise<void>
+    draggedFromOnlyFilesAction: (uri: vscode.Uri) => Promise<void>
   ) {
     this.commandRegistrator = commandRegistrator;
-    this.draggedFromJustFilesAction = draggedFromJustFilesAction;
+    this.draggedFromOnlyFilesAction = draggedFromOnlyFilesAction;
    }
 
   async handleDrag?(
@@ -103,7 +103,7 @@ export class FoldersDragController
             .sort((a, b) => b[1] - a[1])
             .map(([uri]) => uri);
           for (const uri of removing) {
-            await this.draggedFromJustFilesAction(uri);
+            await this.draggedFromOnlyFilesAction(uri);
           }
         }
         return;

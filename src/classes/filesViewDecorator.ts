@@ -3,14 +3,14 @@ import { ExtensionBrandResolver } from './extensionBrandResolver';
 import { getConfigurationsFor, getPathDepth, getUri, isValidUri, same
 } from './utilManager';
 
-const decorMap   = "decorations" as const;
-const colorMain  = "justFilesViewColor" as const;
-const colorMinor = "foldersViewColor" as const;
+const decorMap   = "decorations"                   as const;
+const colorMain  = "onlyFilesViewColor"            as const;
+const colorMinor = "foldersViewColor"              as const;
 const colorModif = "list.focusHighlightForeground" as const;
 
 const configuration = () => ExtensionBrandResolver.configuration;
 const highlightProperty = () => ExtensionBrandResolver.boolean5Property;
-const hasHighlighing = (): boolean => {
+const hasHighlighting = (): boolean => {
   const config = vscode.workspace.getConfiguration(configuration());
 
   return config.get<boolean>(highlightProperty(), true);
@@ -61,7 +61,7 @@ export class FilesViewDecorator
         propagate: false
       };
     }
-    if (hasHighlighing()) {
+    if (hasHighlighting()) {
       if (this.highlighting.has(uri.toString())) {
         return {
           color: this.tone,
@@ -113,8 +113,8 @@ export class FilesViewDecorator
     }
   }
 
-  public removeHighlight(uri: UriOr | string, refresh: boolean = true)
-  { if (!uri) { return; }
+  public removeHighlight(uri: UriOr | string, refresh: boolean = true) {
+    if (!uri) { return; }
 
     this.highlighting.delete(uri.toString());
 

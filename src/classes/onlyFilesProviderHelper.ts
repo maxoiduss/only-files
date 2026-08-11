@@ -8,7 +8,7 @@ import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
 
 /**
  * ```
- * class JustFilesViewProvider implements
+ * class OnlyFilesViewProvider implements
  * vscode.TreeDataProvider<FileItem | PlaceholderItem>,
  * vscodes.Changable<FileItem>,
  * vscodes.Searchable,
@@ -16,7 +16,7 @@ import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
  * ```
  *
  * Provides {@link TreeItem} elements such as {@link FileItem}, 
- * {@link PlaceholderItem} for a TreeView registered in the JustFiles 
+ * {@link PlaceholderItem} for a TreeView registered in the OnlyFiles 
  * main class.
  * - {@link vscodes.Changable<T>} - provides changeTreeItem method 
  * of change to TreeItem element in cases like move/remove/rename file
@@ -39,9 +39,9 @@ import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
  * - {@link Vertex.children} stores child URI strings and is populated lazily
  *   by {@link Vertex.createChildren}.
  * - {@link Vertex.opened} records the last expansion/collapse activity used by
- *   *JustFilesViewProvider* to remove stale descendants.
+ *   *OnlyFilesViewProvider* to remove stale descendants.
  *
- * *JustFilesViewProvider* owns two related collections:
+ * *OnlyFilesViewProvider* owns two related collections:
  * - its `vertices` map contains the materialised graph nodes used to render
  *   TreeView elements;
  * - its `hidden` set contains descendant or bridge IDs that are retained by
@@ -70,11 +70,11 @@ import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
  * {@link saveWorkspaceContexts}. Vertices are converted to the serialisable
  * {@link VertexLike} shape and restored with their item label, file/folder
  * flag, collapsible state, and parent URI. The same state also persists the
- * sorted-mode flag and hidden URI set, allowing the Just Files view to be
+ * sorted-mode flag and hidden URI set, allowing the Only Files view to be
  * reconstructed after reload without scanning the entire workspace.
  */
-// JustFilesProviderHelper module defines some helper types, funcs and docs
-export class JustFilesProviderHelper { }
+// OnlyFilesProviderHelper module defines some helper types, funcs and docs
+export class OnlyFilesProviderHelper { }
 
 const empty = '' as const;
 const sorted = "sorted" as const;

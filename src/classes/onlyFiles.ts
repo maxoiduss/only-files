@@ -4,10 +4,10 @@ import * as folders from "./foldersProviderHelper";
 import { KeybindingsService } from "./keybindingsService";
 import { CommandRegistrator } from "./commandRegistrator";
 import { FilesViewDecorator } from "./filesViewDecorator";
-import { JustFilesDragController } from "./justFilesDragController";
+import { OnlyFilesDragController } from "./onlyFilesDragController";
 import { FoldersDragController } from "./foldersDragController";
 import { FoldersReferenceProvider } from "./foldersReferenceProvider";
-import { JustFilesViewProvider, small } from "./justFilesViewProvider";
+import { OnlyFilesViewProvider, small } from "./onlyFilesViewProvider";
 import { FoldersViewProvider } from "./foldersViewProvider";
 import { FileWatcherExcluder } from "./fileWatcherExcluder";
 import { FileSystemWatcher } from "./fileSystemWatcher";
@@ -16,7 +16,7 @@ import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { LogService } from "./logService";
 import {
-  EmptyFolderItem, FileItem, FileItemOrUriOr, JustFilesItem,
+  EmptyFolderItem, FileItem, FileItemOrUriOr, OnlyFilesItem,
   PlaceholderItem, RootFileItem
 } from "./fileItem";
 import {
@@ -24,11 +24,11 @@ import {
   isFolder, isProjectTooLarge, isValidUri, same, sleep
 } from "./utilManager";
 
-export class JustFiles {
+export class OnlyFiles {
   private readonly context: vscode.ExtensionContext;
-  private readonly justFilesViewProvider: JustFilesViewProvider;
+  private readonly onlyFilesViewProvider: OnlyFilesViewProvider;
   private readonly foldersViewProvider: FoldersViewProvider;
-  private readonly justFilesTreeView: vscode.TreeView<JustFilesItem>;
+  private readonly onlyFilesTreeView: vscode.TreeView<OnlyFilesItem>;
   private readonly foldersTreeView: vscode.TreeView<FileItem>;
   private readonly commandRegistrator: CommandRegistrator;
   private readonly referenceProvider: FoldersReferenceProvider;
@@ -37,25 +37,25 @@ export class JustFiles {
   private readonly fileExcluder: FileWatcherExcluder;
   private readonly fileWatcher: FileSystemWatcher;
 
-  private readonly justFilesDragController: JustFilesDragController;
+  private readonly onlyFilesDragController: OnlyFilesDragController;
   private readonly foldersDragController: FoldersDragController;
   private readonly keybindingsService: KeybindingsService;
 
-  private justFilesSelectedItems: readonly (JustFilesItem)[] = [];
+  private onlyFilesSelectedItems: readonly (OnlyFilesItem)[] = [];
   private filesSelectedItems: readonly FileItem[] = [];
   private lastSelectedView: vscodes.ViewX = "Preview";
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
     this.keybindingsService = new KeybindingsService();
-    this.justFilesViewProvider = new JustFilesViewProvider(context,
-      this.revealJustFilesViewFileItem.bind(this));
+    this.onlyFilesViewProvider = new OnlyFilesViewProvider(context,
+      this.revealOnlyFilesViewFileItem.bind(this));
     this.foldersViewProvider = new FoldersViewProvider(context,
       this.revealFoldersViewFileItem.bind(this));
     this.fileWatcher = new FileSystemWatcher(context,
       this.refreshTreeViews.bind(this),
       this.changeItemInTreeViews.bind(this),
-      this.justFilesViewProvider.deleteItem.bind(this.justFilesViewProvider)
+      this.onlyFilesViewProvider.deleteItem.bind(this.onlyFilesViewProvider)
     );
     this.commandRegistrator = new CommandRegistrator(context,
       this.refreshTreeViews.bind(this),
@@ -64,7 +64,7 @@ export class JustFiles {
       this.fileWatcher.unexcludeUri.bind(this.fileWatcher)
     );
     this.previewProvider = new PreviewProvider(context);
-    this.justFilesDragController = new JustFilesDragController(
+    this.onlyFilesDragController = new OnlyFilesDragController(
       this.commandRegistrator
     );
     this.foldersDragController = new FoldersDragController(
@@ -82,31 +82,31 @@ export class JustFiles {
         showCollapseAll: true,
         dragAndDropController: this.foldersDragController
     });
-    this.justFilesTreeView = vscode.window.createTreeView(
+    this.onlyFilesTreeView = vscode.window.createTreeView(
       ExtensionBrandResolver.treeview2, {
-        treeDataProvider: this.justFilesViewProvider,
+        treeDataProvider: this.onlyFilesViewProvider,
         canSelectMany: true,
         showCollapseAll: true,
-        dragAndDropController: this.justFilesDragController
+        dragAndDropController: this.onlyFilesDragController
     });    
     this.foldersTreeView.title = undefined;
-    this.justFilesTreeView.title = undefined;
+    this.onlyFilesTreeView.title = undefined;
 
     ExtensionStaticService.addDisposablesOnce(
       this.fileDecorator,
       this.fileExcluder,
       this.fileWatcher,
       this.foldersTreeView,
-      this.justFilesTreeView,
+      this.onlyFilesTreeView,
       this.referenceProvider,
       this.foldersViewProvider,
-      this.justFilesViewProvider
+      this.onlyFilesViewProvider
     );
     this.commandRegistrator.targeting = {
       on:  this.fileDecorator.setTargeted.bind(this.fileDecorator),
       off: this.fileDecorator.resetTargeted.bind(this.fileDecorator),
     };
-    this.justFilesViewProvider.highlighting = {
+    this.onlyFilesViewProvider.highlighting = {
       add: this.fileDecorator.addHighlights.bind(this.fileDecorator),
       rem: this.fileDecorator.removeHighlight.bind(this.fileDecorator),
       clr: this.fileDecorator.clearHighlights.bind(this.fileDecorator),
@@ -118,16 +118,16 @@ export class JustFiles {
     const didCollapse1 = this.foldersTreeView.onDidCollapseElement((event) =>
       this.foldersViewProvider.removeCollapsingElement(event.element)
     );
-    const didExpand2 = this.justFilesTreeView.onDidExpandElement((event) =>
-      this.justFilesViewProvider.expandElement(event.element as FileItem)
+    const didExpand2 = this.onlyFilesTreeView.onDidExpandElement((event) =>
+      this.onlyFilesViewProvider.expandElement(event.element as FileItem)
     );
-    const didCollapse2 = this.justFilesTreeView.onDidCollapseElement((event) =>
-      this.justFilesViewProvider.collapseElement(event.element as FileItem)
+    const didCollapse2 = this.onlyFilesTreeView.onDidCollapseElement((event) =>
+      this.onlyFilesViewProvider.collapseElement(event.element as FileItem)
     );
     const didShow1 = this.foldersTreeView.onDidChangeVisibility((event) =>
       event.visible && this.renameTreeViews()
     );
-    const didShow2 = this.justFilesTreeView.onDidChangeVisibility((event) =>
+    const didShow2 = this.onlyFilesTreeView.onDidChangeVisibility((event) =>
       event.visible && this.renameTreeViews()
     );
     context.subscriptions.push(
@@ -153,13 +153,13 @@ export class JustFiles {
     this.subscribeAddFromCommand();
     this.subscribeRemoveFromCommand();
     this.subscribeAddFromExplorer();
-    this.subscribeCleanJustView();
+    this.subscribeCleanOnlyView();
     this.subscribeChanges();
     this.subscribeConfigurationChanges();
     this.subscribeSwitchView();
     this.subscribeSwitchIgnore();
     this.subscribeRefreshFilesView();
-    this.subscribeRefreshJustFilesView();
+    this.subscribeRefreshOnlyFilesView();
     this.subscribeSearchList();
     this.subscribeRevealInExplorer();
     this.subscribeCollapseToFolder();
@@ -172,24 +172,24 @@ export class JustFiles {
   }
 
   private renameTreeViews() {
-    if (this.foldersTreeView.title || this.justFilesTreeView.title) {
+    if (this.foldersTreeView.title || this.onlyFilesTreeView.title) {
       return; }
 
     const projectName = getProjectName();
     if (projectName) {
-      this.foldersTreeView.title = this.justFilesTreeView.title = projectName;
+      this.foldersTreeView.title = this.onlyFilesTreeView.title = projectName;
     }
   }
   
   private refreshTreeViews(item?: FileItem) {
     this.foldersViewProvider.refresh(item);
-    this.justFilesViewProvider.refresh(item);
+    this.onlyFilesViewProvider.refresh(item);
   };
 
   private changeItemInTreeViews(item: FileItemOrUriOr, onUri: vscode.Uri) {
     if (item) {
       this.foldersViewProvider.changeTreeItem(item, onUri).then(() =>
-      this.justFilesViewProvider.changeTreeItem(item, onUri)).catch();
+      this.onlyFilesViewProvider.changeTreeItem(item, onUri)).catch();
     }
   }
 
@@ -197,7 +197,7 @@ export class JustFiles {
     let changed = (item as any)?.resourceUri || (item as vscode.Uri);
     if (changed instanceof vscode.Uri) {
       this.fileDecorator.handleUri(changed, onUri);
-      this.justFilesViewProvider.updateHighlighting(
+      this.onlyFilesViewProvider.updateHighlighting(
         changed.toString(), onUri.toString()
       );
     }
@@ -224,8 +224,8 @@ export class JustFiles {
     });
     if (uris && uris.length > 0) {
       const uri = uris[0];
-      await this.addOrHideOnJustFiles(getUriFrom(item), false);
-      await this.addOrHideOnJustFiles(uri, true);
+      await this.addOrHideOnOnlyFiles(getUriFrom(item), false);
+      await this.addOrHideOnOnlyFiles(uri, true);
 
       const activeEditor = vscode.window.activeTextEditor;
       if (activeEditor && same(activeEditor.document.uri, uri)) {
@@ -243,9 +243,9 @@ export class JustFiles {
          });
   }
 
-  private revealJustFilesViewFileItem(item: FileItem, exp?: boolean) {
+  private revealOnlyFilesViewFileItem(item: FileItem, exp?: boolean) {
     Promise.resolve(sleep(small[1]))
-           .then(() => this.justFilesTreeView.reveal(item, { expand: exp }))
+           .then(() => this.onlyFilesTreeView.reveal(item, { expand: exp }))
            .catch((error) => { LogService.error(error); });
   }
 
@@ -288,7 +288,7 @@ export class JustFiles {
     this.foldersViewProvider.setIgnoredItems(antipattern);
   }
 
-  private async addOrHideOnJustFilesByUris(
+  private async addOrHideOnOnlyFilesByUris(
     uris: vscode.Uri[],
     add: boolean
   ): Promise<void> {
@@ -300,14 +300,14 @@ export class JustFiles {
     for (const item of items) {
       this.foldersViewProvider.prepareState(item);
       this.foldersViewProvider.prepareLabel(item);
-      hide ? await this.justFilesViewProvider.removeFileItem(item)
-           : await this.justFilesViewProvider.addFileItem(item);
+      hide ? await this.onlyFilesViewProvider.removeFileItem(item)
+           : await this.onlyFilesViewProvider.addFileItem(item);
     }
     const selected = !hide && items.length === 1 ? items[0] : undefined;
-    this.justFilesViewProvider.refresh(selected);
+    this.onlyFilesViewProvider.refresh(selected);
   }
   
-  private async addOrHideOnJustFiles<T extends FileItem>(
+  private async addOrHideOnOnlyFiles<T extends FileItem>(
     it: vscode.Uri | T,
     add: boolean
   ): Promise<void> {
@@ -320,11 +320,11 @@ export class JustFiles {
       this.foldersViewProvider.prepareState(item); 
       this.foldersViewProvider.prepareLabel(item);
       add === true ?
-        await this.justFilesViewProvider.addFileItem(item)
-      : await this.justFilesViewProvider.removeFileItem(item);
+        await this.onlyFilesViewProvider.addFileItem(item)
+      : await this.onlyFilesViewProvider.removeFileItem(item);
     }
     const selected = add ? item : undefined;
-    this.justFilesViewProvider.refresh(selected);
+    this.onlyFilesViewProvider.refresh(selected);
   }
   /*-------------------------------subscribes---------------------------------*/
   private subscribeWatcher() { this.fileWatcher.watch(); }
@@ -336,14 +336,14 @@ export class JustFiles {
       this.fileDecorator
     );
     const remark = vscode.commands.registerCommand(brand.remark, (item) => {
-      const items = this.justFilesSelectedItems.some(
+      const items = this.onlyFilesSelectedItems.some(
         (it) => item instanceof FileItem && item.like(it)
-      ) ? this.justFilesSelectedItems : item;
+      ) ? this.onlyFilesSelectedItems : item;
       const array = Array.isArray(items) ? items : [items];
       array.forEach((it) => this.fileDecorator.handleUri(getUriFrom(it)));
 
-      if  (this.justFilesSelectedItems.length === 1
-        && this.justFilesSelectedItems[0] === item) {
+      if  (this.onlyFilesSelectedItems.length === 1
+        && this.onlyFilesSelectedItems[0] === item) {
         this.revealFoldersViewFileItem(item);
       }
     });
@@ -386,8 +386,8 @@ export class JustFiles {
            this.lastSelectedView === "Files"
         && this.filesSelectedItems.length > 0 ?
             this.filesSelectedItems
-          : this.justFilesSelectedItems.length > 0 ?
-              this.justFilesSelectedItems
+          : this.onlyFilesSelectedItems.length > 0 ?
+              this.onlyFilesSelectedItems
             : undefined
         );
     });
@@ -411,8 +411,8 @@ export class JustFiles {
   private subscribeShowAll() {
     const showAll = vscode.commands.registerCommand(brand.showAll,
       () => {
-        this.justFilesViewProvider.removeAllHidden();
-        this.justFilesViewProvider.refreshOnReload();
+        this.onlyFilesViewProvider.removeAllHidden();
+        this.onlyFilesViewProvider.refreshOnReload();
       });
     this.context.subscriptions.push(showAll);
   }
@@ -420,8 +420,8 @@ export class JustFiles {
   private subscribeShowExact() {
     const showExact = vscode.commands.registerCommand(brand.showExact,
       async (fileItem) => {
-        await this.justFilesViewProvider.removeAllParents(fileItem);
-        this.justFilesViewProvider.refreshOnReload(fileItem);
+        await this.onlyFilesViewProvider.removeAllParents(fileItem);
+        this.onlyFilesViewProvider.refreshOnReload(fileItem);
       });
     this.context.subscriptions.push(showExact);
   }
@@ -434,10 +434,10 @@ export class JustFiles {
 
         if (!fileItem || isFileItemContainedInFilesSelectedItems) {
           for (const item of this.filesSelectedItems) {
-            await this.addOrHideOnJustFiles(item, true);
+            await this.addOrHideOnOnlyFiles(item, true);
           } }
         else {
-          await this.addOrHideOnJustFiles(fileItem, true); }
+          await this.addOrHideOnOnlyFiles(fileItem, true); }
       });
     this.context.subscriptions.push(show);
   }
@@ -445,19 +445,19 @@ export class JustFiles {
   private subscribeHide() {
     const hide = vscode.commands.registerCommand(brand.hide,
       async (fileItem) => {
-        const isFileItemContainedInJustFilesSelectedItems =
-          this.justFilesSelectedItems.some((item) =>
+        const isFileItemContainedInOnlyFilesSelectedItems =
+          this.onlyFilesSelectedItems.some((item) =>
             item instanceof FileItem && item.like(fileItem)
           );
 
-        if (!fileItem || isFileItemContainedInJustFilesSelectedItems) {
-          const items = this.justFilesSelectedItems.filter(
+        if (!fileItem || isFileItemContainedInOnlyFilesSelectedItems) {
+          const items = this.onlyFilesSelectedItems.filter(
                 (item) => item instanceof FileItem).map(
                 (item) => item.getUri());
           const uris = await Promise.all(items);
-          await this.addOrHideOnJustFilesByUris(uris, false); }
+          await this.addOrHideOnOnlyFilesByUris(uris, false); }
         else if (fileItem instanceof FileItem) {
-          await this.addOrHideOnJustFiles(fileItem, false);
+          await this.addOrHideOnOnlyFiles(fileItem, false);
         }
       });
     this.context.subscriptions.push(hide);
@@ -466,14 +466,14 @@ export class JustFiles {
   private subscribeAddFromTab() {
     const addFromTab = vscode.commands.registerCommand(
       brand.addItemFromTabMenu,
-      async (uri) => await this.addOrHideOnJustFiles(getUriFrom(uri), true));
+      async (uri) => await this.addOrHideOnOnlyFiles(getUriFrom(uri), true));
     this.context.subscriptions.push(addFromTab);
   }
 
   private subscribeRemoveFromTab() {
     const removeFromTab = vscode.commands.registerCommand(
       brand.removeItemFromTabMenu,
-      async (uri) => await this.addOrHideOnJustFiles(getUriFrom(uri), false));
+      async (uri) => await this.addOrHideOnOnlyFiles(getUriFrom(uri), false));
     this.context.subscriptions.push(removeFromTab);
   }
 
@@ -482,7 +482,7 @@ export class JustFiles {
       brand.addItemFromCommand, async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
-          await this.addOrHideOnJustFiles(activeEditor.document.uri, true);
+          await this.addOrHideOnOnlyFiles(activeEditor.document.uri, true);
         }
       });
     this.context.subscriptions.push(addFromCommand);
@@ -493,7 +493,7 @@ export class JustFiles {
       brand.removeItemFromCommand, async () => {
         const activeEditor = vscode.window.activeTextEditor;
         if (activeEditor) {
-          await this.addOrHideOnJustFiles(activeEditor.document.uri, false);
+          await this.addOrHideOnOnlyFiles(activeEditor.document.uri, false);
         }
       });
     this.context.subscriptions.push(removeFromCommand);
@@ -502,7 +502,7 @@ export class JustFiles {
   private subscribeAddFromExplorer() {
     const addFromExplorer = vscode.commands.registerCommand(
       brand.addItemFromExplorer, async (uri) =>
-        await this.addOrHideOnJustFiles(getUriFrom(uri), true));
+        await this.addOrHideOnOnlyFiles(getUriFrom(uri), true));
     this.context.subscriptions.push(addFromExplorer);
   }
 
@@ -541,10 +541,10 @@ export class JustFiles {
   private subscribeCollectAllMarked() {
     const collect = vscode.commands.registerCommand(brand.collectMarked,
       async () => {
-        this.justFilesViewProvider.populateHighlightings();
+        this.onlyFilesViewProvider.populateHighlightings();
 
         const uris = await this.fileDecorator.getDecorationsAsUris();
-        await this.addOrHideOnJustFilesByUris(uris, true);
+        await this.addOrHideOnOnlyFilesByUris(uris, true);
       });
     this.context.subscriptions.push(collect);
   }
@@ -609,10 +609,10 @@ export class JustFiles {
     this.context.subscriptions.push(provider, preview);
   }
 
-  private subscribeCleanJustView() {
-    const cleanJustView = vscode.commands.registerCommand(brand.removeAll,
-      () => this.justFilesViewProvider.clean());
-    this.context.subscriptions.push(cleanJustView);
+  private subscribeCleanOnlyView() {
+    const cleanOnlyView = vscode.commands.registerCommand(brand.removeAll,
+      () => this.onlyFilesViewProvider.clean());
+    this.context.subscriptions.push(cleanOnlyView);
   }
 
   private subscribeSwitchIgnore() {
@@ -657,21 +657,21 @@ export class JustFiles {
       folders: () => search(this.foldersViewProvider,
         async () => vscode.commands.executeCommand(brand.focus("Files"))
       ),
-      justfiles: () => search(this.justFilesViewProvider,
-        async () => vscode.commands.executeCommand(brand.focus("Just Files"))
+      onlyfiles: () => search(this.onlyFilesViewProvider,
+        async () => vscode.commands.executeCommand(brand.focus("Only Files"))
       ) 
     };
     const searchListFiles = vscode.commands.registerCommand(
       brand.searchListFiles, searchList.folders);
-    const searchListJustFiles = vscode.commands.registerCommand(
-      brand.searchListJustFiles, searchList.justfiles);
+    const searchListOnlyFiles = vscode.commands.registerCommand(
+      brand.searchListOnlyFiles, searchList.onlyfiles);
     const searchListActiveFiles = vscode.commands.registerCommand(
       brand.searchListActiveFiles, searchList.folders);
-    const searchListActiveJustFiles = vscode.commands.registerCommand(
-      brand.searchListActiveJustFiles, searchList.justfiles);
+    const searchListActiveOnlyFiles = vscode.commands.registerCommand(
+      brand.searchListActiveOnlyFiles, searchList.onlyfiles);
     this.context.subscriptions.push(
-      searchListFiles,       searchListJustFiles,
-      searchListActiveFiles, searchListActiveJustFiles
+      searchListFiles,       searchListOnlyFiles,
+      searchListActiveFiles, searchListActiveOnlyFiles
     );
   }
 
@@ -682,35 +682,35 @@ export class JustFiles {
           vscode.commands.executeCommand(brand.closeFolder); }
         else {
           this.foldersViewProvider.focusRoot();
-          this.justFilesViewProvider.populateHighlightings();
+          this.onlyFilesViewProvider.populateHighlightings();
         }
       }
     );
     this.context.subscriptions.push(refreshFilesView);
   }
 
-  private subscribeRefreshJustFilesView() {
+  private subscribeRefreshOnlyFilesView() {
     const refreshAndSwitchSortedMode = () => {
-      this.justFilesViewProvider.sortedMode =
-        !this.justFilesViewProvider.sortedMode;
+      this.onlyFilesViewProvider.sortedMode =
+        !this.onlyFilesViewProvider.sortedMode;
 
-      this.justFilesViewProvider.refresh();
+      this.onlyFilesViewProvider.refresh();
     };
-    const refreshJustFilesView = vscode.commands.registerCommand(
-      brand.refreshJustFiles, () => refreshAndSwitchSortedMode()
+    const refreshOnlyFilesView = vscode.commands.registerCommand(
+      brand.refreshOnlyFiles, () => refreshAndSwitchSortedMode()
     );
-    const refreshSortedJustFilesView = vscode.commands.registerCommand(
-      brand.refreshSortedJustFiles, () => refreshAndSwitchSortedMode()
+    const refreshSortedOnlyFilesView = vscode.commands.registerCommand(
+      brand.refreshSortedOnlyFiles, () => refreshAndSwitchSortedMode()
     );
-    this.context.subscriptions.push(refreshJustFilesView);
-    this.context.subscriptions.push(refreshSortedJustFilesView);
+    this.context.subscriptions.push(refreshOnlyFilesView);
+    this.context.subscriptions.push(refreshSortedOnlyFilesView);
   }
 
   private subscribeChanges() {
-    const did1 = this.justFilesTreeView.onDidChangeSelection(async (e) => {
+    const did1 = this.onlyFilesTreeView.onDidChangeSelection(async (e) => {
       if (!e.selection.some((i) => i instanceof PlaceholderItem)) {
-        this.justFilesSelectedItems = e.selection;
-        this.lastSelectedView = "Just Files";
+        this.onlyFilesSelectedItems = e.selection;
+        this.lastSelectedView = "Only Files";
         await vscode.commands.executeCommand(brand.setContext,
           brand.isActive, true);
       } else {

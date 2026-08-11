@@ -20,7 +20,7 @@ import { getConfigurationFor, getConfigurationsFor, getUri
  *
  * Provides {@link FileItem} elements such as 
  * {@link FileItem}, {@link EmptyFolderItem}, {@link RootFileItem}
- * for a TreeView registered in the JustFiles main class.
+ * for a TreeView registered in the OnlyFiles main class.
  * - {@link vscodes.Changable<T>} - provides changeTreeItem method of 
  *   change to TreeItem element in cases like move/remove/rename file
  * - {@link vscodes.Searchable} - provides flag to detect the view-list 

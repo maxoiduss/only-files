@@ -15,7 +15,7 @@ const _ = {
   }
 };
 
-export class JustFilesDragController
+export class OnlyFilesDragController
   implements TreeDragAndDropController<FileItem>
 {
   private readonly commandRegistrator: CommandRegistrator;

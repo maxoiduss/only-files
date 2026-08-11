@@ -588,7 +588,7 @@ export const showQuickInput = (
 export const validate = () => { return {
   exclude: (input: string): string | undefined => {
     const trimmed = input.trim();
-    if  (!trimmed) { return "Pattern cannot be empty or just spaces."; }
+    if  (!trimmed) { return "Pattern cannot be empty or only spaces."; }
     if   (trimmed.includes("\\")) { return `Use forward slashes (/) for glob 
       paths instead of backslashes (\\)`; }
     if (/^[a-zA-Z]:/i.test(trimmed) || trimmed.startsWith('/')) { return `Paths 

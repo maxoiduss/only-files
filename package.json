@@ -1,7 +1,7 @@
 {
-  "name": "just-files",
-  "displayName": "Just Files",
-  "description": "Select and work just with the files you will use",
+  "name": "only-files",
+  "displayName": "Only Files",
+  "description": "Select and work only with the files you will use",
   "version": "1.0.8",
   "publisher": "palaso",
   "icon": "resources/icon.png",
@@ -28,9 +28,9 @@
     ],
     "configuration": [
       {
-        "title": "Just Files",
+        "title": "Only Files",
         "properties": {
-          "justFiles.clickTime": {
+          "onlyFiles.clickTime": {
             "type": "number",
             "default": 500,
             "minimum": 50,
@@ -38,7 +38,7 @@
             "scope": "application",
             "description": "Tolerance between clicks in millisec to trigger open file."
           },
-          "justFiles.renameTime": {
+          "onlyFiles.renameTime": {
             "type": "number",
             "default": 1500,
             "minimum": 1050,
@@ -46,7 +46,7 @@
             "scope": "application",
             "description": "Tolerance between clicks in millisec to trigger rename file."
           },
-          "justFiles.timeToPick": {
+          "onlyFiles.timeToPick": {
             "type": "number",
             "default": 4,
             "minimum": 1,
@@ -54,7 +54,7 @@
             "scope": "application",
             "description": "Time in seconds quick pick dialog to auto accept."
           },
-          "justFiles.timeToWaitOperations": {
+          "onlyFiles.timeToWaitOperations": {
             "type": "number",
             "default": 4,
             "minimum": 1,
@@ -62,37 +62,37 @@
             "scope": "application",
             "description": "Time in seconds extension will wait before the filesystem operation breaks."
           },
-          "justFiles.showUncollapsedFolders": {
+          "onlyFiles.showUncollapsedFolders": {
             "type": "boolean",
             "default": true,
             "description": "Should uncollapsed folders be shown in the plain mode."
           },
-          "justFiles.showEmptyFolders": {
+          "onlyFiles.showEmptyFolders": {
             "type": "boolean",
             "default": true,
             "description": "Should empty folders be shown when the whole project is uncollapsed to plain mode."
           },
-          "justFiles.showHiddenFilesHighlight": {
+          "onlyFiles.showHiddenFilesHighlight": {
             "type": "boolean",
             "default": true,
             "description": "Should hidden files and folders be highlighted in files explorer."
           },
-          "justFiles.aDuplicatePostfix": {
+          "onlyFiles.aDuplicatePostfix": {
             "type": "string",
             "default": "duplicate",
             "description": "A postfix used for names of duplicated files and folders."
           },
-          "justFiles.singleFileContentCopy": {
+          "onlyFiles.singleFileContentCopy": {
             "type": "boolean",
             "default": true,
             "description": "Should file content be copied on a single item copy."
           },
-          "justFiles.useWatcherExclude": {
+          "onlyFiles.useWatcherExclude": {
             "type": "boolean",
             "default": true,
             "scope": "resource",
             "description": "Use or not file watcher exclusions for a project.",
-            "markdownDescription": "Use file watcher extra exclusions for a project. \n\n Once you won't use it all these exclusions can be erased. \n\n You can [manage](command:just-files.manageWatcherExclude) exclusions manually. \n\n ⚠️ This [setting](#files.watcherExclude \"Apply this configuration exclusively under the Workspace or Folder tabs\") has **no effect** in global **_User_** settings."
+            "markdownDescription": "Use file watcher extra exclusions for a project. \n\n Once you won't use it all these exclusions can be erased. \n\n You can [manage](command:only-files.manageWatcherExclude) exclusions manually. \n\n ⚠️ This [setting](#files.watcherExclude \"Apply this configuration exclusively under the Workspace or Folder tabs\") has **no effect** in global **_User_** settings."
           }
         }
       }
@@ -106,32 +106,32 @@
           "order": 3
         },
         {
-          "id": "just-files-explorer",
-          "title": "Just",
+          "id": "only-files-explorer",
+          "title": "Only",
           "icon": "resources/folder.png",
           "order": 2
         },
         {
           "id": "pre-view-container",
           "title": "Preview",
-          "icon": "resources/folder.svg",
+          "icon": "resources/folder.png",
           "order": 1
         }
       ]
     },
     "views": {
-      "just-files-explorer": [
+      "only-files-explorer": [
         {
-          "id": "justFilesView",
-          "name": "Just Files",
+          "id": "onlyFilesView",
+          "name": "Only Files",
           "type": "tree",
-          "icon": "resources/justFolder.svg"
+          "icon": "resources/onlyFolder.svg"
         }
       ],
       "files-explorer": [
         {
           "id": "filesView",
-          "name": "Just Folders",
+          "name": "Only Folders",
           "type": "tree",
           "icon": "resources/folder.svg"
         }
@@ -147,7 +147,7 @@
     },
     "viewsWelcome": [
       {
-        "view": "justFilesView",
+        "view": "onlyFilesView",
         "contents": "Drag files here"
       },
       {
@@ -157,7 +157,7 @@
     ],
     "colors": [
       {
-        "id": "justFilesViewColor",
+        "id": "onlyFilesViewColor",
         "description": "Highlight color for the file decorator",
         "defaults": {
           "dark": "#91B431",
@@ -177,31 +177,31 @@
     ],
     "commands": [
       {
-        "command": "just-files.showLogs",
-        "title": "Show Just Files Collected Logs"
+        "command": "only-files.showLogs",
+        "title": "Show Only Files Collected Logs"
       },
       {
-        "command": "just-files.showSettings",
-        "title": "Show Just Files Settings"
+        "command": "only-files.showSettings",
+        "title": "Show Only Files Settings"
       },
       {
-        "command": "just-files.showAll",
+        "command": "only-files.showAll",
         "title": "Show All Possible Files"
       },
       {
-        "command": "just-files.showExact",
+        "command": "only-files.showExact",
         "title": "Show Only This One"
       },
       {
-        "command": "just-files.showWarnings",
-        "title": "Make Just Files Warnings Showable"
+        "command": "only-files.showWarnings",
+        "title": "Make Only Files Warnings Showable"
       },
       {
-        "command": "just-files.manageWatcherExclude",
+        "command": "only-files.manageWatcherExclude",
         "title": "Manage Files Watcher Exclusions"
       },
       {
-        "command": "just-files.switch",
+        "command": "only-files.switch",
         "title": "Switch between classic/plain views",
         "icon": {
           "light": "resources/light/switchViewLight.svg",
@@ -209,7 +209,7 @@
         }
       },
       {
-        "command": "just-files.switchback",
+        "command": "only-files.switchback",
         "title": "Switch between classic/plain views",
         "icon": {
           "light": "resources/light/switchbackViewLight.svg",
@@ -217,23 +217,23 @@
         }
       },
       {
-        "command": "just-files.show",
-        "title": "Send to Just Files",
+        "command": "only-files.show",
+        "title": "Send to Only Files",
         "icon": {
           "light": "resources/light/showEyeLight.svg",
           "dark": "resources/dark/showEyeDark.svg"
         }
       },
       {
-        "command": "just-files.hide",
-        "title": "Remove from Just Files",
+        "command": "only-files.hide",
+        "title": "Remove from Only Files",
         "icon": {
           "light": "resources/light/hideEyeLight.svg",
           "dark": "resources/dark/hideEyeDark.svg"
         }
       },
       {
-        "command": "just-files.removeAll",
+        "command": "only-files.removeAll",
         "title": "Remove all",
         "icon": {
           "light": "resources/light/removeAllLight.svg",
@@ -241,7 +241,7 @@
         }
       },
       {
-        "command": "just-files.ignore",
+        "command": "only-files.ignore",
         "title": "Switch between use/don't use ignore-files",
         "icon": {
           "light": "resources/light/ignoreLight.svg",
@@ -249,7 +249,7 @@
         }
       },
       {
-        "command": "just-files.ignoreback",
+        "command": "only-files.ignoreback",
         "title": "Switch between use/don't use ignore-files",
         "icon": {
           "light": "resources/light/ignorebackLight.svg",
@@ -257,7 +257,7 @@
         }
       },
       {
-        "command": "just-files.collapseFolder",
+        "command": "only-files.collapseFolder",
         "title": "Collapse to/from folder",
         "icon": {
           "light": "resources/light/collapsedLight.svg",
@@ -265,7 +265,7 @@
         }
       },
       {
-        "command": "just-files.searchListFiles",
+        "command": "only-files.searchListFiles",
         "title": "Search among shown elements",
         "icon": {
           "light": "resources/light/searchListLight.svg",
@@ -273,7 +273,7 @@
         }
       },
       {
-        "command": "just-files.searchListJustFiles",
+        "command": "only-files.searchListOnlyFiles",
         "title": "Search among shown elements",
         "icon": {
           "light": "resources/light/searchListLight.svg",
@@ -281,7 +281,7 @@
         }
       },
       {
-        "command": "just-files.searchListActiveFiles",
+        "command": "only-files.searchListActiveFiles",
         "title": "Search among shown elements",
         "icon": {
           "light": "resources/light/searchListActiveLight.svg",
@@ -289,7 +289,7 @@
         }
       },
       {
-        "command": "just-files.searchListActiveJustFiles",
+        "command": "only-files.searchListActiveOnlyFiles",
         "title": "Search among shown elements",
         "icon": {
           "light": "resources/light/searchListActiveLight.svg",
@@ -297,11 +297,11 @@
         }
       },
       {
-        "command": "just-files.uncollapseAll",
+        "command": "only-files.uncollapseAll",
         "title": "Uncollapse All To Plain"
       },
       {
-        "command": "just-files.remark",
+        "command": "only-files.remark",
         "title": "Mark/Unmark",
         "icon": {
           "light": "resources/light/markLight.svg",
@@ -309,35 +309,35 @@
         }
       },
       {
-        "command": "just-files.addItemFromTabMenu",
-        "title": "Send to Just Files"
+        "command": "only-files.addItemFromTabMenu",
+        "title": "Send to Only Files"
       },
       {
-        "command": "just-files.removeItemFromTabMenu",
-        "title": "Remove from Just Files"
+        "command": "only-files.removeItemFromTabMenu",
+        "title": "Remove from Only Files"
       },
       {
-        "command": "just-files.addItemFromCommand",
-        "title": "Send tab to Just Files"
+        "command": "only-files.addItemFromCommand",
+        "title": "Send tab to Only Files"
       },
       {
-        "command": "just-files.removeItemFromCommand",
-        "title": "Remove tab from to Just Files"
+        "command": "only-files.removeItemFromCommand",
+        "title": "Remove tab from to Only Files"
       },
       {
-        "command": "just-files.addItemFromExplorer",
-        "title": "Send to Just Files"
+        "command": "only-files.addItemFromExplorer",
+        "title": "Send to Only Files"
       },
       {
-        "command": "just-files.previewItem",
-        "title": "Preview in Just Files",
+        "command": "only-files.previewItem",
+        "title": "Preview in Only Files",
         "icon": {
           "light": "resources/light/previewIconLight.svg",
           "dark": "resources/dark/previewIconDark.svg"
         }
       },
       {
-        "command": "just-files.refreshFiles",
+        "command": "only-files.refreshFiles",
         "title": "Refresh",
         "icon": {
           "light": "resources/light/refreshIconLight.svg",
@@ -345,7 +345,7 @@
         }
       },
       {
-        "command": "just-files.refreshJustFiles",
+        "command": "only-files.refreshOnlyFiles",
         "title": "Refresh/Reorder",
         "icon": {
           "light": "resources/light/refreshIconLight.svg",
@@ -353,15 +353,15 @@
         }
       },
       {
-        "command": "just-files.refreshSortedJustFiles",
-        "title": "Refresh JustFiles",
+        "command": "only-files.refreshSortedOnlyFiles",
+        "title": "Refresh OnlyFiles",
         "icon": {
           "light": "resources/light/refreshSortedIconLight.svg",
           "dark": "resources/dark/refreshSortedIconDark.svg"
         }
       },
       {
-        "command": "just-files.revealInSidebar",
+        "command": "only-files.revealInSidebar",
         "title": "Present file in sidebar",
         "icon": {
           "light": "resources/light/revealIconLight.svg",
@@ -369,336 +369,336 @@
         }
       },
       {
-        "command": "just-files.restore",
+        "command": "only-files.restore",
         "title": "Restore"
       },
       {
-        "command": "just-files.rename",
+        "command": "only-files.rename",
         "title": "Rename"
       },
       {
-        "command": "just-files.renameTab",
+        "command": "only-files.renameTab",
         "title": "Rename File"
       },
       {
-        "command": "just-files.delete",
+        "command": "only-files.delete",
         "title": "Delete"
       },
       {
-        "command": "just-files.deleteHard",
+        "command": "only-files.deleteHard",
         "title": "Delete Permanently"
       },
       {
-        "command": "just-files.duplicate",
+        "command": "only-files.duplicate",
         "title": "Duplicate"
       },
       {
-        "command": "just-files.emptify",
+        "command": "only-files.emptify",
         "title": "Emptify"
       },
       {
-        "command": "just-files.copy",
+        "command": "only-files.copy",
         "title": "Copy"
       },
       {
-        "command": "just-files.cut",
+        "command": "only-files.cut",
         "title": "Cut"
       },
       {
-        "command": "just-files.collect",
+        "command": "only-files.collect",
         "title": "Collect All Marked"
       },
       {
-        "command": "just-files.refuse",
+        "command": "only-files.refuse",
         "title": "Refuse All Marked"
       },
       {
-        "command": "just-files.copyFilePath",
+        "command": "only-files.copyFilePath",
         "title": "Copy Path"
       },
       {
-        "command": "just-files.copyRelativeFilePath",
+        "command": "only-files.copyRelativeFilePath",
         "title": "Copy Relative Path"
       },
       {
-        "command": "just-files.paste",
+        "command": "only-files.paste",
         "title": "Paste"
       },
       {
-        "command": "just-files.findRef",
+        "command": "only-files.findRef",
         "title": "Reveal References"
       },
       {
-        "command": "just-files.revealFileInOS",
+        "command": "only-files.revealFileInOS",
         "title": "Reveal in OS"
       },
       {
-        "command": "just-files.newFolder",
+        "command": "only-files.newFolder",
         "title": "New Folder"
       },
       {
-        "command": "just-files.newFile",
+        "command": "only-files.newFile",
         "title": "New File"
       },
       {
-        "command": "just-files.openFolder",
+        "command": "only-files.openFolder",
         "title": "Open Folder"
       },
       {
-        "command": "just-files.closeFolder",
+        "command": "only-files.closeFolder",
         "title": "Close Folders"
       },
       {
-        "command": "just-files.ctrl",
+        "command": "only-files.ctrl",
         "title": "Copy Ctrl+Ctrl"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "just-files.addItemFromExplorer",
+          "command": "only-files.addItemFromExplorer",
           "when": "resourceScheme && resourceScheme != untitled",
           "group": "z"
         },
         {
-          "command": "just-files.previewItem",
+          "command": "only-files.previewItem",
           "when": "resourceScheme && resourceScheme != untitled",
           "group": "z"
         }
       ],
       "view/title": [
         {
-          "command": "just-files.removeAll",
-          "when": "view == justFilesView",
+          "command": "only-files.removeAll",
+          "when": "view == onlyFilesView",
           "group": "navigation"
         },
         {
-          "command": "just-files.switch",
-          "when": "view == filesView && !just-files:isPlain",
+          "command": "only-files.switch",
+          "when": "view == filesView && !only-files:isPlain",
           "group": "navigation"
         },
         {
-          "command": "just-files.switchback",
-          "when": "view == filesView && just-files:isPlain",
+          "command": "only-files.switchback",
+          "when": "view == filesView && only-files:isPlain",
           "group": "navigation"
         },
         {
-          "command": "just-files.ignore",
-          "when": "view == filesView && !just-files:isIgnored",
+          "command": "only-files.ignore",
+          "when": "view == filesView && !only-files:isIgnored",
           "group": "navigation"
         },
         {
-          "command": "just-files.ignoreback",
-          "when": "view == filesView && just-files:isIgnored",
+          "command": "only-files.ignoreback",
+          "when": "view == filesView && only-files:isIgnored",
           "group": "navigation"
         },
         {
-          "command": "just-files.refreshJustFiles",
-          "when": "view == justFilesView && !just-files:isSorted",
+          "command": "only-files.refreshOnlyFiles",
+          "when": "view == onlyFilesView && !only-files:isSorted",
           "group": "navigation"
         },
         {
-          "command": "just-files.refreshSortedJustFiles",
-          "when": "view == justFilesView && just-files:isSorted",
+          "command": "only-files.refreshSortedOnlyFiles",
+          "when": "view == onlyFilesView && only-files:isSorted",
           "group": "navigation"
         },
         {
-          "command": "just-files.refreshFiles",
+          "command": "only-files.refreshFiles",
           "when": "view == filesView",
           "group": "navigation"
         },
         {
-          "command": "just-files.searchListFiles",
-          "when": "view == filesView && just-files:isActive",
+          "command": "only-files.searchListFiles",
+          "when": "view == filesView && only-files:isActive",
           "group": "navigation"
         },
         {
-          "command": "just-files.searchListJustFiles",
-          "when": "view == justFilesView && !just-files:isActive",
+          "command": "only-files.searchListOnlyFiles",
+          "when": "view == onlyFilesView && !only-files:isActive",
           "group": "navigation"
         },
         {
-          "command": "just-files.searchListActiveFiles",
-          "when": "view == filesView && !just-files:isActive",
+          "command": "only-files.searchListActiveFiles",
+          "when": "view == filesView && !only-files:isActive",
           "group": "navigation"
         },
         {
-          "command": "just-files.searchListActiveJustFiles",
-          "when": "view == justFilesView && just-files:isActive",
+          "command": "only-files.searchListActiveOnlyFiles",
+          "when": "view == onlyFilesView && only-files:isActive",
           "group": "navigation"
         }
       ],
       "editor/title/context": [
         {
-          "command": "just-files.addItemFromTabMenu",
+          "command": "only-files.addItemFromTabMenu",
           "group": "z"
         },
         {
-          "command": "just-files.removeItemFromTabMenu",
+          "command": "only-files.removeItemFromTabMenu",
           "group": "z"
         },
         {
-          "command": "just-files.renameTab",
+          "command": "only-files.renameTab",
           "group": "1_open"
         },
         {
-          "command": "just-files.previewItem",
+          "command": "only-files.previewItem",
           "group": "z"
         }
       ],
       "view/item/context": [
         {
-          "command": "just-files.revealInSidebar",
+          "command": "only-files.revealInSidebar",
           "group": "inline",
-          "when": "(view == filesView || view == justFilesView) && viewItem != dummy && viewItem != root && viewItem != vac"
+          "when": "(view == filesView || view == onlyFilesView) && viewItem != dummy && viewItem != root && viewItem != vac"
         },
         {
-          "command": "just-files.openFolder",
+          "command": "only-files.openFolder",
           "when": "focusedView == filesView && viewItem == vac",
           "group": "0_navigation"
         },
         {
-          "command": "just-files.closeFolder",
+          "command": "only-files.closeFolder",
           "when": "focusedView == filesView && viewItem == root",
           "group": "7_other"
         },
         {
-          "command": "just-files.revealFileInOS",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy",
+          "command": "only-files.revealFileInOS",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy",
           "group": "1_navigation"
         },
         {
-          "command": "just-files.newFile",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != vac",
+          "command": "only-files.newFile",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != vac",
           "group": "1_navigation"
         },
         {
-          "command": "just-files.newFolder",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != vac",
+          "command": "only-files.newFolder",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != vac",
           "group": "1_navigation"
         },
         {
-          "command": "just-files.findRef",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != folder && viewItem != empty && viewItem != dummy && viewItem != root && viewItem != vac",
+          "command": "only-files.findRef",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != folder && viewItem != empty && viewItem != dummy && viewItem != root && viewItem != vac",
           "group": "1_navigation"
         },
         {
-          "command": "just-files.copyFilePath",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy",
+          "command": "only-files.copyFilePath",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy",
           "group": "3_cutcopypaste"
         },
         {
-          "command": "just-files.copyRelativeFilePath",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy",
+          "command": "only-files.copyRelativeFilePath",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy",
           "group": "3_cutcopypaste"
         },
         {
-          "command": "just-files.copy",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root && viewItem != vac",
+          "command": "only-files.copy",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root && viewItem != vac",
           "group": "2_cutcopypaste"
         },
         {
-          "command": "just-files.cut",
+          "command": "only-files.cut",
           "when": "focusedView == filesView && viewItem != root && viewItem != vac",
           "group": "2_cutcopypaste"
         },
         {
-          "command": "just-files.paste",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != vac && viewItem != dummy",
+          "command": "only-files.paste",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != vac && viewItem != dummy",
           "group": "2_cutcopypaste"
         },
         {
-          "command": "just-files.collect",
-          "when": "focusedView == justFilesView",
+          "command": "only-files.collect",
+          "when": "focusedView == onlyFilesView",
           "group": "5_other"
         },
         {
-          "command": "just-files.refuse",
-          "when": "focusedView == justFilesView && viewItem == dummy",
+          "command": "only-files.refuse",
+          "when": "focusedView == onlyFilesView && viewItem == dummy",
           "group": "5_other"
         },
         {
-          "command": "just-files.showAll",
-          "when": "focusedView == justFilesView && viewItem != dummy",
+          "command": "only-files.showAll",
+          "when": "focusedView == onlyFilesView && viewItem != dummy",
           "group": "5_other"
         },
         {
-          "command": "just-files.showExact",
-          "when": "focusedView == justFilesView && viewItem != dummy",
+          "command": "only-files.showExact",
+          "when": "focusedView == onlyFilesView && viewItem != dummy",
           "group": "5_other"
         },
         {
-          "command": "just-files.uncollapseAll",
+          "command": "only-files.uncollapseAll",
           "when": "focusedView == filesView",
           "group": "5_other"
         },
         {
-          "command": "just-files.showSettings",
+          "command": "only-files.showSettings",
           "when": "focusedView == filesView && viewItem == root",
           "group": "6_other"
         },
         {
-          "command": "just-files.restore",
-          "when": "(focusedView == justFilesView) && viewItem != dummy && viewItem != folder",
+          "command": "only-files.restore",
+          "when": "(focusedView == onlyFilesView) && viewItem != dummy && viewItem != folder",
           "group": "4_modification"
         },
         {
-          "command": "just-files.rename",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root && viewItem != vac",
+          "command": "only-files.rename",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root && viewItem != vac",
           "group": "4_modification"
         },
         {
-          "command": "just-files.delete",
-          "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root && viewItem != vac",
+          "command": "only-files.delete",
+          "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root && viewItem != vac",
           "group": "4_modification"
         },
         {
-          "command": "just-files.duplicate",
+          "command": "only-files.duplicate",
           "when": "focusedView == filesView && viewItem != root && viewItem != vac",
           "group": "4_modification"
         },
         {
-          "command": "just-files.emptify",
+          "command": "only-files.emptify",
           "when": "focusedView == filesView && viewItem != root && viewItem != vac && viewItem == folder",
           "group": "4_modification"
         },
         {
-          "command": "just-files.collapseFolder",
+          "command": "only-files.collapseFolder",
           "group": "inline",
-          "when": "view == filesView && (just-files:isPlain || viewItem != file) && viewItem != rooting && viewItem != root && viewItem != vac"
+          "when": "view == filesView && (only-files:isPlain || viewItem != file) && viewItem != rooting && viewItem != root && viewItem != vac"
         },
         {
-          "command": "just-files.remark",
+          "command": "only-files.remark",
           "group": "inline",
-          "when": "view == justFilesView && viewItem != dummy"
+          "when": "view == onlyFilesView && viewItem != dummy"
         },
         {
-          "command": "just-files.show",
+          "command": "only-files.show",
           "group": "inline",
           "when": "view == filesView && viewItem != root && viewItem != empty && viewItem != vac"
         },
         {
-          "command": "just-files.hide",
+          "command": "only-files.hide",
           "group": "inline",
-          "when": "view == justFilesView && viewItem != dummy"
+          "when": "view == onlyFilesView && viewItem != dummy"
         },
         {
-          "command": "just-files.previewItem",
+          "command": "only-files.previewItem",
           "group": "inline",
-          "when": "view == justFilesView && viewItem != dummy && viewItem != empty && viewItem != root && viewItem != folder"
+          "when": "view == onlyFilesView && viewItem != dummy && viewItem != empty && viewItem != root && viewItem != folder"
         },
         {
-          "command": "just-files.show",
+          "command": "only-files.show",
           "when": "view == filesView && viewItem != dummy && viewItem != root && viewItem != empty && viewItem != vac",
           "group": "default"
         },
         {
-          "command": "just-files.hide",
-          "when": "view == justFilesView && viewItem != dummy",
+          "command": "only-files.hide",
+          "when": "view == onlyFilesView && viewItem != dummy",
           "group": "default"
         },
         {
-          "command": "just-files.previewItem",
+          "command": "only-files.previewItem",
           "when": "viewItem != dummy && viewItem != root && viewItem != folder && viewItem != empty",
           "group": "default"
         }
@@ -706,109 +706,109 @@
     },
     "keybindings": [
       {
-        "command": "just-files.rename",
+        "command": "only-files.rename",
         "key": "f2",
         "mac": "f2",
-        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root"
       },
       {
-        "command": "just-files.renameTab",
+        "command": "only-files.renameTab",
         "key": "shift+f2",
         "mac": "shift+f2",
         "when": "resourceScheme && resourceScheme != untitled"
       },
       {
-        "command": "just-files.delete",
+        "command": "only-files.delete",
         "key": "delete",
         "mac": "delete",
-        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root"
       },
       {
-        "command": "just-files.deleteHard",
+        "command": "only-files.deleteHard",
         "key": "shift+delete",
         "mac": "shift+delete",
-        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root"
       },
       {
-        "command": "just-files.copy",
+        "command": "only-files.copy",
         "key": "ctrl+c",
         "mac": "cmd+c",
-        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy && viewItem != root"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy && viewItem != root"
       },
       {
-        "command": "just-files.cut",
+        "command": "only-files.cut",
         "key": "ctrl+x",
         "mac": "cmd+x",
-        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != root"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != root"
       },
       {
-        "command": "just-files.paste",
+        "command": "only-files.paste",
         "key": "ctrl+v",
         "mac": "cmd+v",
-        "when": "focusedView == filesView || focusedView == justFilesView"
+        "when": "focusedView == filesView || focusedView == onlyFilesView"
       },
       {
-        "command": "just-files.copyFilePath",
+        "command": "only-files.copyFilePath",
         "key": "ctrl+shift+c",
         "mac": "cmd+shift+c",
-        "when": "(focusedView == filesView || focusedView == justFilesView) && viewItem != dummy"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy"
       },
       {
-        "command": "just-files.previewItem",
+        "command": "only-files.previewItem",
         "key": "ctrl+shift+alt+enter",
         "mac": "cmd+shift+alt+enter",
         "when": "resourceScheme && resourceScheme != untitled"
       },
       {
-        "command": "just-files.refreshFiles",
+        "command": "only-files.refreshFiles",
         "key": "space r",
         "mac": "space r",
         "when": "true"
       },
       {
-        "command": "just-files.refreshJustFiles",
+        "command": "only-files.refreshOnlyFiles",
         "key": "space shift+r",
         "mac": "space shift+r",
         "when": "true"
       },
       {
-        "command": "just-files.switch",
+        "command": "only-files.switch",
         "key": "shift+z",
         "mac": "shift+z",
-        "when": "!just-files:isPlain"
+        "when": "!only-files:isPlain"
       },
       {
-        "command": "just-files.switchback",
+        "command": "only-files.switchback",
         "key": "shift+z",
         "mac": "shift+z",
-        "when": "just-files:isPlain"
+        "when": "only-files:isPlain"
       },
       {
-        "command": "just-files.show",
+        "command": "only-files.show",
         "key": "ctrl+y",
         "mac": "cmd+y",
         "when": "(focusedView == filesView) && viewItem != empty && viewItem != root && viewItem != vac"
       },
       {
-        "command": "just-files.hide",
+        "command": "only-files.hide",
         "key": "ctrl+alt+y",
         "mac": "cmd+alt+y",
-        "when": "(focusedView == justFilesView) && viewItem != dummy"
+        "when": "(focusedView == onlyFilesView) && viewItem != dummy"
       },
       {
-        "command": "just-files.addItemFromCommand",
+        "command": "only-files.addItemFromCommand",
         "key": "ctrl+y",
         "mac": "cmd+y",
         "when": "resourceScheme && resourceScheme != untitled"
       },
       {
-        "command": "just-files.removeItemFromCommand",
+        "command": "only-files.removeItemFromCommand",
         "key": "ctrl+alt+y",
         "mac": "cmd+alt+y",
         "when": "resourceScheme && resourceScheme != untitled"
       },
       {
-        "command": "just-files.ctrl",
+        "command": "only-files.ctrl",
         "key": "ctrl+ctrl ctrl",
         "mac": "cmd+cmd cmd",
         "when": "(focusedView == filesView) && viewItem != root && viewItem != vac"
@@ -817,13 +817,13 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run prepublish",
-    "prepublish": "npm run pretest && npm run justbuild",
+    "prepublish": "npm run pretest && npm run onlybuild",
     "pretest": "npm run compile && npm run lint",
     "test": "npm run pretest && npm run runtest",
     "compile": "tsc -p ./",
     "build": "node ./esbuild.config.js --watch",
     "package": "vsce package",
-    "justbuild": "node ./esbuild.config.js",
+    "onlybuild": "node ./esbuild.config.js",
     "check": "tsc -p ./ --noEmit",
     "lint": "eslint src && tsc -p tsconfig.json --noEmit",
     "runtest": "node ./out/test/runTest.js",

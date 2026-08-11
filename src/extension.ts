@@ -1,5 +1,5 @@
 import "./types/vscodes";
-import { JustFiles } from "./classes/justFiles";
+import { OnlyFiles } from "./classes/onlyFiles";
 import { ExtensionBrandResolver } from "./classes/extensionBrandResolver";
 import { ExtensionStaticService } from "./classes/extensionStaticService";
 
@@ -7,8 +7,8 @@ export function activate(context: vscode.ExtensionContext) {
   const brandResolver = new ExtensionBrandResolver();
   brandResolver.resolve();
 
-  const justFiles = new JustFiles(context);
-  justFiles.subscribe();  
+  const onlyFiles = new OnlyFiles(context);
+  onlyFiles.subscribe();  
 }
 
 export function deactivate() {

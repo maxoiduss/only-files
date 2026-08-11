@@ -4,7 +4,7 @@ export type Disposable = import("vscode").Disposable & {
 
 export type EnumLike<T> = T[keyof T];
 
-export type ViewX = "Files" | "Just Files" | "Preview";
+export type ViewX = "Files" | "Only Files" | "Preview";
 
 export type Serializable =
   | Serializing
@@ -76,12 +76,12 @@ export interface Brand {
   switch: string;
   switchback: string;
   searchListFiles: string;
-  searchListJustFiles: string;
+  searchListOnlyFiles: string;
   searchListActiveFiles: string;
-  searchListActiveJustFiles: string;
+  searchListActiveOnlyFiles: string;
   refreshFiles: string;
-  refreshJustFiles: string;
-  refreshSortedJustFiles: string;
+  refreshOnlyFiles: string;
+  refreshSortedOnlyFiles: string;
   manageWatcherExclude: string;
   setContext: string;
   restore: string;

@@ -12,7 +12,7 @@ type TypeLog = vscodes.EnumLike<typeof TypeLog>;
 const notifyEvery: number = 1;
 const logsLimit: number = 100;
 const joiner: string = "\n";
-const label: string = "just-files";
+const label: string = "only-files";
 const show: string = "Show All Collected Logs";
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const TypeLog = {
