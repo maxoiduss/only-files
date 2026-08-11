@@ -3,25 +3,24 @@ import * as manager from "./fileItemManager";
 import { FileItemOr } from "./fileItem";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { basename, getKeyByValue } from "./utilManager";
-import { LogService as log } from "./logService";
 
 interface Event {
   uri: vscode.Uri;
   action: Action;
 }
-
-const throttling = () => ExtensionStaticService.fsThrottling;
-const key = (item: Event) => item.uri.toString();
-const form = (item: Event) => item.action;
-const name = (item: Action) => getKeyByValue(Action, item);
-const group = (items: Queue<Event>) => [
-  items.get(Action.deleted) ?? new Map<string, Event>(),
-  items.get(Action.created) ?? new Map<string, Event>()
-];
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const Action = {
   created: 1,
   deleted: 2   } as const;
+
+const throttling = () => ExtensionStaticService.fsThrottling;
+const key = (item: Event) => item.uri.toString();
+const form = (item: Event) => item.action;
+const group = (items: Queue<Event>) => [
+  items.get(Action.deleted) ?? new Map<string, Event>(),
+  items.get(Action.created) ?? new Map<string, Event>()
+];
+export const name = (item: Action) => getKeyByValue(Action, item);
 
 type Action = vscodes.EnumLike<typeof Action>;
 type WSF = vscode.WorkspaceFoldersChangeEvent;
@@ -135,9 +134,6 @@ export class FileSystemWatcher implements vscodes.Disposable {
   }
 
   private acceptExclusions() {
-    log.console.out(`popped :: ${[...this.exclusions.popped].join(" - ")}`);
-    log.console.out(`pushed :: ${[...this.exclusions.pushed].join(" - ")}`);
-    log.console.out(`values :: ${[...this.exclusions.values].join(" - ")}`);
     this.exclusions.popped.forEach((uri) => this.exclusions.values.delete(uri));
     this.exclusions.popped.clear();
     this.exclusions.pushed.forEach((uri) => this.exclusions.values.add(uri));
@@ -179,10 +175,9 @@ export class FileSystemWatcher implements vscodes.Disposable {
   }
 
   private addEvent(where: string, action: Action, uri: vscode.Uri) {
-    log.console.log("color:green; background: black; font-weight: bold;",
-      `ADDED`, ` :: ${name(action)} :: ${uri}`);
     const queue = this.queues.get(where);
-    if (queue) { queue.push({ action, uri }); }
+    if (queue) {
+      queue.push({ action, uri }); }
   }
 
   private handleEvent(event: Event) {
@@ -200,15 +195,12 @@ export class FileSystemWatcher implements vscodes.Disposable {
     this.acceptExclusions();
 
     const all = queue.get();
-    log.console.debug(`ALL: ${queue.all().map((e) => name(e.action)).join(" | ")}`);
-
     for (const [key] of all) {
       if (this.exclusions.values.has(key)) { queue.pop(key); }
     }
-    log.console.error(`NOW: ${queue.all().map((e) => name(e.action)).join(" ! ")}`);
-    if (!queue.uniformal) { this.handleEventPairs(queue); }
+    if (!queue.uniformal) {
+      this.handleEventPairs(queue); }
 
-    log.console.debug(`REST: ${queue.all().map((e) => name(e.action)).join(" I ")}`);
     this.handleEvents(...queue.pop().values());
   }
 

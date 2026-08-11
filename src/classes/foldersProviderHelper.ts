@@ -114,6 +114,14 @@ export const refreshTheCache = (items: FileItem[]): FileItem[] => {
 
 export const real = (obj: any): obj is {} => obj !== undefined && obj !== null;
 
+export const isEmptyOrNull = (ignoreOr: Ignore | undefined) : boolean => 
+    ignoreOr === undefined
+|| (ignoreOr.fileRules.length   <= 0
+ && ignoreOr.folderRules.length <= 0);
+
+export const isEmpty = (itemsOr: [boolean, RegExp][] | undefined) : boolean =>
+  itemsOr === undefined || itemsOr.length <= 0;
+
 export const isTimeToRefreshStates = (): boolean => {
   getChildrenRootCount++;
 

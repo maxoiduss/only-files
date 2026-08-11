@@ -120,7 +120,7 @@ export class FoldersReferenceProvider implements
   ): Promise<Location[]> {
     const currentItem = fileItem;
     const progressBar = showProgressBar("Searching references");
-    const entreSearch = await this.findTextInFiles(currentItem, undefined, token);
+    const entreSearch = await this.findTextInFiles(currentItem, undefined,token);
     const classSearch = await this.findTextInFiles(currentItem, "class",  token);
     const strctSearch = await this.findTextInFiles(currentItem, "struct", token);
     entreSearch.push(...classSearch, ...strctSearch);

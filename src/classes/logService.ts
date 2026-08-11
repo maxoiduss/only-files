@@ -99,6 +99,20 @@ export class LogService {
     }
   };
 
+  /**
+   * We can use console in a such effective way:
+   * 
+   * *const style = 
+   * "background: yellow; color: black; font-weight: bold;";*
+   * 
+   * *LogService.console.warn( style, 
+   * "FolderProvider", 
+   * " :: ", style,
+   * "new", \`: ${item.toString()}\`,
+   * " :: ", style,
+   * "old", \`: ${oldUri.toString()}\`
+   * );*
+   */
   public static console = (() => {
     const empty = '' as const;
     const cssEmpty =

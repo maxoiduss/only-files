@@ -246,7 +246,7 @@ export class JustFiles {
   private revealJustFilesViewFileItem(item: FileItem, exp?: boolean) {
     Promise.resolve(sleep(small[1]))
            .then(() => this.justFilesTreeView.reveal(item, { expand: exp }))
-           .catch((error) => { LogService.console.warn(error); });
+           .catch((error) => { LogService.error(error); });
   }
 
   private async openUriIfFolderViewEmpty(uri: vscode.Uri): Promise<boolean> {
@@ -572,7 +572,8 @@ export class JustFiles {
             yes, "No"
           );
           if (answer === yes) {
-            this.foldersViewProvider.resetOrNotIgnoredItems();
+            this.foldersViewProvider.resettedIgnoredItems();
+            
             await this.fillIgnoredFiles();
           }
         }
@@ -617,8 +618,7 @@ export class JustFiles {
   private subscribeSwitchIgnore() {
     const switchIgnore = (command: string) => vscode.commands.registerCommand(
       command, async () => {
-        const wasReset = this.foldersViewProvider.resetOrNotIgnoredItems();
-        if  (!wasReset) {
+        if (!this.foldersViewProvider.resettedIgnoredItems()) {
           await this.fillIgnoredFiles();
         }
         this.foldersViewProvider.refresh();

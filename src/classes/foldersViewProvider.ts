@@ -4,21 +4,13 @@ import * as helper from "./foldersProviderHelper";
 import { ProviderResult, TreeItemCollapsibleState } from "vscode";
 import { brand } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
-import { LogService } from "./logService";
 import { State, FoldersProviderHelper } from "./foldersProviderHelper";
 import { EmptyFolderItem, emptyRoot, FileItem, FileItemOr, root, RootFileItem
 } from "./fileItem";
 import {
-  asRelative,
-  retrieveAllFolders,
-  getFolder,
-  getFoldersBy,
-  getUri,
-  getWorkspaceFolderIndex,
-  resolveUri,
-  same,
-  getUriFrom,
-  isValidUri
+  asRelative, retrieveAllFolders,
+  getFolder, getFoldersBy, getUri, getWorkspaceFolderIndex,
+  resolveUri, same, getUriFrom, isValidUri
 } from "./utilManager";
 
 export const little = {
@@ -62,11 +54,11 @@ export class FoldersViewProvider implements
   private readonly revealItem: (item: FileItem, expand?: boolean) => void;
   /** Uncollapse-To-All mode. [A, B] : A - global, B - local */
   private uncollapsedMode: [boolean, boolean] = [false, false];
-  private showingRoot: boolean = true;
   private ignoredItems: helper.Ignore | undefined;
   private focusedItem: FileItemOr;
   private expandedItem: FileItemOr;
   private selectedItem: (FileItem | string | undefined)[] = [];
+  private showingRoot: boolean = true;
   private savingTimer;
 
   private roots!: RootFileItem[];
@@ -117,8 +109,9 @@ export class FoldersViewProvider implements
 
         for (const [pathe] of this.collapsingItems) {
           const folder = asRelative(getUri(pathe));
-          if (this.ignoredItems.folderRules.some((expr) => expr.test(folder)))
-          { await this.popFromCollapsings(pathe); }
+
+          if (this.ignoredItems.folderRules.some((expr) => expr.test(folder))) {
+            await this.popFromCollapsings(pathe); }
         }
       }
     };
@@ -127,15 +120,16 @@ export class FoldersViewProvider implements
   private async updateCollapsings(
     uri: vscode.Uri,
     collapses: TreeItemCollapsibleState,
-    isPlain: boolean): Promise<void>
-  { const dir = (await getFolder(uri)).toString();
+    isPlain: boolean
+  ): Promise<void> {
+    const dir = (await getFolder(uri)).toString();
     this.collapsingItems.set(dir, { isPlain: isPlain, collapses: collapses });
   }
 
-  private async popFromCollapsings(
-    uriOr: vscode.Uri | string ): Promise<boolean>
-  { const pathe = typeof uriOr === 'string' ? uriOr : undefined;
+  private async popFromCollapsings(uriOr: vscode.Uri|string): Promise<boolean> {
+    const pathe = typeof uriOr === 'string' ? uriOr : undefined;
     const dir = pathe ?? (await getFolder(uriOr as vscode.Uri)).toString();
+
     return this.collapsingItems.delete(dir);
   }
   
@@ -157,9 +151,6 @@ export class FoldersViewProvider implements
     item: FileItem | vscode.Uri,
     oldUri: vscode.Uri
   ): Promise<void> {
-    const style = "background: yellow; color: black; font-weight: bold;";
-    LogService.console.warn(style, `FolderProvider`, 
-      ` :: `, style, `new`, `: ${item.toString()}`, ` :: `, style, `old`, `: ${oldUri.toString()}`);
     const exist = this.collapsingItems.get(oldUri.toString());
     const newUri = getUriFrom(item);
     if (('isFile' in item && item.isFile) || !newUri) { return; }
@@ -278,21 +269,25 @@ export class FoldersViewProvider implements
 
   public focusRoot() { this.revealItem(this.root, true); } /// forces refresh
 
-  public setIgnoredItems(items: [boolean, RegExp][]) {
-    this.ignoredItems = {
+  public setIgnoredIcon (value: boolean) {
+    vscode.commands.executeCommand(
+      brand.setContext, brand.isIgnored, value);
+  }
+
+  public setIgnoredItems(items: [boolean, RegExp][] | undefined) {
+    this.setIgnoredIcon(!helper.isEmpty(items));
+
+    this.ignoredItems = !items ? undefined : {
       fileRules: items.flatMap(([fileRule, expr]) => fileRule ? expr : []),
       folderRules: items.flatMap(([fileRule, expr]) => fileRule ? [] : expr)
     };
   }
 
-  public resetOrNotIgnoredItems(): boolean {
-    const restored = this.ignoredItems !== undefined;
-    this.ignoredItems = undefined;
-    vscode.commands.executeCommand(
-      brand.setContext, brand.isIgnored, !restored
-    );
+  public resettedIgnoredItems(): boolean {
+    const resetted = !helper.isEmptyOrNull(this.ignoredItems);
+    this.setIgnoredItems(undefined);
 
-    return restored;
+    return resetted;
   }
 
   public addCollapsingElement(element: FileItem) {
