@@ -222,7 +222,7 @@ export class PreviewProvider implements
     }
     if (type === PreviewType.md) {
       const raw = await vscode.workspace.fs.readFile(getUri(uriOr));
-      const content = Buffer.from(raw).toString('utf8');
+      const content = new TextDecoder().decode(raw);
       const markedContent = await marked.parse(content);
       this.view.webview.html = helper.getHtmlTemplate(
         markedContent, non, csps
@@ -232,11 +232,10 @@ export class PreviewProvider implements
     else {
       try {
         const raw = await vscode.workspace.fs.readFile(getUri(uriOr));
-        const content = Buffer.from(raw);
         if (!this.view) { return; }
 
         if (type === PreviewType.pdf) {
-          const pdfContent = helper.getPdfTemplate(content,
+          const pdfContent = helper.getPdfTemplate(raw,
             vscode.Uri.file(this.context.extensionPath),
             this.view.webview,
             non
@@ -248,7 +247,7 @@ export class PreviewProvider implements
           return;
         }
 
-        const htmlContent = content.toString('utf8');
+        const htmlContent = new TextDecoder().decode(raw);
         if (type === PreviewType.txt) {
             this.view.webview.html = helper.getHtmlTemplate(
               `<h4>${htmlContent}</h4>`,

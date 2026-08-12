@@ -25,9 +25,6 @@ const warnings = {
 };
 const singular = {
   get shouldCopyContent() {
-    if (isWeb()) {
-      return false;
-    }
     return ExtensionStaticService.copyFileContentOnSingleCopy; }
 };
 const commands = {
@@ -57,7 +54,6 @@ const byId = ExtensionStaticService.withId;
 const name             = () => ExtensionBrandResolver.command;
 const configuration    = () => ExtensionBrandResolver.configuration;
 const string1Property  = () => ExtensionBrandResolver.stringProperty;
-const isWeb = () => ExtensionStaticService.process.platform === "web";
 
 const cacheRemoval = (id: string) => ExtensionStaticService.cacheRemoval(id);
 const throttling   = () => ExtensionStaticService.fsThrottling;
@@ -262,7 +258,7 @@ export class CommandRegistrator {
 
     if (item.isFile && single && singular.shouldCopyContent) {
       const array = await workspace.fs.readFile(item.resourceUri);
-      const content = Buffer.from(array).toString('utf8');
+      const content = new TextDecoder().decode(array);
       await vscode.env.clipboard.writeText(content);
     }
   }

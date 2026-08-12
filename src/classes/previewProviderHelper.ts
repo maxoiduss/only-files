@@ -45,6 +45,18 @@ const container = "container" as const;
 const placeholder = "placeholder" as const;
 const dropAreaMask = 'dropzone' as const;
 
+const bytesToBase64 = (bytes: Uint8Array): string => {
+  let binary = "";
+  const chunkSize = 0x8000;
+
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    const chunk = bytes.subarray(index, index + chunkSize);
+    binary += String.fromCharCode(...chunk);
+  }
+
+  return btoa(binary);
+};
+
 export const contextCommand = 'contextMenu' as const;
 export const resetStateCommand = 'resetState' as const;
 export const disableStateCommand = 'disableState' as const;
@@ -58,7 +70,7 @@ export const emptyFrame =
   </div>` as const;
 
 export const getPdfTemplate = (
-  pdfContent: string | Buffer,
+  pdfContent: string | Uint8Array,
   extensionUri: vscode.Uri,
   webview: vscode.Webview,
   nonce: string,
@@ -71,10 +83,10 @@ export const getPdfTemplate = (
     min: { mjs: 'pdf.min.mjs' },
     worker: { min: { mjs: 'pdf.worker.min.mjs' }}
   };
-  const base64Content = (Buffer.isBuffer(pdfContent) ?
-      pdfContent as Buffer
-    : Buffer.from(pdfContent)
-  ).toString('base64');
+  const content = typeof pdfContent === 'string' ?
+      new TextEncoder().encode(pdfContent)
+    : pdfContent;
+  const base64Content = bytesToBase64(content);
   const dataUri = `data:application/pdf;base64,${base64Content}`;
   const pdfjsUri = webview.asWebviewUri(
     vscode.Uri.joinPath(extensionUri,

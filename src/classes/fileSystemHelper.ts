@@ -164,10 +164,8 @@ export const workspace = {
       return vscode.workspace.fs.readDirectory(uri);
     },
 
-    async readFile(uri: vscode.Uri): Promise<Buffer<ArrayBuffer> > {
-      const content = await vscode.workspace.fs.readFile(uri);
-
-      return Buffer.from(content);
+    async readFile(uri: vscode.Uri): Promise<Uint8Array> {
+      return vscode.workspace.fs.readFile(uri);
     },
 
     async delete(uri: vscode.Uri, options?: {
