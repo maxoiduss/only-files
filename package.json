@@ -3,11 +3,11 @@
   "displayName": "Only Files",
   "description": "Select and work only with the files you will use",
   "version": "1.0.8",
-  "publisher": "palaso",
+  "publisher": "maxoiduss",
   "icon": "resources/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/palaso0/just-files.git"
+    "url": "https://github.com/maxoiduss/only-files.git"
   },
   "engines": {
     "vscode": "^1.95.0"
@@ -19,6 +19,7 @@
     "onWebviewView:pre-view"
   ],
   "main": "./dist/extension.js",
+  "browser": "./dist/extension.web.js",
   "contributes": {
     "webviewResources": [
       {
@@ -821,7 +822,8 @@
     "pretest": "npm run compile && npm run lint",
     "test": "npm run pretest && npm run runtest",
     "compile": "tsc -p ./",
-    "build": "node ./esbuild.config.js --watch",
+    "build-desk": "node ./esbuild.config.js --watch",
+    "build-web": "node ./esbuild.config.js --watch --web",
     "package": "vsce package",
     "onlybuild": "node ./esbuild.config.js",
     "check": "tsc -p ./ --noEmit",
@@ -837,6 +839,7 @@
     "@typescript-eslint/eslint-plugin": "^8.59.4",
     "@typescript-eslint/parser": "^8.59.4",
     "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-web": "^0.0.81",
     "esbuild": "^0.28.1",
     "eslint": "^8.57.1",
     "glob": "^8.1.0",

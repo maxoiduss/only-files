@@ -14,11 +14,10 @@
       }
     },
     {
-      "label": "es-build",
+      "label": "es-build-desk",
       "icon": { "id": "build", "color": "terminal.ansiGreen" },
       "type": "npm",
-      "script": "build",
-      "problemMatcher": [],
+      "script": "build-desk",
       "isBackground": true,
       "presentation": {
         "reveal": "never"
@@ -26,15 +25,90 @@
       "group": {
         "kind": "build",
         "isDefault": true
+      },
+      "problemMatcher": {
+        "owner": "esbuild",
+        "source": "esbuild",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "\\[watch\\] build started",
+          "endsPattern": "\\[watch\\] build finished"
+        }
       }
     },
     {
-      "label": "npm-run",
+      "label": "es-build-web",
+      "icon": { "id": "build", "color": "terminal.ansiYellow" },
+      "type": "npm",
+      "script": "build-web",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "never"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": {
+        "owner": "esbuild",
+        "source": "esbuild",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "\\[watch\\] build started",
+          "endsPattern": "\\[watch\\] build finished"
+        }
+      }
+    },
+    {
+      "label": "vscode-browser",
+      "type": "shell",
+      "command": "npx @vscode/test-web --browser='none' --extensionDevelopmentPath=. --port=3000 --verbose",
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "test-web",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": ".",
+          "endsPattern": ".*(Listening|listening|available at|http://localhost:3000)"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "npm-run-desk",
       "dependsOrder": "sequence",
       "dependsOn": [
         "ts-check",
-        "es-build"
+        "es-build-desk"
       ],
+      "problemMatcher": []
+    },
+    {
+      "label": "npm-run-web",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "ts-check",
+        "es-build-web"
+      ],
+      "problemMatcher": []
     }
   ]
 }

@@ -107,7 +107,10 @@ export interface Brand {
     openFolder: string
   };
   workbench: {
-    action : {
+    action: {
+      files: {
+        openFolderViaWorkspace: string;
+      },
       openSettings: string,
       openGlobalKeybindings: string,
       closeFolder: string,

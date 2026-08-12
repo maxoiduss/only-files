@@ -1,11 +1,13 @@
 import * as vscodes from "../types/vscodes";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
+import { ExtensionStaticService } from "./extensionStaticService";
 import { asRelative, basename, getPathDepth, getTopRootOf, getUri, resolveUri
 } from "./utilManager";
 
 const empty = ''      as const;
 const separator = '/' as const;
 const timegap = 2500  as const;
+const process  = ExtensionStaticService.process;
 
 const name = () => ExtensionBrandResolver.command;
 const workspaceFolders = () => vscode.workspace.workspaceFolders ?? [];

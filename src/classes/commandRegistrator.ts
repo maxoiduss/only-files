@@ -7,9 +7,9 @@ import { FoldersReferenceProvider, getPositionSafelyFrom
 } from "./foldersReferenceProvider";
 import { brand as brand,
   ExtensionBrandResolver } from "./extensionBrandResolver";
-import { basename, extname, getFolder, getNicePath, getNumeric, getUri,
-  getUriFrom, isValidUri, same, showQuickInput, sleep,
-  validate
+import {
+  basename, extname, getFolder, getNicePath, getNumeric, getUri,
+  getUriFrom, isValidUri, same, showQuickInput, sleep, validate
 } from "./utilManager";
 
 const empty = ''             as const;
@@ -25,6 +25,9 @@ const warnings = {
 };
 const singular = {
   get shouldCopyContent() {
+    if (isWeb()) {
+      return false;
+    }
     return ExtensionStaticService.copyFileContentOnSingleCopy; }
 };
 const commands = {
@@ -54,6 +57,7 @@ const byId = ExtensionStaticService.withId;
 const name             = () => ExtensionBrandResolver.command;
 const configuration    = () => ExtensionBrandResolver.configuration;
 const string1Property  = () => ExtensionBrandResolver.stringProperty;
+const isWeb = () => ExtensionStaticService.process.platform === "web";
 
 const cacheRemoval = (id: string) => ExtensionStaticService.cacheRemoval(id);
 const throttling   = () => ExtensionStaticService.fsThrottling;
@@ -563,9 +567,11 @@ export class CommandRegistrator {
         const fileItem = await this.getAnySelectedIfBad(item);
         if (!fileItem?.resourceUri) { return; }
         
-        await vscode.commands.executeCommand(commands.revealBuiltin,
-          fileItem.resourceUri
-        );
+        try {
+          await vscode.commands.executeCommand(commands.revealBuiltin,
+            fileItem.resourceUri); }
+          catch (error) {
+            vscode.window.showInformationMessage("Can't reveal on Web"); }
     });
     const _new = vscode.commands.registerCommand(commands.newFile,
       async (item: FileItem) => {

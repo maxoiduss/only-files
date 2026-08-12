@@ -8,6 +8,7 @@ interface KeybindingContribution {
   mac?: unknown;
   win?: unknown;
   linux?: unknown;
+  web?: unknown;
 }
 
 interface ExtensionKeybinding {
@@ -15,24 +16,30 @@ interface ExtensionKeybinding {
   readonly command: string;
 }
 
-const byId = ExtensionStaticService.withId;
+const process  = ExtensionStaticService.process;
+const identify = ExtensionStaticService.withId;
+
 const keybindings = () => ExtensionBrandResolver.keybindings;
 
 const isKeybindingContribution = (
   value: unknown
 ): value is KeybindingContribution => {
-  return typeof value === "object" && value !== null;
+  return typeof value === 'object' && value !== null;
 };
 
 const platformKey = (): KeybindingPlatform => {
+  if (vscode.env.uiKind === vscode.UIKind.Web) {
+    return "web";
+  }
   switch (process.platform) {
+    case "web":    return "web";
     case "darwin": return "mac";
-    case "win32": return "win";
-    default: return "linux";
+    case "win32":  return "win";
+    default:       return "linux";
   }
 };
 
-type KeybindingPlatform = "key" | "mac" | "win" | "linux";
+type KeybindingPlatform = "key" | "mac" | "win" | "linux" | "web";
 
 export class KeybindingsService {
   private static instance: KeybindingsService | undefined;
@@ -64,12 +71,12 @@ export class KeybindingsService {
   private createKeybinding(
     contribution: KeybindingContribution
   ): ExtensionKeybinding | undefined {
-    if (typeof contribution.command !== "string") {
+    if (typeof contribution.command !== 'string') {
       return undefined; }
 
     const key = contribution[platformKey()] ?? contribution.key;
 
-    if (typeof key !== "string" || key.length === 0) {
+    if (typeof key !== 'string' || key.length === 0) {
       return undefined; }
 
     return {
@@ -111,7 +118,7 @@ export class KeybindingsService {
     if (answer === showAll) {
       await vscode.commands.executeCommand(
         brand.workbench.action.openGlobalKeybindings,
-        byId(context?.extension?.id)
+        identify(context?.extension?.id)
       );
     }
   }

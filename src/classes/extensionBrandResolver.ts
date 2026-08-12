@@ -6,11 +6,11 @@ const resolver = "only-files" as const;
 
 const branch = "redesign" as const;
 const link175: string =
-  "https://github.com/maxoiduss/just-files/" +
+  "https://github.com/maxoiduss/only-files/" +
   `blob/${branch}/src/classes/`              +
   "extensionBrandResolver.ts#L175";
 const link193: string =
-  "https://github.com/maxoiduss/just-files/" +
+  "https://github.com/maxoiduss/only-files/" +
   `blob/${branch}/src/classes/`              +
   "extensionBrandResolver.ts#L193";
 
@@ -147,12 +147,16 @@ export class ExtensionBrandResolver {
     };
     brand.workbench = {
       action: {
+        files: {
+          openFolderViaWorkspace:
+            "workbench.action.files.openFolderViaWorkspace"
+        },
         openSettings: "workbench.action.openSettings",
         openGlobalKeybindings: "workbench.action.openGlobalKeybindings",
         closeFolder: "workbench.action.closeFolder",
         closeActiveEditor: "workbench.action.closeActiveEditor",
-        focusActiveEditorGroup:
-          "workbench.action.focusActiveEditorGroup"
+        focusActiveEditorGroup: "workbench.action.focusActiveEditorGroup",
+        
       },
       view: {
         extension: {

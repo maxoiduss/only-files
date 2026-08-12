@@ -19,7 +19,7 @@ let boosted: boolean = false;
 const applyEdit = async (
   edit: vscode.WorkspaceEdit,
   fallback: () => Thenable<void>,
-  timeout: number = 300
+  timeout: number = 450
 ): Promise<boolean> => {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const status = { good: "succeeded", bad: "failed" } as const;

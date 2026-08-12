@@ -14,10 +14,47 @@
         "--enable-source-maps",
         //"--disable-extensions"
       ],
-      "preLaunchTask": "npm-run",
+      "outFiles": [
+        "${workspaceFolder}/dist/extension.js",
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm-run-desk",
       "sourceMaps": true,
       "smartStep": true,
       "showAsyncStacks": true
+    },
+    {
+      "name": "Run Web Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "debugWebWorkerHost": true,
+      "args": [
+        "--extensionDevelopmentPath=${workspaceFolder}",
+        "--extensionDevelopmentKind=web",
+        //"--disable-extensions"
+      ],
+      "outFiles": [
+        "${workspaceFolder}/dist/extension.web.js",
+        "${workspaceFolder}/dist/**/*.js"
+      ],
+      "preLaunchTask": "npm-run-web",
+      "sourceMaps": true
+    },
+    {
+      "name": "Attach to Browser",
+      "type": "msedge",
+      "request": "attach",
+      "urlFilter": "http://localhost:3000/*"
+    },
+    {
+      "name": "Run In Browser",
+      "type": "editor-browser",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}",
+      "timeout": 25000,
+      "preLaunchTask": "vscode-browser",
+      "sourceMaps": true
     },
     {
       "name": "Run Extension Tests",

@@ -33,6 +33,12 @@ export class ExtensionStaticService {
   public static showEmptyUncollapsedFolders: boolean = true;
   public static showUncollapsedPlainFolders: boolean = true;
 
+  public static process =
+    (typeof process !== 'undefined' && process.platform) ? process : {
+      platform: "web",
+      cwd: () => "/"
+    };
+
   public static cacheRemoval: (id: string) => void;
 
   public static withId = (id: unknown) => `@ext:${id}`;

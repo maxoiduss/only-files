@@ -508,7 +508,12 @@ export class OnlyFiles {
 
   private subscribeOpenFolder() {
     const openFolder = vscode.commands.registerCommand(brand.openFolder,
-      () => vscode.commands.executeCommand(brand.vscode.openFolder));
+      async () => {
+        try { await vscode.commands.executeCommand(brand.vscode.openFolder); }
+        catch (error) {
+          await vscode.commands.executeCommand(
+            brand.workbench.action.files.openFolderViaWorkspace); }
+      });
     this.context.subscriptions.push(openFolder);
   }
   

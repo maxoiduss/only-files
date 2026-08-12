@@ -97,7 +97,7 @@ export const getNicePath = (fromUriOr: vscode.Uri | string): string => {
 
 export const getUri = (fromUriOr: vscode.Uri | string): vscode.Uri => {
   const separator = '/';
-  const uri = typeof fromUriOr === "string" ?
+  const uri = typeof fromUriOr === 'string' ?
     fromUriOr.includes(scheme) ?
       vscode.Uri.parse(fromUriOr)
     : vscode.Uri.file(

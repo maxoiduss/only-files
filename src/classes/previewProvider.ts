@@ -25,7 +25,7 @@ const PreviewType = {
   txt:   "txt",
   error: "error"    } as const;
 
-const byId = ExtensionStaticService.withId;
+const identify = ExtensionStaticService.withId;
 
 type PreviewType = vscodes.EnumLike<typeof PreviewType>;
 
@@ -178,7 +178,7 @@ export class PreviewProvider implements
       if (showSettings && result === ok) {
         await vscode.commands.executeCommand(
           brand.workbench.action.openSettings,
-          byId(this.context?.extension?.id)
+          identify(this.context?.extension?.id)
         );
         return;
       }
