@@ -2,7 +2,8 @@ import { Brand, ViewX } from "../types/vscodes";
 import { getRegistratorCommands } from "./commandRegistrator";
 import { LogService } from "./logService";
 
-const resolver = "only-files" as const;
+const resolver  = "only-files"     as const;
+const container = "files-explorer" as const;
 
 const branch = "redesign" as const;
 const link175: string =
@@ -163,7 +164,7 @@ export class ExtensionBrandResolver {
           webviewContainer:
             "workbench.view.extension.pre-view-container",
           treeviewContainer:
-            `workbench.view.extension.${resolver}-explorer`
+            `workbench.view.extension.${container}`
         }
       }
     };

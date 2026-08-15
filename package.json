@@ -826,8 +826,8 @@
     "build-web": "node ./esbuild.config.js --watch --web",
     "package": "vsce package",
     "onlybuild": "node ./esbuild.config.js",
-    "check": "tsc -p ./ --noEmit",
-    "lint": "eslint src && tsc -p tsconfig.json --noEmit",
+    "check": "tsc -p ./ --noEmit && node scripts/check.js",
+    "lint": "eslint src && eslint scripts && tsc -p tsconfig.json --noEmit",
     "runtest": "node ./out/test/runTest.js",
     "unittest": "mocha -r ts-node/register src/tests/**/*.test.ts --timeout 5000"
   },

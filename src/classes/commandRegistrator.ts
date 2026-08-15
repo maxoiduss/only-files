@@ -9,7 +9,7 @@ import { brand as brand,
   ExtensionBrandResolver } from "./extensionBrandResolver";
 import {
   basename, extname, getFolder, getNicePath, getNumeric, getUri,
-  getUriFrom, isValidUri, same, showQuickInput, sleep, validate
+  getUriFrom, isValidUri, same, showQuickInput, sleep, validation
 } from "./utilManager";
 
 const empty = ''             as const;
@@ -114,7 +114,7 @@ export class CommandRegistrator {
       prompt: `Enter new ${isFile ? 'file' : 'folder'} name`,
       value: empty,
       ignoreFocusOut: true,
-      validateInput: validate().rename
+      validateInput: validation().rename
     });
     if (!newName) { return; }
     
@@ -231,7 +231,7 @@ export class CommandRegistrator {
 
     if (fileItem instanceof vscode.Uri) {
       const agree = !useWarning ? true : await showQuickInput(warning,
-        getNicePath(fileItem));
+        { value: getNicePath(fileItem) });
       try { agree && await deletes(fileItem); }
       catch (error) { }
     }
@@ -239,7 +239,7 @@ export class CommandRegistrator {
       if (!fileItem?.resourceUri) { return; }
       try {
         const agree = !useWarning ? true : await showQuickInput(warning,
-          getNicePath(fileItem.resourceUri ));
+          { value: getNicePath(fileItem.resourceUri) });
         agree && await deletes(fileItem.resourceUri); }
       catch(error) { }
     }

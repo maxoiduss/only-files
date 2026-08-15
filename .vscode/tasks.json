@@ -87,6 +87,7 @@
           "endsPattern": ".*(Listening|listening|available at|http://localhost:3000)"
         }
       },
+      "dependsOn": ["ts-check"],
       "presentation": {
         "reveal": "always",
         "panel": "dedicated"

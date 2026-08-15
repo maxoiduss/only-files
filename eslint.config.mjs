@@ -54,5 +54,17 @@ export default [
         }
       ]
     }
+  },
+  {
+    files: ["scripts/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2024,
+      sourceType: "module"
+    },
+    rules: {
+      curly: "warn",
+      eqeqeq: "warn",
+      semi: ["warn", "always"]
+    }
   }
 ];

@@ -1,8 +1,9 @@
+import * as vscodes from "../types/vscodes";
 import { MayBeBusy } from "../types/vscodes";
 import { ExtensionBrandResolver } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { CancellationTokenSource as CTS } from "vscode";
-import { LogService as Log } from "./logService";
+import { LogService as Log, LogService } from "./logService";
 
 const normalize = true as const;
 const dot = '.'        as const;
@@ -11,7 +12,7 @@ const scheme = '://'   as const;
 const slashes = /\\/g;
 
 const configuration = () => ExtensionBrandResolver.configuration;
-const number3Property = () => ExtensionBrandResolver.number3Property;
+const countdown     = () => ExtensionBrandResolver.number3Property;
 
 let numeric: number  = 0;
 
@@ -233,7 +234,8 @@ export const erase = async (
   section: string,
   onTarget: vscode.ConfigurationTarget
 ): Promise<void> => {
-  await config.update(section, undefined, onTarget);
+  try { await config.update(section, undefined, onTarget); }
+  catch (error) { LogService.error(error); }
 };
 
 export const inspect = <T>(
@@ -485,9 +487,11 @@ export const showProgressBar = (withMessage: string): CTS => {
 
 export const showQuickInput = (
   withText: string,
-  option: string,
+  optionText: string | vscodes.Warning,
   stop?: Promise<void>
 ): Promise<string> => {
+  const valid  = typeof optionText === 'object';
+  const option = valid ? optionText.value : optionText;
   const config = vscode.workspace.getConfiguration(configuration());
   let pick: vscode.QuickPick<vscode.QuickPickItem>;
 
@@ -498,7 +502,7 @@ export const showQuickInput = (
     pick.value = option;
     pick.ignoreFocusOut = true;
     pick.matchOnDetail = false;
-    let secondsRemaining = stop ? 0 : config.get<number>(number3Property(), 4);
+    let secondsRemaining = stop ? 0 : config.get<number>(countdown(), 4);
     let isResolved = false;
 
     const okButton: vscode.QuickInputButton = {
@@ -546,22 +550,23 @@ export const showQuickInput = (
     };
     pick.onDidChangeValue((value) => {
       clearTimer(timer, value);
+      if (valid) { return; }
       
-      const validation = validate().rename(value);
-      pick.title = validation ? runError(validation) : withText;
-      pick.buttons = validation ?
+      const validatable = validation().rename(value);
+      pick.title   = validatable ? runError(validatable) : withText;
+      pick.buttons = validatable ?
         [cancelButton]
       : [okButton, cancelButton];
     });
     pick.onDidAccept(() => {
       const value = pick.value;
-      const validation = validate().rename(value);
-      if (validation) {
-        pick.title = runError(validation);
+      const validatable = validation().rename(value);
+      if (valid || !validatable) {
+        void runAccept(pick.value); }
+      else {
+        pick.title = runError(validatable);
 
-        return;
-      }
-      else { void runAccept(pick.value); }
+        return; }
     });
     pick.onDidTriggerButton((button) => {
       if (button === okButton) { void runAccept(pick.value); }
@@ -585,7 +590,7 @@ export const showQuickInput = (
   return Promise.race(promises);
 };
 
-export const validate = () => { return {
+export const validation = () => { return {
   exclude: (input: string): string | undefined => {
     const trimmed = input.trim();
     if  (!trimmed) { return "Pattern cannot be empty or only spaces."; }

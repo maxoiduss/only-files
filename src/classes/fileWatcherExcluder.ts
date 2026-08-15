@@ -4,7 +4,7 @@ import { ConfigurationTarget } from "vscode";
 import { brand, ExtensionBrandResolver } from "./extensionBrandResolver";
 import { ExtensionStaticService } from "./extensionStaticService";
 import { basename, erase, getGlobalValue, getStaticName, inspect,
-  isBusy, saveGlobalValues, sleep, stopGlobalChanges, validate
+  isBusy, saveGlobalValues, sleep, stopGlobalChanges, validation
 } from "./utilManager";
 
 interface WatcherQuickPickItem extends vscode.QuickPickItem {
@@ -327,7 +327,7 @@ export class FileWatcherExcluder implements vscodes.Disposable {
         const newPattern = (await vscode.window.showInputBox({
           prompt: "Type a pattern string to exclude from file watching",
           ignoreFocusOut: true,
-          validateInput: validate().exclude
+          validateInput: validation().exclude
         }))?.trim();
         changed = newPattern ? onMap[newPattern] = true : false;
         break;

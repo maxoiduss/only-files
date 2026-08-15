@@ -1,6 +1,7 @@
-// A launch configuration that compiles the extension and then opens it inside a new window
+/* Configuration that compiles the extension and then opens it inside a new window.*/
 // Use IntelliSense to learn about possible attributes.
 // Hover to view descriptions of existing attributes.
+// Use "--disable-extensions" in args to disable all extensions except this one.
 // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
 {
   "version": "0.2.0",
@@ -11,8 +12,7 @@
       "request": "launch",
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--enable-source-maps",
-        //"--disable-extensions"
+        "--enable-source-maps"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/extension.js",
@@ -30,8 +30,7 @@
       "debugWebWorkerHost": true,
       "args": [
         "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionDevelopmentKind=web",
-        //"--disable-extensions"
+        "--extensionDevelopmentKind=web"
       ],
       "outFiles": [
         "${workspaceFolder}/dist/extension.web.js",
@@ -41,10 +40,16 @@
       "sourceMaps": true
     },
     {
-      "name": "Attach to Browser",
+      "name": "Attach to Edge",
       "type": "msedge",
       "request": "attach",
-      "urlFilter": "http://localhost:3000/*"
+      "urlFilter": "http://localhost:3000"
+    },
+    {
+      "name": "Attach to Chrome",
+      "type": "chrome",
+      "request": "attach",
+      "urlFilter": "http://localhost:3000"
     },
     {
       "name": "Run In Browser",
@@ -52,7 +57,7 @@
       "request": "launch",
       "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}",
-      "timeout": 25000,
+      "timeout": 20000,
       "preLaunchTask": "vscode-browser",
       "sourceMaps": true
     },

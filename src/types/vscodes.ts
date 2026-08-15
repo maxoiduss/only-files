@@ -45,6 +45,10 @@ export interface HasDefaults {
   setDefaults(): Promise<void>;
 }
 
+export interface Warning {
+  value: string
+};
+
 export interface Brand {
   show: string;
   hide: string;

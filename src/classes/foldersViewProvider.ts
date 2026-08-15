@@ -533,7 +533,7 @@ export class FoldersViewProvider implements
       }
     };
     const filterItemsInPlainMode = async (rooted: boolean = true) =>
-    { /* ----------------------------------------------------------------- */
+    { /*>--------------------------------------------------------------------<*/
       const getNestedComponentsArrays = async () =>
         await Promise.all(collapsings.map(async ([path, state]) => {
           if (!state.isPlain) { return []; }
@@ -559,7 +559,7 @@ export class FoldersViewProvider implements
           return elements;
         })
       ).then((resolved) => resolved.flat(2).filter((it) => helper.real(it)));
-      /* ----------------------------------------------------------------- */
+      /*>--------------------------------------------------------------------<*/
       if (uncollapsedModeNotSetButShould()) { /// launches uncollapse-all mode
         if (this.selectedWorkspaceFolder >= 0) {
           await initCollapsingItemsByAllSubFoldersOf(
@@ -567,7 +567,7 @@ export class FoldersViewProvider implements
           );
         }
       }
-      /* ----------------------------------------------------------------- */
+      /*>--------------------------------------------------------------------<*/
       await this.check().ignoredItems();
       await excludeOrEmptifyNestedPlainItems(
         [...this.collapsingItems.entries()]

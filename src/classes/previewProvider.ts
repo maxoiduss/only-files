@@ -57,8 +57,8 @@ export class PreviewProvider implements
   async resolveWebviewView(
     webviewView: WebviewView,
     context: vscode.WebviewViewResolveContext<unknown>, 
-    token: vscode.CancellationToken): Promise<void | undefined>
-  {
+    token: vscode.CancellationToken
+  ): Promise<void | undefined> {
     if (token.isCancellationRequested) { return; }
 
     const view = webviewView;
@@ -108,8 +108,7 @@ export class PreviewProvider implements
     return this.view !== undefined;
   }
 
-  public async showAsWebView(uriOr: vscode.Uri | string): Promise<void>
-  {
+  public async showAsWebView(uriOr: vscode.Uri | string): Promise<void> {
     await this.toBeResolved;
 
     const bad = empty;
@@ -131,22 +130,36 @@ export class PreviewProvider implements
     this.view?.show(true);
   }
 
-  public async setDefaults(): Promise<void> {
+  async setDefaults(): Promise<void> {
     await this.toBeResolved;
 
     this.updateDefaults();
   }
 
+  /*private isWeb() {
+    return this.context.extensionUri.scheme === "http"
+        || this.context.extensionUri.scheme === "https";
+  }*/
+
   private async updateDefaults(): Promise<void> {
     if (this.view) {
       await this.updateWebview();
       
-      this.view.webview.options = {
-        enableScripts: true,
-        localResourceRoots: [
-          vscode.Uri.joinPath(this.context.extensionUri, "resources")
-        ]
-      };
+      const resourcesUri = vscode.Uri.joinPath(this.context.extensionUri,
+        "resources");
+      const pdfjsUri = vscode.Uri.joinPath(resourcesUri,
+        "pdfjs");
+
+      if (!this.view.webview.options?.localResourceRoots) {
+        this.view.webview.options = {
+          enableScripts: true,
+          localResourceRoots: [
+            this.context.extensionUri,
+            resourcesUri,
+            pdfjsUri
+          ]
+        };
+      }
     }
   }
 
@@ -180,6 +193,7 @@ export class PreviewProvider implements
           brand.workbench.action.openSettings,
           identify(this.context?.extension?.id)
         );
+
         return;
       }
       if (result === tip) {
@@ -236,7 +250,7 @@ export class PreviewProvider implements
 
         if (type === PreviewType.pdf) {
           const pdfContent = helper.getPdfTemplate(raw,
-            vscode.Uri.file(this.context.extensionPath),
+            this.context.extensionUri,
             this.view.webview,
             non
           );
@@ -249,19 +263,19 @@ export class PreviewProvider implements
 
         const htmlContent = new TextDecoder().decode(raw);
         if (type === PreviewType.txt) {
-            this.view.webview.html = helper.getHtmlTemplate(
-              `<h4>${htmlContent}</h4>`,
-              non,
-              csps
-            );
-            return;
-          }
           this.view.webview.html = helper.getHtmlTemplate(
-            htmlContent,
+            `<h4>${htmlContent}</h4>`,
             non,
             csps
           );
+          return;
         }
+        this.view.webview.html = helper.getHtmlTemplate(
+          htmlContent,
+          non,
+          csps
+        );
+      }
       catch (err) {
         this.showError(this.context.extension.id, err); }
     }

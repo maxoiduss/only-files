@@ -41,9 +41,9 @@
  */
 export class PreviewProviderHelper { }
 
-const container = "container" as const;
-const placeholder = "placeholder" as const;
-const dropAreaMask = 'dropzone' as const;
+const container    = "container"   as const;
+const placeholder  = "placeholder" as const;
+const dropAreaMask = 'dropzone'    as const;
 
 const bytesToBase64 = (bytes: Uint8Array): string => {
   let binary = "";
@@ -57,12 +57,12 @@ const bytesToBase64 = (bytes: Uint8Array): string => {
   return btoa(binary);
 };
 
-export const contextCommand = 'contextMenu' as const;
-export const resetStateCommand = 'resetState' as const;
-export const disableStateCommand = 'disableState' as const;
+export const contextCommand       = 'contextMenu'   as const;
+export const resetStateCommand    = 'resetState'    as const;
+export const disableStateCommand  = 'disableState'  as const;
 export const contentLoadedCommand = 'contentLoaded' as const;
-export const fileDropCommand = 'fileDropped' as const;
-
+export const fileDropCommand      = 'fileDropped'   as const;
+/*----------------------------------------------------------------------------*/
 export const emptyFrame =
   `<div class="${container}">
     <h2>Drag-n-Shift Here</h2>
@@ -75,7 +75,7 @@ export const getPdfTemplate = (
   webview: vscode.Webview,
   nonce: string,
   useModernLoad: "yes" | "no" = "yes"
-) => {
+): string => {
   const tempLocalFolder = 'resources';
   const viewerContainer = 'pdf-viewer-container';
   const pdfjs = {
@@ -88,14 +88,15 @@ export const getPdfTemplate = (
     : pdfContent;
   const base64Content = bytesToBase64(content);
   const dataUri = `data:application/pdf;base64,${base64Content}`;
+
   const pdfjsUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri,
-      tempLocalFolder, pdfjs.folder, pdfjs.min.mjs)
-  );
+      vscode.Uri.joinPath(extensionUri,
+        tempLocalFolder, pdfjs.folder, pdfjs.min.mjs)
+    ).toString();
   const workerUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(extensionUri,
-      tempLocalFolder, pdfjs.folder, pdfjs.worker.min.mjs)
-  );
+      vscode.Uri.joinPath(extensionUri,
+        tempLocalFolder, pdfjs.folder, pdfjs.worker.min.mjs)
+    ).toString();
 
   return `<div id="drop-zone">
             <div id="${viewerContainer}"/>
@@ -142,15 +143,20 @@ export const getPdfTemplate = (
       </script>`;  
 };
 
-export const getHtmlTemplate = (content: string, nonce: string, cspSource: string) => {
+export const getHtmlTemplate = (
+  content: string,
+  nonce: string,
+  cspSource: string
+): string => {
   const csp = [
     `default-src 'none'`,
-    `script-src 'nonce-${nonce}' ${cspSource}`,
-    `style-src 'nonce-${nonce}' ${cspSource} 'unsafe-inline'`,
-    `img-src ${cspSource} blob: data: https:`,
-    `frame-src ${cspSource} blob: data:`,
-    `worker-src blob: ${cspSource}`,
-    `connect-src ${cspSource} https: http://localhost:* http://127.0.0.1:*`
+    `worker-src blob: https: http://localhost:* ` ,
+    `script-src  ${cspSource} 'nonce-${nonce}' blob: https: http://localhost:*`,
+    `style-src   ${cspSource} 'unsafe-inline' https: http: `,
+    `img-src     ${cspSource} data: blob: https: http: `,
+    `font-src    ${cspSource} data: http: https: `,
+    `frame-src   ${cspSource} data: blob: http://localhost:*`,
+    `connect-src ${cspSource} http: blob: https: `
   ].join("; ");
 
   return `<!DOCTYPE html>
@@ -161,12 +167,23 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Preview</title>
         <style nonce="${nonce}">
+          html {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+          }
           body {
-            canvas { display: block; }
+            height: 100%;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
             color: var(--vscode-foreground);
             font-family: var(--vscode-font-family);
             font-size: var(--vscode-font-size);
-            padding: lrem;
+            overflow: auto;
+          }
+          canvas {
+            display: block;
           }
           code {
             font-family: monospace;
@@ -178,12 +195,14 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
           .${container} {
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            height: 100%;
+            overflow: hidden;
           }
           .${placeholder} {
             flex: 1;
+            min-height: 0;
             background: rgba(0, 0, 0, 0.0);
-          } 
+          }
         </style>
       </head>
       <body id="${dropAreaMask}">
@@ -200,9 +219,9 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
           }, { passive: true });
           dropZone.addEventListener('dragover', (event) => {
             event.preventDefault();
-            dropZone.style.border = '2px dashed var(--vscode-editor-background)';
+            dropZone.style.border ='2px dashed var(--vscode-editor-background)';
             dropZone.style.backgroundColor = '#0051FF62';
-          }, { passive: true });
+          }, { passive: false });
           dropZone.addEventListener('dragleave', (event) => {
             dropZone.style.border = '2px dashed var(--vscode-background)';
             dropZone.style.backgroundColor = dropZoneColor;
@@ -212,7 +231,7 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
             dropZone.style.border = '2px dashed var(--vscode-background)';
             dropZone.style.backgroundColor = dropZoneColor;
 
-            const uriList = event.dataTransfer.getData('text/uri-list');
+            const uriList = event.dataTransfer.getData('text/plain');
             if (uriList && uriList.length > 0) {
               const uri = uriList.replace('\\n', ';').split(';')[0];
               vscode.postMessage({
@@ -234,6 +253,18 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
             scale = disable ? undefined : 1.0;
             center = disable ? undefined : { x: 0, y: 0 };
             setState();
+          };
+          const unlockVerticalScroll = () => {
+            const html = document.documentElement;
+            const body = document.body;
+            const unlock = (element) => {
+              const overflow = getComputedStyle(element).overflowY;
+              if (overflow === 'hidden' || overflow === 'clip') {
+                element.style.setProperty('overflow-y', 'auto', 'important');
+              }
+            };
+            unlock(html);
+            unlock(body);
           };
           const getContentCenter = () => {
             const centerX = (window.scrollX + window.innerWidth/2) / scale;
@@ -263,7 +294,8 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
                 if (!center) { return; } 
                 const targetX = center.x * scale - window.innerWidth/2;
                 const targetY = center.y * scale - window.innerHeight/2;
-                const doc = document.scrollingElement || document.documentElement;
+                const doc = document.scrollingElement
+                         || document.documentElement;
                 doc.scrollTo({
                   left: Math.round(targetX),
                   top: Math.round(targetY),
@@ -299,6 +331,8 @@ export const getHtmlTemplate = (content: string, nonce: string, cspSource: strin
 
           document.addEventListener('DOMContentLoaded',
             async () => {
+              unlockVerticalScroll();
+
               await transform(true);
               vscode.postMessage({
                 command: '${contentLoadedCommand}'

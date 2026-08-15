@@ -682,9 +682,18 @@ export class OnlyFiles {
 
   private subscribeRefreshFilesView() {
     const refreshFilesView = vscode.commands.registerCommand(
-      brand.refreshFiles, () => {
+      brand.refreshFiles, async () => {
         if (this.foldersViewProvider.isEmpty) {
-          vscode.commands.executeCommand(brand.closeFolder); }
+          this.foldersViewProvider.refresh();
+          await sleep(1000);
+          
+          if (this.foldersViewProvider.isEmpty) {
+            const ok = "Ok";
+            const answer = await vscode.window.showInformationMessage(
+              "Project folder looks like empty. The folder will be closed.",
+              ok, "Stay");
+            if (answer === ok) {
+              await vscode.commands.executeCommand(brand.closeFolder); } } }
         else {
           this.foldersViewProvider.focusRoot();
           this.onlyFilesViewProvider.populateHighlightings();
