@@ -16,6 +16,7 @@
     "Other"
   ],
   "activationEvents": [
+    "onStartupFinished",
     "onWebviewView:pre-view"
   ],
   "main": "./dist/extension.js",
@@ -113,7 +114,7 @@
           "order": 2
         },
         {
-          "id": "pre-view-container",
+          "id": "pre-view-explorer",
           "title": "Preview",
           "icon": "resources/folder.png",
           "order": 1
@@ -137,10 +138,11 @@
           "icon": "resources/folder.svg"
         }
       ],
-      "pre-view-container": [
+      "pre-view-explorer": [
         {
           "id": "pre-view",
-          "name": "Preview",
+          "name": "Only",
+          "when": "true",
           "type": "webview",
           "icon": "resources/previewer.svg"
         }
@@ -154,6 +156,11 @@
       {
         "view": "filesView",
         "contents": "Loading the workspace..."
+      },
+      {
+        "view": "pre-view",
+        "contents": "<!DOCTYPE html><html><h3>Loading...</h3></html>",
+        "when": "true"
       }
     ],
     "colors": [
@@ -540,11 +547,13 @@
         },
         {
           "command": "only-files.renameTab",
-          "group": "1_open"
+          "group": "1_open",
+          "when": "resourceScheme && resourceScheme != untitled"
         },
         {
           "command": "only-files.previewItem",
-          "group": "z"
+          "group": "z",
+          "when": "resourceScheme && resourceScheme != untitled"
         }
       ],
       "view/item/context": [
@@ -756,20 +765,20 @@
       },
       {
         "command": "only-files.previewItem",
-        "key": "ctrl+shift+alt+enter",
-        "mac": "cmd+shift+alt+enter",
-        "when": "resourceScheme && resourceScheme != untitled"
+        "key": "shift+space v",
+        "mac": "shift+space v",
+        "when": "true"
       },
       {
         "command": "only-files.refreshFiles",
-        "key": "space r",
-        "mac": "space r",
+        "key": "shift+space z",
+        "mac": "shift+space z",
         "when": "true"
       },
       {
         "command": "only-files.refreshOnlyFiles",
-        "key": "space shift+r",
-        "mac": "space shift+r",
+        "key": "shift+space x",
+        "mac": "shift+space x",
         "when": "true"
       },
       {
@@ -786,26 +795,26 @@
       },
       {
         "command": "only-files.show",
-        "key": "ctrl+y",
-        "mac": "cmd+y",
+        "key": "ctrl+space c",
+        "mac": "ctrl+space c",
         "when": "(focusedView == filesView) && viewItem != empty && viewItem != root && viewItem != vac"
       },
       {
         "command": "only-files.hide",
-        "key": "ctrl+alt+y",
-        "mac": "cmd+alt+y",
+        "key": "ctrl+space x",
+        "mac": "ctrl+space x",
         "when": "(focusedView == onlyFilesView) && viewItem != dummy"
       },
       {
         "command": "only-files.addItemFromCommand",
-        "key": "ctrl+y",
-        "mac": "cmd+y",
+        "key": "ctrl+space c",
+        "mac": "ctrl+space c",
         "when": "resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "only-files.removeItemFromCommand",
-        "key": "ctrl+alt+y",
-        "mac": "cmd+alt+y",
+        "key": "ctrl+space x",
+        "mac": "ctrl+space x",
         "when": "resourceScheme && resourceScheme != untitled"
       },
       {

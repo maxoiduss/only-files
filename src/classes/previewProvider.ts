@@ -85,7 +85,7 @@ export class PreviewProvider implements
     view.webview.onDidReceiveMessage(async (message) => {
       if (message.command === fileDropCommand && message.path) {
         const path = message.path as string;
-        this.showAsWebView(vscode.Uri.parse(path)); }
+        this.showAsWebView(getUri(path)); }
       else if (message.command === contentLoadedCommand) {
         if (!this.lastWebviewLoaded) {
           this.lastWebviewLoaded = true;
@@ -135,11 +135,6 @@ export class PreviewProvider implements
 
     this.updateDefaults();
   }
-
-  /*private isWeb() {
-    return this.context.extensionUri.scheme === "http"
-        || this.context.extensionUri.scheme === "https";
-  }*/
 
   private async updateDefaults(): Promise<void> {
     if (this.view) {

@@ -150,12 +150,12 @@ export const getHtmlTemplate = (
 ): string => {
   const csp = [
     `default-src 'none'`,
-    `worker-src blob: https: http://localhost:* ` ,
-    `script-src  ${cspSource} 'nonce-${nonce}' blob: https: http://localhost:*`,
+    `worker-src blob: https: http://localhost:* http://127.0.0.1:*` ,
+    `script-src  ${cspSource} 'nonce-${nonce}' blob: https: http://localhost:* http://127.0.0.1:*`,
     `style-src   ${cspSource} 'unsafe-inline' https: http: `,
     `img-src     ${cspSource} data: blob: https: http: `,
     `font-src    ${cspSource} data: http: https: `,
-    `frame-src   ${cspSource} data: blob: http://localhost:*`,
+    `frame-src   ${cspSource} data: blob: http://localhost:* http://127.0.0.1:*`,
     `connect-src ${cspSource} http: blob: https: `
   ].join("; ");
 
@@ -197,6 +197,8 @@ export const getHtmlTemplate = (
             flex-direction: column;
             height: 100%;
             overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
           }
           .${placeholder} {
             flex: 1;

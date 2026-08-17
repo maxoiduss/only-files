@@ -136,7 +136,7 @@ export class OnlyFiles {
   }
 
   public subscribe() {
-    
+    this.subscribePreviewItemAndRegister();
     this.subscribeWatcher();
     this.subscribeKeybindings();
     this.subscribeDecoratorAndRegister();
@@ -168,7 +168,6 @@ export class OnlyFiles {
     this.subscribeRefuseAllMarked();
     this.subscribeOpenFolder();
     this.subscribeCloseFolder();
-    this.subscribePreviewItemAndRegister();
   }
 
   private renameTreeViews() {
@@ -252,19 +251,18 @@ export class OnlyFiles {
   private async openUriIfFolderViewEmpty(uri: vscode.Uri): Promise<boolean> {
     if (this.foldersViewProvider.isEmpty) {
       try {
-        const yes = "Ok";
+        const ok = "Ok";
+        const yes = "In new window";
         const folder = await isFolder(uri);
         const answer = await vscode.window.showInformationMessage(
           `Open ${getNicePath(uri)} as a ${folder ? "folder" : "file"}?`,
           { modal: true },
-          yes
+          ok, yes
         );
-        if (answer === yes) {
-          await vscode.commands.executeCommand(
-            folder ? brand.vscode.openFolder : brand.vscode.open,
-            uri
-          );
-        } }
+        if (answer === ok || answer === yes) {
+          await vscode.commands.executeCommand(brand.vscode.openFolder,
+            uri, { forceNewWindow: answer === yes }
+          ); } }
       catch (error) {
         LogService.log(error);
       }
@@ -275,7 +273,7 @@ export class OnlyFiles {
 
   private async openUriOrRemoveFromView(uri: vscode.Uri): Promise<void> {
     const opened = await this.openUriIfFolderViewEmpty(uri);
-    if (!opened) {
+    if  (!opened) {
       await vscode.commands.executeCommand(brand.removeItemFromTabMenu, uri);
     }
   }
@@ -529,8 +527,7 @@ export class OnlyFiles {
       async (fileItem) => {
         const uri: vscode.Uri = getUriFrom(fileItem);
         const isViewEmpty = await this.openUriIfFolderViewEmpty(uri);
-
-        if (!isViewEmpty) {
+        if  (!isViewEmpty) {
           vscode.commands.executeCommand(brand.revealInExplorer, uri);
         }
     });
@@ -596,16 +593,16 @@ export class OnlyFiles {
     );
     const preview = vscode.commands.registerCommand(brand.previewItem,
       async (uriOr) => {
-        const uri: vscode.Uri = getUriFrom(uriOr);
+        const uri = uriOr ? getUriFrom(uriOr) : getUriFrom(
+          (this.lastSelectedView === "Only Files" ?
+            this.onlyFilesSelectedItems[0]?.resourceUri
+          : this.filesSelectedItems[0]?.resourceUri));
+
         if (!this.previewProvider.canBeShownAsWebView()) {
-          await vscode.commands.executeCommand(
-            brand.workbench.view.extension.webviewContainer);
           await vscode.commands.executeCommand(brand.focus("Preview"));
         }
         await this.previewProvider.showAsWebView(uri);
         if (this.foldersTreeView.visible) {
-          await vscode.commands.executeCommand(
-            brand.workbench.view.extension.treeviewContainer);
           await vscode.commands.executeCommand(brand.focus("Files"));
 
           this.foldersViewProvider.trySelectByUri(uri);

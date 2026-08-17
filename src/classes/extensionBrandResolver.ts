@@ -162,7 +162,7 @@ export class ExtensionBrandResolver {
       view: {
         extension: {
           webviewContainer:
-            "workbench.view.extension.pre-view-container",
+            "workbench.view.extension.pre-view-explorer",
           treeviewContainer:
             `workbench.view.extension.${container}`
         }
