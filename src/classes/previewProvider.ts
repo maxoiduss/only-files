@@ -16,7 +16,8 @@ import {
   resetStateCommand
 } from "./previewProviderHelper";
 
-const empty = '' as const;
+const empty = ''              as const;
+const visibilityTimeout = 100 as const;
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const PreviewType = {
   pdf:   "pdf",
@@ -25,7 +26,18 @@ const PreviewType = {
   txt:   "txt",
   error: "error"    } as const;
 
-const identify = ExtensionStaticService.withId;
+const identify  = ExtensionStaticService.withId;
+const getPreviewTypeBy: Record<string, PreviewType> = {
+  pdf:   PreviewType.pdf,
+  htm:   PreviewType.html,
+  html:  PreviewType.html,
+  mhtml: PreviewType.html,
+  md:    PreviewType.md,
+  md5:   PreviewType.md,
+  txt:   PreviewType.txt,
+  log:   PreviewType.txt,
+  bad:   PreviewType.error
+};
 
 type PreviewType = vscodes.EnumLike<typeof PreviewType>;
 
@@ -64,8 +76,6 @@ export class PreviewProvider implements
     const view = webviewView;
     this.view = view;
     this.cspSourceDefault = view.webview.cspSource;
-
-    const visibilityTimeout = 100;
 
     view.onDidDispose(() => this.view = undefined,
       this, this.context.subscriptions
@@ -113,16 +123,6 @@ export class PreviewProvider implements
 
     const bad = empty;
     const ext = extname(uriOr) ?? bad;    
-    const getPreviewTypeBy: Record<string, PreviewType> = {
-      pdf:  PreviewType.pdf,
-      htm:  PreviewType.html,
-      html: PreviewType.html,
-      md:   PreviewType.md,
-      md5:  PreviewType.md,
-      txt:  PreviewType.txt,
-      log:  PreviewType.txt,
-      bad:  PreviewType.error
-    };
     const type = getPreviewTypeBy[ext] ?? PreviewType.error;
     this.lastWebviewLoaded = false;
 
@@ -140,10 +140,10 @@ export class PreviewProvider implements
     if (this.view) {
       await this.updateWebview();
       
-      const resourcesUri = vscode.Uri.joinPath(this.context.extensionUri,
-        "resources");
-      const pdfjsUri = vscode.Uri.joinPath(resourcesUri,
-        "pdfjs");
+      const resourcesUri = vscode.Uri.joinPath(
+        this.context.extensionUri, helper.resor);
+      const pdfjsUri = vscode.Uri.joinPath(
+        resourcesUri, helper.pdfjs.folder);
 
       if (!this.view.webview.options?.localResourceRoots) {
         this.view.webview.options = {
@@ -207,10 +207,12 @@ export class PreviewProvider implements
   }
 
   private setEmptyView(nonce: string, cspSource: string) {
-    this.view!.webview.html = helper.getHtmlTemplate(
-      helper.emptyFrame, nonce, cspSource
-    );
-    this.setTitle(empty, true);
+    if (this.view) {
+      this.view.webview.html = helper.getHtmlTemplate(
+        helper.emptyFrame, nonce, cspSource
+      );
+      this.setTitle(empty, true);
+    }
   }
 
   private async updateWebview(

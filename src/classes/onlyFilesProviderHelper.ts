@@ -3,7 +3,8 @@ import * as manager from "./fileItemManager";
 import { TreeItem, TreeItemCollapsibleState } from "vscode";
 import { FileItem, FileItemLike, FileItemOr, PlaceholderItem
 } from "./fileItem";
-import { getConfigurationFor, getUri, isFolder, isValidUri, known, same
+import {
+  getConfigurationFor, getUri, isFolder, isValidUri, known, isReal, same
 } from "./utilManager";
 
 /**
@@ -238,7 +239,7 @@ const convertFrom = <T extends VertexLike>(
   return vertex;
 };
 
-export const real = (obj: any): obj is {} => obj !== undefined && obj !== null;
+export const real = isReal;
 
 export const loadWorkspaceContexts = (
   context: vscode.ExtensionContext,

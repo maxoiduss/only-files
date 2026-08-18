@@ -20,8 +20,14 @@ const names: {
 export class ExtensionStaticService {
   private static readonly disposables: vscode.Disposable[] = [];
 
-  public static readonly fsThrottling: number = 180;
-  public static readonly fsExclusion:  string = "**/.git/**";
+  public static readonly fsThrottling: number = 180            as const;
+  public static readonly fsExclusion: string  = "**/.git/**"   as const;
+  public static readonly resourcesFolder: string = 'resources' as const;
+  public static readonly placeholderText = 'Drag-n-Shift Here' as const;
+  public static readonly pdfjs = {
+    folder: 'pdfjs',
+    min: { mjs: 'pdf.min.mjs' },
+    worker: { min: { mjs: 'pdf.worker.min.mjs' } }           } as const;
 
   public static clickTolerance:  number;
   public static renameTolerance: number;

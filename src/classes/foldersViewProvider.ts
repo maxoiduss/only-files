@@ -597,8 +597,9 @@ export class FoldersViewProvider implements
     await this.loadingWorkspaceFolders;
 
     if (!element) {
-      if (this.workspaceFolders.length === 1)
-      {
+      if (this.workspaceFolders.length === 1) {
+        this.isEmpty = false;
+        
         const files = await vscode.workspace.fs.readDirectory(
           this.workspaceFolders[0].uri
         );

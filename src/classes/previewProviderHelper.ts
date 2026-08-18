@@ -1,3 +1,5 @@
+import { ExtensionStaticService } from "./extensionStaticService";
+
 /**
  * ```
  * class PreviewProvider implements
@@ -62,10 +64,14 @@ export const resetStateCommand    = 'resetState'    as const;
 export const disableStateCommand  = 'disableState'  as const;
 export const contentLoadedCommand = 'contentLoaded' as const;
 export const fileDropCommand      = 'fileDropped'   as const;
+
+export const resor = ExtensionStaticService.resourcesFolder;
+export const empty = ExtensionStaticService.placeholderText;
+export const pdfjs = ExtensionStaticService.pdfjs;
 /*----------------------------------------------------------------------------*/
 export const emptyFrame =
   `<div class="${container}">
-    <h2>Drag-n-Shift Here</h2>
+    <h2>${empty}</h2>
     <div class="${placeholder}"></div>
   </div>` as const;
 
@@ -76,26 +82,19 @@ export const getPdfTemplate = (
   nonce: string,
   useModernLoad: "yes" | "no" = "yes"
 ): string => {
-  const tempLocalFolder = 'resources';
   const viewerContainer = 'pdf-viewer-container';
-  const pdfjs = {
-    folder: 'pdfjs',
-    min: { mjs: 'pdf.min.mjs' },
-    worker: { min: { mjs: 'pdf.worker.min.mjs' }}
-  };
   const content = typeof pdfContent === 'string' ?
       new TextEncoder().encode(pdfContent)
     : pdfContent;
   const base64Content = bytesToBase64(content);
   const dataUri = `data:application/pdf;base64,${base64Content}`;
-
   const pdfjsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(extensionUri,
-        tempLocalFolder, pdfjs.folder, pdfjs.min.mjs)
+        resor, pdfjs.folder, pdfjs.min.mjs)
     ).toString();
   const workerUri = webview.asWebviewUri(
       vscode.Uri.joinPath(extensionUri,
-        tempLocalFolder, pdfjs.folder, pdfjs.worker.min.mjs)
+        resor, pdfjs.folder, pdfjs.worker.min.mjs)
     ).toString();
 
   return `<div id="drop-zone">
@@ -175,7 +174,7 @@ export const getHtmlTemplate = (
           body {
             height: 100%;
             margin: 0;
-            padding: 1rem;
+            padding: 5px;
             box-sizing: border-box;
             color: var(--vscode-foreground);
             font-family: var(--vscode-font-family);
@@ -188,14 +187,16 @@ export const getHtmlTemplate = (
           code {
             font-family: monospace;
           }
-          ul {
-            list-style: none;
+          h2, h3, h4 {
+            margin: 0;
             padding: 0;
+            line-height: 1;
           }
           .${container} {
+            height: 100%;
+            padding-left: 15px;
             display: flex;
             flex-direction: column;
-            height: 100%;
             overflow: hidden;
             user-select: none;
             -webkit-user-select: none;
@@ -233,9 +234,15 @@ export const getHtmlTemplate = (
             dropZone.style.border = '2px dashed var(--vscode-background)';
             dropZone.style.backgroundColor = dropZoneColor;
 
-            const uriList = event.dataTransfer.getData('text/plain');
-            if (uriList && uriList.length > 0) {
-              const uri = uriList.replace('\\n', ';').split(';')[0];
+            let uriList = event.dataTransfer.getData('text/uri-list');
+            if (!uriList || uriList.trim().length === 0) {
+              uriList = event.dataTransfer.getData('text/plain');
+            }
+            if (uriList && uriList.trim().length > 0) {
+              const uri  = uriList.replaceAll('\\r\\n', '\\n')
+                .replaceAll('\\r', '\\n').split('\\n')
+                .map((line) => line.trim())
+                .filter((line) => line && !line.startsWith('#'))[0];
               vscode.postMessage({
                 command: '${fileDropCommand}',
                 path: uri

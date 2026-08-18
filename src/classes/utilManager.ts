@@ -256,6 +256,9 @@ export const inspect = <T>(
   }
 };
 
+export const isReal = (obj: any): obj is {} =>
+  obj !== undefined && obj !== null;
+
 export const resolveUri = async (
   relativePathOrUri: vscode.Uri | string
 ): Promise<vscode.Uri> => {

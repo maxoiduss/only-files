@@ -6,7 +6,7 @@ import { ExtensionStaticService as Static
 } from "./extensionStaticService";
 import { EmptyFolderItem, FileItem, RootFileItem
 } from "./fileItem";
-import { getConfigurationFor, getConfigurationsFor, getUri
+import { getConfigurationFor, getConfigurationsFor, getUri, isReal
 } from "./utilManager";
 
 /**
@@ -112,7 +112,7 @@ export const refreshTheCache = (items: FileItem[]): FileItem[] => {
   });
 };
 
-export const real = (obj: any): obj is {} => obj !== undefined && obj !== null;
+export const real = isReal;
 
 export const isEmptyOrNull = (ignoreOr: Ignore | undefined) : boolean => 
     ignoreOr === undefined

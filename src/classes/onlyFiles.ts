@@ -21,7 +21,7 @@ import {
 } from "./fileItem";
 import {
   getNicePath, getProjectName, getUriFrom,
-  isFolder, isProjectTooLarge, isValidUri, same, sleep
+  isFolder, isProjectTooLarge, isReal, isValidUri, same, sleep
 } from "./utilManager";
 
 export class OnlyFiles {
@@ -264,7 +264,7 @@ export class OnlyFiles {
             uri, { forceNewWindow: answer === yes }
           ); } }
       catch (error) {
-        LogService.log(error);
+        LogService.error(error);
       }
       return true;
     }
@@ -284,6 +284,15 @@ export class OnlyFiles {
     });
     const antipattern = await this.referenceProvider.createRegexFrom(file);
     this.foldersViewProvider.setIgnoredItems(antipattern);
+  }
+
+  private getSelectedUris(justFirst?: boolean): vscode.Uri[] | undefined {
+    const uris = (this.lastSelectedView === "Only Files" ?
+                  this.onlyFilesSelectedItems.map((i) => i.resourceUri)
+                                             .filter((uri) => isReal(uri))
+                : this.filesSelectedItems.map((i) => i.resourceUri)
+                                         .filter((uri) => isReal(uri)));
+    return uris.length > 0 ? justFirst ? [uris[0]] : uris : undefined;
   }
 
   private async addOrHideOnOnlyFilesByUris(
@@ -478,10 +487,10 @@ export class OnlyFiles {
   private subscribeAddFromCommand() {
     const addFromCommand = vscode.commands.registerCommand(
       brand.addItemFromCommand, async () => {
-        const activeEditor = vscode.window.activeTextEditor;
-        if (activeEditor) {
-          await this.addOrHideOnOnlyFiles(activeEditor.document.uri, true);
-        }
+        const opened = vscode.window.activeTextEditor?.document.uri;
+        const selectedUris = this.getSelectedUris() ?? (opened ? [opened] : []);
+        if (selectedUris.length > 0) {
+          await this.addOrHideOnOnlyFilesByUris(selectedUris, true); }
       });
     this.context.subscriptions.push(addFromCommand);
   }
@@ -489,10 +498,10 @@ export class OnlyFiles {
   private subscribeRemoveFromCommand() {
     const removeFromCommand = vscode.commands.registerCommand(
       brand.removeItemFromCommand, async () => {
-        const activeEditor = vscode.window.activeTextEditor;
-        if (activeEditor) {
-          await this.addOrHideOnOnlyFiles(activeEditor.document.uri, false);
-        }
+        const opened = vscode.window.activeTextEditor?.document.uri;
+        const selectedUris = this.getSelectedUris() ?? (opened ? [opened] : []);
+        if (selectedUris.length > 0) {
+          await this.addOrHideOnOnlyFilesByUris(selectedUris, false); }
       });
     this.context.subscriptions.push(removeFromCommand);
   }
@@ -593,10 +602,9 @@ export class OnlyFiles {
     );
     const preview = vscode.commands.registerCommand(brand.previewItem,
       async (uriOr) => {
-        const uri = uriOr ? getUriFrom(uriOr) : getUriFrom(
-          (this.lastSelectedView === "Only Files" ?
-            this.onlyFilesSelectedItems[0]?.resourceUri
-          : this.filesSelectedItems[0]?.resourceUri));
+        const  uri = uriOr ?
+          getUriFrom(uriOr)
+        : getUriFrom(this.getSelectedUris(true)?.[0]);
 
         if (!this.previewProvider.canBeShownAsWebView()) {
           await vscode.commands.executeCommand(brand.focus("Preview"));

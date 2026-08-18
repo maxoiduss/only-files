@@ -794,28 +794,34 @@
         "when": "only-files:isPlain"
       },
       {
-        "command": "only-files.show",
+        "command": "only-files.addItemFromExplorer",
         "key": "ctrl+space c",
         "mac": "ctrl+space c",
-        "when": "(focusedView == filesView) && viewItem != empty && viewItem != root && viewItem != vac"
+        "when": "focusedView == explorer"
       },
       {
-        "command": "only-files.hide",
+        "command": "only-files.addItemFromTabMenu",
+        "key": "ctrl+space c",
+        "mac": "ctrl+space c",
+        "when": "resourceScheme && resourceScheme != untitled"
+      },
+      {
+        "command": "only-files.removeItemFromTabMenu",
         "key": "ctrl+space x",
         "mac": "ctrl+space x",
-        "when": "(focusedView == onlyFilesView) && viewItem != dummy"
+        "when": "resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "only-files.addItemFromCommand",
         "key": "ctrl+space c",
         "mac": "ctrl+space c",
-        "when": "resourceScheme && resourceScheme != untitled"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != empty && viewItem != root && viewItem != vac"
       },
       {
         "command": "only-files.removeItemFromCommand",
         "key": "ctrl+space x",
         "mac": "ctrl+space x",
-        "when": "resourceScheme && resourceScheme != untitled"
+        "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != empty && viewItem != root && viewItem != vac"
       },
       {
         "command": "only-files.ctrl",
