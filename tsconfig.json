@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "types": ["node"],
+    "types": ["node", "mocha"],
     "module": "esnext",
     "moduleResolution": "bundler",
     "target": "es2024",
@@ -22,7 +22,6 @@
     ]
   },
   "exclude": [
-    "src/tests/**/*.test.ts",
     "out",
     "node_modules"
   ]
