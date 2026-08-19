@@ -56,8 +56,13 @@ export class OnlyFilesViewProvider implements
       .filter((vertex) => vertex.isRootOn(this.vertices));
   }
 
+  public get roots(): (FileItem | undefined)[] { /// used by tests
+    return this.heads.map((v) => v.item);
+  }
+  
+  public hidden: Set<string> = new Set(); /// used by tests
+
   private sorted: boolean = false;
-  private hidden: Set<string> = new Set();
   private vertices: Map<string, Vertex> = new Map();
   private switchable: boolean = false;
   private addonQueue: Promise<void> | undefined = Promise.resolve();

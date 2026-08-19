@@ -1,37 +1,34 @@
-// tests/justFilesViewProvider.test.ts
+// tests/OnlyFilesViewProvider.test.ts
 import { expect } from "chai";
 import * as sinon from "sinon";
 import * as vscode from "vscode";
-import { JustFilesViewProvider } from "../src/justFilesViewProvider";
-import { FileItemManager } from "../fileItemManager";
-import { FileItem } from "../src/fileItem";
+import { OnlyFilesViewProvider } from "../classes/onlyFilesViewProvider";
+import * as FileItemManager from "../classes/fileItemManager";
+import { FileItem } from "../classes/fileItem";
 
 function makeFakeFileItem(path: string, isFile = false): FileItem {
-  // Minimal fake that matches the provider expectations
   const uri = vscode.Uri.file(path);
-  const item = Object.create(FileItem.prototype) as FileItem;
-  item.resourceUri = uri;
+  const label = path.split("/").pop() ?? path;
+  const collapsibleState = isFile ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed;
+  const item = new FileItem(label, collapsibleState, isFile, uri);
+  // ensure the id and relativePath match expectations
   item.relativePath = path.replace(/\\/g, "/");
   item.id = item.relativePath;
-  item.isFile = isFile;
-  item.collapsibleState = isFile ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Collapsed;
-  item.label = path.split("/").pop();
-  item.command = undefined;
   return item;
 }
 
-describe("JustFilesViewProvider unit tests", function () {
-  let sandbox: sinon.SinonSandbox;
+describe("OnlyFilesViewProvider unit tests", function () {
+  let sandbox: any;
   let createFileItemStub: sinon.SinonStub;
   let getChildrenNamesStub: sinon.SinonStub;
-  let provider: JustFilesViewProvider;
+  let provider: OnlyFilesViewProvider;
 
   beforeEach(function () {
     sandbox = sinon.createSandbox();
-    // stub FileItemManager methods used by the provider
-    createFileItemStub = sandbox.stub(FileItemManager.prototype, "createFileItem");
-    getChildrenNamesStub = sandbox.stub(FileItemManager.prototype, "getChildrenNames");
-    provider = new JustFilesViewProvider();
+    // stub FileItemManager functions used by the provider
+    createFileItemStub = sandbox.stub(FileItemManager, "createFileItem" as any);
+    getChildrenNamesStub = sandbox.stub(FileItemManager, "getChildrenNames" as any);
+    provider = new OnlyFilesViewProvider(undefined as any, (() => {}) as any);
   });
 
   afterEach(function () {
@@ -53,11 +50,11 @@ describe("JustFilesViewProvider unit tests", function () {
     getChildrenNamesStub.withArgs(sinon.match.any).resolves([child]);
 
     // Act: add child first
-    const childItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(child), false, false);
+    const childItem = await FileItemManager.createFileItem(vscode.Uri.file(child), false);
     await provider.addFileItem(childItem);
 
     // Now add parent
-    const parentItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(parent), false, false);
+    const parentItem = await FileItemManager.createFileItem(vscode.Uri.file(parent), false);
     await provider.addFileItem(parentItem);
 
     // Assert: parent exists as a root and child is present under parent exactly once
@@ -80,10 +77,10 @@ describe("JustFilesViewProvider unit tests", function () {
       .resolves(makeFakeFileItem(child, false));
     getChildrenNamesStub.withArgs(sinon.match.any).resolves([child]);
 
-    const parentItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(parent), false, false);
+    const parentItem = await FileItemManager.createFileItem(vscode.Uri.file(parent), false);
     await provider.addFileItem(parentItem);
 
-    const childItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(child), false, false);
+    const childItem = await FileItemManager.createFileItem(vscode.Uri.file(child), false);
     await provider.addFileItem(childItem);
 
     const children = await provider.getChildren(parentItem);
@@ -103,11 +100,11 @@ describe("JustFilesViewProvider unit tests", function () {
       .resolves(makeFakeFileItem(child2, false));
     getChildrenNamesStub.withArgs(sinon.match.any).resolves([child1, child2]);
 
-    const parentItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(parent), false, false);
+    const parentItem = await FileItemManager.createFileItem(vscode.Uri.file(parent), false);
     await provider.addFileItem(parentItem);
 
-    const childItem1 = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(child1), false, false);
-    const childItem2 = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(child2), false, false);
+    const childItem1 = await FileItemManager.createFileItem(vscode.Uri.file(child1), false);
+    const childItem2 = await FileItemManager.createFileItem(vscode.Uri.file(child2), false);
     await provider.addFileItem(childItem1);
     await provider.addFileItem(childItem2);
 
@@ -136,11 +133,11 @@ describe("JustFilesViewProvider unit tests", function () {
       .resolves(makeFakeFileItem(childHidden, false));
     getChildrenNamesStub.withArgs(sinon.match.any).resolves([childVisible, childHidden]);
 
-    const parentItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(parent), false, false);
+    const parentItem = await FileItemManager.createFileItem(vscode.Uri.file(parent), false);
     await provider.addFileItem(parentItem);
 
-    const visibleItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(childVisible), false, false);
-    const hiddenItem = await FileItemManager.prototype.createFileItem.call(new FileItemManager(), vscode.Uri.file(childHidden), false, false);
+    const visibleItem = await FileItemManager.createFileItem(vscode.Uri.file(childVisible), false);
+    const hiddenItem = await FileItemManager.createFileItem(vscode.Uri.file(childHidden), false);
     await provider.addFileItem(visibleItem);
     await provider.addFileItem(hiddenItem);
 
