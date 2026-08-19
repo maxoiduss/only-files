@@ -337,6 +337,10 @@
         "title": "Send to Only Files"
       },
       {
+        "command": "only-files.previewItemFromTab",
+        "title": "Preview in Only Files"
+      },
+      {
         "command": "only-files.previewItem",
         "title": "Preview in Only Files",
         "icon": {
@@ -551,7 +555,7 @@
           "when": "resourceScheme && resourceScheme != untitled"
         },
         {
-          "command": "only-files.previewItem",
+          "command": "only-files.previewItemFromTab",
           "group": "z",
           "when": "resourceScheme && resourceScheme != untitled"
         }
@@ -764,6 +768,12 @@
         "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != dummy"
       },
       {
+        "command": "only-files.previewItemFromTab",
+        "key": "shift+space v",
+        "mac": "shift+space v",
+        "when": "editorFocus == true && resourceScheme && resourceScheme != untitled"
+      },
+      {
         "command": "only-files.previewItem",
         "key": "shift+space v",
         "mac": "shift+space v",
@@ -797,19 +807,19 @@
         "command": "only-files.addItemFromExplorer",
         "key": "ctrl+space c",
         "mac": "ctrl+space c",
-        "when": "focusedView == explorer"
+        "when": "focusedView == 'workbench.explorer.fileView'"
       },
       {
         "command": "only-files.addItemFromTabMenu",
         "key": "ctrl+space c",
         "mac": "ctrl+space c",
-        "when": "resourceScheme && resourceScheme != untitled"
+        "when": "editorFocus == true && resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "only-files.removeItemFromTabMenu",
         "key": "ctrl+space x",
         "mac": "ctrl+space x",
-        "when": "resourceScheme && resourceScheme != untitled"
+        "when": "editorFocus == true && resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "only-files.addItemFromCommand",

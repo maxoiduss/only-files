@@ -1,5 +1,6 @@
 import * as manager from "./fileItemManager";
 import * as helper from "./fileSystemHelper";
+import * as clipboard from "./clipboardManager";
 import { command, FileItem, FileItemOr, FileItemOrUriOr } from "./fileItem";
 import { workspace } from "./fileSystemHelper";
 import { ExtensionStaticService } from "./extensionStaticService";
@@ -257,9 +258,7 @@ export class CommandRegistrator {
     this.internals.add(item.resourceUri.toString());
 
     if (item.isFile && single && singular.shouldCopyContent) {
-      const array = await workspace.fs.readFile(item.resourceUri);
-      const content = new TextDecoder().decode(array);
-      await vscode.env.clipboard.writeText(content);
+      await clipboard.writeFile(item.resourceUri);
     }
   }
 
@@ -528,9 +527,7 @@ export class CommandRegistrator {
         const fileItem = await this.getAnySelectedIfBad(item);
         if (!fileItem?.resourceUri) { return; }
 
-        await vscode.env.clipboard.writeText(
-          getNicePath(fileItem.resourceUri)
-        );
+        await clipboard.writeFilePath(fileItem.resourceUri);
     });
     const _copyrfp = vscode.commands.registerCommand(commands.copyRelative, 
       async (item: FileItem) => {
@@ -540,7 +537,7 @@ export class CommandRegistrator {
         const relativePath = vscode.workspace.asRelativePath(
           fileItem.resourceUri
         );
-        await vscode.env.clipboard.writeText(relativePath);
+        await clipboard.writeText(relativePath);
     });
     const _find = vscode.commands.registerCommand(commands.find,
       async (item: FileItem) => {

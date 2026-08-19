@@ -62,13 +62,14 @@ export interface Brand {
   addItemFromCommand: string;
   removeItemFromCommand: string;
   addItemFromExplorer: string;
+  previewItemFromTab: string;
+  previewItem: string;
   revealInSidebar: string;
   revealInExplorer: string;
   refuseMarked: string;
   collectMarked: string;
   collapseFolder: string;
   uncollapseAll: string;
-  previewItem: string;
   removeAll: string;
   remark: string;
   ignore: string;
@@ -87,6 +88,7 @@ export interface Brand {
   refreshOnlyFiles: string;
   refreshSortedOnlyFiles: string;
   manageWatcherExclude: string;
+  copyFilePath: string;
   setContext: string;
   restore: string;
   isActive: string;

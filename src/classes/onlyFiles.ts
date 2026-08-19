@@ -1,6 +1,7 @@
 import * as vscodes from "../types/vscodes";
 import * as manager from "./fileItemManager";
 import * as folders from "./foldersProviderHelper";
+import * as clipboard from "./clipboardManager";
 import { KeybindingsService } from "./keybindingsService";
 import { CommandRegistrator } from "./commandRegistrator";
 import { FilesViewDecorator } from "./filesViewDecorator";
@@ -304,7 +305,8 @@ export class OnlyFiles {
     const all = Promise.all(allowed.map((uri) => manager.createFileItem(uri)));
     const items = await all;
     const hide = add !== true;
-    for (const item of items) {
+    for (const item of items)
+    {
       this.foldersViewProvider.prepareState(item);
       this.foldersViewProvider.prepareLabel(item);
       hide ? await this.onlyFilesViewProvider.removeFileItem(item)
@@ -320,8 +322,8 @@ export class OnlyFiles {
   ): Promise<void> {
     if (add && it instanceof EmptyFolderItem) { return; }
     if (add && !this.foldersViewProvider.canBeCreated(it as vscode.Uri)) {
-      return;
-    }
+      return; }
+
     const item = it instanceof FileItem ? it : await manager.createFileItem(it);
     {
       this.foldersViewProvider.prepareState(item); 
@@ -508,8 +510,9 @@ export class OnlyFiles {
 
   private subscribeAddFromExplorer() {
     const addFromExplorer = vscode.commands.registerCommand(
-      brand.addItemFromExplorer, async (uri) =>
-        await this.addOrHideOnOnlyFiles(getUriFrom(uri), true));
+      brand.addItemFromExplorer, async (uriOr) => {
+        const uri = uriOr ?? await clipboard.readFilePath();
+        await this.addOrHideOnOnlyFiles(getUriFrom(uri), true); });
     this.context.subscriptions.push(addFromExplorer);
   }
 
@@ -600,23 +603,27 @@ export class OnlyFiles {
       ExtensionBrandResolver.webview,
       this.previewProvider
     );
-    const preview = vscode.commands.registerCommand(brand.previewItem,
-      async (uriOr) => {
-        const  uri = uriOr ?
-          getUriFrom(uriOr)
-        : getUriFrom(this.getSelectedUris(true)?.[0]);
+    const preview = async (uriOr: unknown): Promise<void> => {
+      const uri =  uriOr ?
+        getUriFrom(uriOr)
+      : getUriFrom(this.getSelectedUris(true)?.[0]);
 
-        if (!this.previewProvider.canBeShownAsWebView()) {
-          await vscode.commands.executeCommand(brand.focus("Preview"));
-        }
-        await this.previewProvider.showAsWebView(uri);
-        if (this.foldersTreeView.visible) {
-          await vscode.commands.executeCommand(brand.focus("Files"));
+      if (!this.previewProvider.canBeShownAsWebView()) {
+        await vscode.commands.executeCommand(brand.focus("Preview"));
+      }
+      await this.previewProvider.showAsWebView(uri);
+      if (this.foldersTreeView.visible) {
+        await vscode.commands.executeCommand(brand.focus("Files"));
 
-          this.foldersViewProvider.trySelectByUri(uri);
-        }
-      });
-    this.context.subscriptions.push(provider, preview);
+        this.foldersViewProvider.trySelectByUri(uri);
+      }
+    };
+    const viewer1 = brand.previewItem, viewer2 = brand.previewItemFromTab;
+    const preview1 = vscode.commands.registerCommand(viewer1,(u) => preview(u));
+    const preview2 = vscode.commands.registerCommand(viewer2, () => {
+      const uri = vscode.window.activeTextEditor?.document.uri;
+      uri && preview(uri); });
+    this.context.subscriptions.push(provider, preview1, preview2);
   }
 
   private subscribeCleanOnlyView() {

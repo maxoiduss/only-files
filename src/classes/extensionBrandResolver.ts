@@ -6,14 +6,14 @@ const resolver  = "only-files"     as const;
 const container = "files-explorer" as const;
 
 const branch = "redesign" as const;
-const link175: string =
+const link183: string =
   "https://github.com/maxoiduss/only-files/" +
   `blob/${branch}/src/classes/`              +
-  "extensionBrandResolver.ts#L175";
-const link193: string =
+  "extensionBrandResolver.ts#L183";
+const link201: string =
   "https://github.com/maxoiduss/only-files/" +
   `blob/${branch}/src/classes/`              +
-  "extensionBrandResolver.ts#L193";
+  "extensionBrandResolver.ts#L201";
 
 const validate = (entries: string[], on: Set<string>): boolean => {
   return entries.every((entry) => on.has(entry));
@@ -85,25 +85,28 @@ export class ExtensionBrandResolver {
   }
 
   private setupBrand() {
+    /// all names are duplication from its values
     const focus = "focus";
     const name = ExtensionBrandResolver.command;
-    brand.setContext = "setContext";
     brand.show = `${name}.show`;
     brand.hide = `${name}.hide`;
+    brand.openFolder = `${name}.openFolder`;
+    brand.closeFolder = `${name}.closeFolder`;
+    brand.getSelected = `${name}:getSelected`;
+    brand.setSelected = `${name}:setSelected`;
     brand.addItemFromTabMenu = `${name}.addItemFromTabMenu`;
     brand.removeItemFromTabMenu = `${name}.removeItemFromTabMenu`;
     brand.addItemFromCommand = `${name}.addItemFromCommand`;
     brand.removeItemFromCommand = `${name}.removeItemFromCommand`;
     brand.addItemFromExplorer = `${name}.addItemFromExplorer`;
-    brand.openFolder = `${name}.openFolder`;
-    brand.closeFolder = `${name}.closeFolder`;
+    brand.previewItemFromTab = `${name}.previewItemFromTab`;
+    brand.previewItem = `${name}.previewItem`;
     brand.revealInSidebar = `${name}.revealInSidebar`;
     brand.revealInExplorer = "revealInExplorer";
     brand.refuseMarked = `${name}.refuse`;
     brand.collectMarked = `${name}.collect`;
     brand.collapseFolder = `${name}.collapseFolder`;
     brand.uncollapseAll = `${name}.uncollapseAll`;
-    brand.previewItem = `${name}.previewItem`;
     brand.removeAll = `${name}.removeAll`;
     brand.remark = `${name}.remark`;
     brand.ignore = `${name}.ignore`;
@@ -122,8 +125,8 @@ export class ExtensionBrandResolver {
     brand.refreshOnlyFiles = `${name}.refreshOnlyFiles`;
     brand.refreshSortedOnlyFiles = `${name}.refreshSortedOnlyFiles`;
     brand.manageWatcherExclude = `${name}.manageWatcherExclude`;
-    brand.getSelected = `${name}:getSelected`;
-    brand.setSelected = `${name}:setSelected`;
+    brand.copyFilePath = "copyFilePath";
+    brand.setContext = "setContext";
     brand.restore = `${name}.restore`;
     brand.isActive = `${name}:isActive`;
     brand.isIgnored = `${name}:isIgnored`;
@@ -189,7 +192,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...branding], on);
     if  (!validated) {
-      this.showError("validateSetup failed", link175);
+      this.showError("validateSetup failed", link183);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN BRANDING");
     }
     this.validateCommandRegistration(on);
@@ -202,7 +205,7 @@ export class ExtensionBrandResolver {
     );
     const validated = validate([...registration], on);
     if  (!validated) {
-      this.showError("validateCommandRegistration failed", link193);
+      this.showError("validateCommandRegistration failed", link201);
       throw new Error("PACKAGE.JSON DOESN'T CONTAIN REGISTRATION");
     }
   }

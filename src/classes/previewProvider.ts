@@ -1,6 +1,7 @@
 import * as vscodes from "../types/vscodes";
 import * as marked from "marked";
 import * as helper from "./previewProviderHelper";
+import * as clipboard from "./clipboardManager";
 import { brand } from "./extensionBrandResolver";
 import { WebviewView } from "vscode";
 import { KeybindingsService } from "./keybindingsService";
@@ -181,7 +182,7 @@ export class PreviewProvider implements
     }
 
     if (result === copy) {
-      await vscode.env.clipboard.writeText(pathe); }
+      await clipboard.writeText(pathe); }
     else {
       if (showSettings && result === ok) {
         await vscode.commands.executeCommand(
