@@ -33,6 +33,8 @@ export class ExtensionStaticService {
   public static renameTolerance: number;
   public static plainMode: boolean = false;
 
+  public static context: vscode.ExtensionContext;
+
   public static showExtensionExtraWarnings:  boolean = true;
   public static copyFileContentOnSingleCopy: boolean = true;
   public static showEmptyUncollapsedFolders: boolean = true;

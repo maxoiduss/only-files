@@ -7,6 +7,8 @@ export function activate(context: vscode.ExtensionContext) {
   const brandResolver = new ExtensionBrandResolver();
   brandResolver.resolve();
 
+  ExtensionStaticService.context = context;
+
   const onlyFiles = new OnlyFiles(context);
   onlyFiles.subscribe();  
 }
