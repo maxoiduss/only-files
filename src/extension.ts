@@ -4,13 +4,17 @@ import { ExtensionBrandResolver } from "./classes/extensionBrandResolver";
 import { ExtensionStaticService } from "./classes/extensionStaticService";
 
 export function activate(context: vscode.ExtensionContext) {
+  ExtensionStaticService.context = context;
+
   const brandResolver = new ExtensionBrandResolver();
   brandResolver.resolve();
 
-  ExtensionStaticService.context = context;
-
   const onlyFiles = new OnlyFiles(context);
-  onlyFiles.subscribe();  
+  onlyFiles.subscribe();
+
+  return { // eslint-disable-next-line @typescript-eslint/naming-convention
+    ExtensionBrandResolver, ExtensionStaticService
+  };
 }
 
 export function deactivate() {

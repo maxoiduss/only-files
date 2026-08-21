@@ -20,6 +20,7 @@ const names: {
 export class ExtensionStaticService {
   private static readonly disposables: vscode.Disposable[] = [];
 
+  public static readonly id: number = Date.now();
   public static readonly fsThrottling: number = 180            as const;
   public static readonly fsExclusion: string  = "**/.git/**"   as const;
   public static readonly resourcesFolder: string = 'resources' as const;

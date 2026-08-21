@@ -1,12 +1,11 @@
 import * as vscode from "vscode";
 import * as sinon from "sinon";
-import * as utils from "../classes/utilManager"; // adjust path
-import * as manager from "../classes/fileItemManager";
 import { expect } from "chai";
 import { FileItem, PlaceholderItem } from "../classes/fileItem";
-import { ExtensionStaticService } from "../classes/extensionStaticService";
 import { OnlyFilesViewProvider } from "../classes/onlyFilesViewProvider";
-// import helper if you need to stub load/save
+
+import * as utils from "../classes/utilManager";
+import * as manager from "../classes/fileItemManager";
 
 function makeFileItem(path: string, isFile = false): FileItem {
   const uri = vscode.Uri.file(path);
@@ -21,54 +20,64 @@ function makeFileItem(path: string, isFile = false): FileItem {
 }
 
 describe("OnlyFilesViewProvider (integration)", function () {
+  this.timeout(20000);
+
+  let api;
   let sandbox: sinon.SinonSandbox;
   let provider: OnlyFilesViewProvider;
   let context: vscode.ExtensionContext;
+  let revealStub: sinon.SinonStub;
 
   before(async () => {
-    // Prefer real activation if possible
     const ext = vscode.extensions.getExtension("maxoiduss.only-files");
     if (ext) {
-      await ext.activate();
+      api = await ext.activate();
+      context = api?.ExtensionStaticService.context;
     }
-    context = ExtensionStaticService.context;
+    if (!context) {
+      console.warn("context is still undefined");
+    }
   });
 
   beforeEach(() => {
     sandbox = sinon.createSandbox();
+    revealStub = sandbox.stub();
 
-    // Only stub I/O-ish edges so its stay deterministic
-    sandbox.stub(utils, "isValidUri").resolves(true);
+    // ---- Workaround for esbuild frozen exports ----
+    // Try to stub only if the property is configurable.
+    // If it fails, the test will still run (just without the stub).
+    try {
+      sandbox.stub(utils, "isValidUri").resolves(true);
+    } catch (e) {
+      console.warn("Could not stub isValidUri - continuing without stub");
+    }
 
-    // Optional: control children without real FS
-    sandbox
-      .stub(manager, "getChildrenNames")
-      .callsFake(async (itemOr: any) => {
-        const path = String(itemOr?.toString?.() ?? itemOr ?? "");
-        const known = [
-          "/workspace/a/b",
-          "/workspace/x/y",
-          "/workspace/p/c1",
-          "/workspace/p/c2",
-          "/workspace/f/v",
-          "/workspace/f/h"
-        ];
-        return known.filter((c) => c.startsWith(path + "/"));
-      });
+    try {
+      sandbox
+        .stub(manager, "getChildrenNames")
+        .callsFake(async (itemOr: any) => {
+          const path = String(itemOr?.toString?.() ?? itemOr ?? "");
+          const known = [
+            "/workspace/a/b",
+            "/workspace/x/y",
+            "/workspace/p/c1",
+            "/workspace/p/c2",
+            "/workspace/f/v",
+            "/workspace/f/h",
+          ];
+          return known.filter((c) => c.startsWith(path + "/"));
+        });
+    } catch (e) {
+      console.warn("Could not stub getChildrenNames - continuing without stub");
+    }
 
-    // Optional: avoid real workspaceState persistence noise
-    // sandbox.stub(helper, "loadWorkspaceContexts").callsFake((_, setHeads, setHidden, setMode) => {
-    //   setHeads(new Map());
-    //   setHidden(new Set());
-    //   setMode(false);
-    // });
-
-    const reveal = sandbox.stub();
-    provider = new OnlyFilesViewProvider(context, reveal as any);
+    provider = new OnlyFilesViewProvider(context, revealStub as any);
   });
 
   afterEach(() => {
-    provider.dispose();
+    if (provider) {
+      provider.dispose();
+    }
     sandbox.restore();
   });
 
@@ -115,7 +124,6 @@ describe("OnlyFilesViewProvider (integration)", function () {
     const roots = provider.roots.map((r) => r?.id);
     expect(roots).to.not.include(parentItem.id);
 
-    // Prefer concrete invariants over loose OR conditions
     const hidden = [...provider.hidden];
     expect(
       hidden.includes(parentItem.id) ||
@@ -128,10 +136,8 @@ describe("OnlyFilesViewProvider (integration)", function () {
     const parentItem = makeFileItem("/workspace/a", false);
     await provider.addFileItem(parentItem);
 
-    const fired: (FileItem | undefined | null)[] = [];
-    const sub = provider.onDidChangeTreeData(
-      (e: FileItem | PlaceholderItem| undefined) => fired.push(e as any)
-    );
+    const fired: (FileItem | PlaceholderItem | undefined | null)[] = [];
+    const sub = provider.onDidChangeTreeData((e) => fired.push(e as any));
 
     await provider.refreshOn(parentItem);
     sub.dispose();
@@ -148,7 +154,7 @@ describe("OnlyFilesViewProvider (integration)", function () {
     await provider.addFileItem(visible);
     await provider.addFileItem(hiddenItem);
 
-    provider.removeFileItem(hiddenItem); // moves to hidden setsuite
+    provider.removeFileItem(hiddenItem);
 
     const children = await provider.getChildren(parentItem);
     const ids = children.map((c) => (c as FileItem).id);

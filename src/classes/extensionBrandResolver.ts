@@ -431,7 +431,7 @@ export class ExtensionBrandResolver {
       ExtensionBrandResolver.instance.commandsJSON      = [];
       ExtensionBrandResolver.instance.viewsJSON         = [];
     }
-    catch (error) { LogService.console.trace(error as string); }
+    catch (error) { LogService.error(error); }
     const self = ExtensionBrandResolver as any;
     if (self) { self.instance = undefined; }
   }

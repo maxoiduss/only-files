@@ -44,11 +44,14 @@ const metaPlugin = {
 const sharedOptions = {
   bundle: true,                         /// bundle dependencies
   platform: isWeb ? 'browser' : 'node', /// VS Code extensions run in Node
-  target: 'es2024',                     /// match VS Code’s runtime (es2024)
   format: 'cjs',
   external: [
     'vscode',                           /// keep VS Code API external
-    '@vscode/test-electron'
+    'mocha',
+    "sinon",
+    "chai",
+    '@vscode/test-electron',
+    '@vscode/test-cli'
   ],
   plugins: [
     metaPlugin,
@@ -64,8 +67,10 @@ const sharedOptions = {
   minify: false                         /// usually off for extensions
 };
 
-const buildOptions = async () => { return {
+const buildOptions = async () => {
+  return {
   ...sharedOptions,
+  target: 'es2024',
   mainFields: isWeb ? [
     'browser',
     'module',
@@ -74,8 +79,8 @@ const buildOptions = async () => { return {
   entryPoints: [
     'src/extension.ts'
   ],
-  outfile: `${outDir}/extension${isWeb ? ".web.js" : ".js"}`
-}; };
+  outfile: `${outDir}/extension${isWeb ? ".web.js" : ".js"}` };
+};
 
 const testsOptions = async () => {
   const tests = await glob("src/tests/**/*.test.ts");
@@ -83,11 +88,17 @@ const testsOptions = async () => {
   return {
   ...sharedOptions,
   entryPoints: tests,
+  format: "cjs",
+  target: "es2022",
   outdir: "dist/tests",
+  mainFields: ['main'],
   banner: {
-    js: 'const vscode = require("vscode");\n',
-  }
-}; };
+    js: `
+      var vscode = require("vscode");
+      globalThis.vscode = vscode;
+    ` }
+  };
+};
 
 const run = () => isTests ? testsOptions() : buildOptions();
 const see = `${isWeb ? 'WEB' : 'DESKTOP'}`;

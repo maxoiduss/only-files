@@ -8,7 +8,7 @@ const dirname = path.dirname(filename);
 async function main(): Promise<void> {
   try {
     const extensionDevelopmentPath = path.resolve(dirname, '..', '..');
-    const extensionTestsPath = path.resolve(dirname, 'suite', 'index');
+    const extensionTestsPath = path.resolve(dirname, 'units', 'index.ts');
 
     await runTests({
       extensionDevelopmentPath,

@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { fileURLToPath } from 'url';
 import Mocha from 'mocha';
+import { fileURLToPath } from 'url';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -15,6 +15,7 @@ export async function run(): Promise<void> {
 
   const testsRoot = dirname;
   const testFiles = collectTestFiles(testsRoot);
+  console.log("TEST FILES: " + testFiles.join(" | "));
 
   for (const file of testFiles) {
     mocha.addFile(file);
@@ -39,7 +40,7 @@ function collectTestFiles(dir: string): string[] {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       files.push(...collectTestFiles(fullPath));
-    } else if (entry.isFile() && entry.name.endsWith('.test.js')) {
+    } else if (entry.isFile() && entry.name.endsWith('.test.ts')) {
       files.push(fullPath);
     }
   }

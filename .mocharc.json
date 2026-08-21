@@ -1,7 +1,0 @@
-{
-  "spec": "src/tests/**/*.test.ts",
-  "extension": ["ts"],
-  "timeout": 5000,
-  "recursive": true,
-  "ignore": ["src/tests/suite/**"]
-}

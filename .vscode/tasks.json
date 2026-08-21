@@ -17,7 +17,7 @@
       "label": "es-build-desk",
       "icon": { "id": "build", "color": "terminal.ansiGreen" },
       "type": "npm",
-      "script": "build-desk",
+      "script": "builddesk",
       "isBackground": true,
       "presentation": {
         "reveal": "never"
@@ -47,11 +47,37 @@
       "label": "es-build-web",
       "icon": { "id": "build", "color": "terminal.ansiYellow" },
       "type": "npm",
-      "script": "build-web",
+      "script": "buildweb",
       "isBackground": true,
       "presentation": {
         "reveal": "never"
       },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": {
+        "owner": "esbuild",
+        "source": "esbuild",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^$",
+          "file": 1,
+          "location": 2,
+          "message": 3
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "\\[watch\\] build started",
+          "endsPattern": "\\[watch\\] build finished"
+        }
+      }
+    },
+    {
+      "label": "es-build-test",
+      "type": "npm",
+      "script": "buildtest",
+      "presentation": { "reveal": "silent" },
       "group": {
         "kind": "build",
         "isDefault": true
@@ -94,6 +120,19 @@
       }
     },
     {
+      "label": "unit-test",
+      "icon": { "id": "check-all", "color": "terminal.ansiMagenta" },
+      "type": "npm",
+      "script": "unittest",
+      "presentation": {
+        "reveal": "always"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
       "label": "npm-run-desk",
       "dependsOrder": "sequence",
       "dependsOn": [
@@ -108,6 +147,26 @@
       "dependsOn": [
         "ts-check",
         "es-build-web"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "npm-run-test-desk",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "es-build-desk",
+        "es-build-test",
+        "unit-test"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "npm-run-test-web",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "es-build-web",
+        "es-build-test",
+        "unit-test"
       ],
       "problemMatcher": []
     }
