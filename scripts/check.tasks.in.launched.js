@@ -2,7 +2,6 @@
 /// finds tasks in the first and check existence in the second.
 /// Writes the result to TASKS.md
 const fs = require('fs');
-const path = require('path');
 
 let strippedLines = 0;
 
@@ -58,3 +57,4 @@ const entries = [];
 });
 
 fs.writeFileSync('.vscode/TASKS.md', `# Task links\n\n${entries.join('\n')}\n`);
+fs.appendFileSync('.vscode/TASKS.md', `## All Tasks\n\n- ${[...labels].join('\n- ')}\n`);

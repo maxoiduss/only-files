@@ -20,6 +20,7 @@ const names: {
 export class ExtensionStaticService {
   private static readonly disposables: vscode.Disposable[] = [];
 
+  public static readonly id: number = Date.now();
   public static readonly fsThrottling: number = 180            as const;
   public static readonly fsExclusion: string  = "**/.git/**"   as const;
   public static readonly resourcesFolder: string = 'resources' as const;
@@ -32,6 +33,8 @@ export class ExtensionStaticService {
   public static clickTolerance:  number;
   public static renameTolerance: number;
   public static plainMode: boolean = false;
+
+  public static context: vscode.ExtensionContext;
 
   public static showExtensionExtraWarnings:  boolean = true;
   public static copyFileContentOnSingleCopy: boolean = true;

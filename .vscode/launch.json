@@ -62,17 +62,24 @@
       "sourceMaps": true
     },
     {
-      "name": "Run Extension Tests",
+      "name": "Run Unit Tests",
       "type": "extensionHost",
       "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/tests/**/*.js"],
+      "preLaunchTask": "${input:pickBuildTask}"
+    },
+    {
+      "name": "Run Integration Tests",
+      "type": "extensionHost",
+      "request": "launch",
+      "testConfiguration": "${workspaceFolder}/.vscode-test.mjs",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}",
-        "--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+        "--extensionDevelopmentPath=${workspaceFolder}"
       ],
       "outFiles": [
-        "${workspaceFolder}/out/tests/**/*.js"
-      ],
-      "preLaunchTask": "${defaultBuildTask}"
+        "${workspaceFolder}/dist/tests/**/*.js"
+      ]
     },
     {
       "name": "Attach to VS Code",
@@ -84,6 +91,18 @@
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
       "localRoot": "${workspaceFolder}",
       "remoteRoot": "${workspaceFolder}"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "pickBuildTask",
+      "type": "pickString",
+      "description": "Which build task do you want to run first?",
+      "options": [
+        "npm-run-test-desk",
+        "npm-run-test-web"
+      ],
+      "default": "npm-run-test-desk"
     }
   ]
 }
