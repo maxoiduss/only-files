@@ -56,11 +56,11 @@ export class OnlyFilesViewProvider implements
       .filter((vertex) => vertex.isRootOn(this.vertices));
   }
 
-  public get roots(): (FileItem | undefined)[] { /// used by tests
+  public get roots(): (FileItem | undefined)[] {
     return this.heads.map((v) => v.item);
   }
   
-  public hidden: Set<string> = new Set(); /// used by tests
+  public hidden: Set<string> = new Set();
 
   private sorted: boolean = false;
   private vertices: Map<string, Vertex> = new Map();
@@ -172,8 +172,8 @@ export class OnlyFilesViewProvider implements
   }
 
   private async createParent(vert: Vertex, hiddenId?: string): Promise<void> {
-    const parentVert = new Vertex(vert.parent);
-    const parentId = await parentVert.getId();
+    const parentId = getUri(vert.parent).toString();
+    const parentVert = new Vertex(parentId);
     
     if (parentId === helper.dot) { return; }
     if (!this.vertices.has(parentId)) {
@@ -205,25 +205,36 @@ export class OnlyFilesViewProvider implements
     const canCreate = vert.children.length === 0 || force;
     const shouldCreate = vert.isFolder() && canCreate;
     if (shouldCreate) {
-      await vert.createChildren(); }
-
+      await vert.createChildren();
+      if (vert.children.length === 0) {
+        await vert.gatherChildrenOn(this.vertices);
+      }
+    }
     if (this.isDisposed) { return; }
 
     await this.cleanupQueue;
 
-    let unchanged = true;
-    const allowed = vert.children.filter((child) => !this.hidden.has(child));
-    const children = await Promise.all(allowed.map(async (child) => {
-      const exist = this.vertices.get(child);
-      if (exist) {
-        exist.parent = await vert.getId();
+    await this.setupChildren(vert);
+  }
 
+  private async setupChildren(vertex: helper.Vertex): Promise<void> {
+    let unchanged = true;
+    const allowed = vertex.children.filter((child) => !this.hidden.has(child));
+    const children = await Promise.all(allowed.map(async (child) => {
+      const childId = getUri(child).toString();
+      const exist = this.vertices.get(childId);
+      if (exist) {
+        exist.parent = await vertex.getId();
+        if (!exist.item) {
+          await exist.getId();
+        }
         return exist;
       }
       unchanged = false;
 
-      return new Vertex(child);
+      return new Vertex(childId);
     }));
+
     if (!unchanged) {
       for (const childVertex of children) {
         const id = await childVertex.getId();
@@ -251,9 +262,13 @@ export class OnlyFilesViewProvider implements
   }
 
   private pushById(id: string, where: [string, number][]) {
+    if (this.isDisposed) { return; }
+
     const vertex = this.vertices.get(id);
     if (vertex) {
       for (const childId of vertex.children) {
+        if (this.isDisposed) { break; }
+
         this.pushById(childId, where);
       };
       where.push([id, this.pushing(id)]);
@@ -268,7 +283,7 @@ export class OnlyFilesViewProvider implements
         vertex.removeChild(childId);
       };
       let parent = this.vertices.get(vertex.parent);
-      if (parent) {
+      if (parent && !this.hidden.has(id)) {
         parent.removeChild(id);
       }
       this.delete(id).fromVertices();
@@ -377,6 +392,7 @@ export class OnlyFilesViewProvider implements
     this.addonQueue = this.addonQueue?.then(async () => {
       await this.cleanupQueue;
 
+      fileItem.setUri(getUri(fileItem.id));
       const exist = this.vertices.get(fileItem.id);
       const root = exist ?? new Vertex(fileItem);
       await root.validateState();
@@ -402,17 +418,18 @@ export class OnlyFilesViewProvider implements
     itemOrUri: FileItem | vscode.Uri,
     canBeHidden: boolean = true
   ) {
-    const rootId = itemOrUri instanceof FileItem ?
+    const id = itemOrUri instanceof FileItem ?
       itemOrUri.id : itemOrUri.toString(); 
+    const rootId = getUri(id).toString();
     const root = this.vertices.get(rootId);
     if (!root) { return; }
-    
-    this.removeById(rootId);
 
-    if (canBeHidden) {
-      if (!root.isRootOn(this.vertices)) {
-        this.add(rootId).toHidden();
-      } }
+    if (canBeHidden && !root.isRootOn(this.vertices)) {
+      this.add(rootId).toHidden();
+      root.children.forEach((child) => this.removeById(child));
+      this.delete(rootId).fromVertices(); }
+    else {
+      this.removeById(rootId); }
   }
 
   public async removeAllParents(element: FileItem): Promise<void> {

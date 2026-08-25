@@ -1,12 +1,13 @@
 import { assert } from 'chai';
 import { suite, test } from 'mocha';
+import { extension } from "../helpers/name";
 
 suite('Only Files extension smoke tests', () => {
   test('extension is installed and activates', async () => {
-    const extension = vscode.extensions.getExtension('maxoiduss.only-files');
-    assert.isDefined(extension, "extension not exists");
+    const ext = vscode.extensions.getExtension(extension);
+    assert.isDefined(ext, "extension not exists");
 
-    await extension.activate();
-    assert.strictEqual(extension.isActive, true, "extension.isActive is false");
+    await ext.activate();
+    assert.strictEqual(ext.isActive, true, "extension.isActive is false");
   });
 });

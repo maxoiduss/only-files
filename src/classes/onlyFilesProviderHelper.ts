@@ -162,17 +162,25 @@ export class Vertex {
     }
   }
 
+  public removeChild(child: string) {
+    this.childrenSet.delete(child);
+  }
+
   public async createChildren(): Promise<void> {
     const children = await manager.getChildrenNames(this.item || this.id);
     children.forEach((child) => this.childrenSet.add(child));
   };
 
-  public removeChild(child: string) {
-    this.childrenSet.delete(child);
+  public async gatherChildrenOn(vertices: Map<string, Vertex>): Promise<void> {
+    const parentId = await this.getId();
+    for (const [id, vertex] of vertices) {
+      if (vertex.parent === parentId) {
+        this.childrenSet.add(id); }
+    }
   }
 
-  public isRootOn(leaves: Map<string, Vertex>): boolean {
-    return !leaves.has(this.parent);
+  public isRootOn(vertices: Map<string, Vertex>): boolean {
+    return !vertices.has(this.parent);
   }
 
   public isFolder(): boolean | undefined {

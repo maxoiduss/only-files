@@ -5,11 +5,12 @@ import { ExtensionStaticService } from "./extensionStaticService";
 import { CancellationTokenSource as CTS } from "vscode";
 import { LogService as Log, LogService } from "./logService";
 
-const normalize = true as const;
 const dot = '.'        as const;
 const empty = ''       as const;
 const scheme = '://'   as const;
 const slashes = /\\/g;
+
+const normalize = ExtensionStaticService.normalize;
 
 const configuration = () => ExtensionBrandResolver.configuration;
 const countdown     = () => ExtensionBrandResolver.number3Property;

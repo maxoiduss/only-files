@@ -1,13 +1,14 @@
 import * as vscode from "vscode";
 import * as sinon from "sinon";
 import { expect } from "chai";
+import { extension } from "./helpers/name";
 import { FileItem, PlaceholderItem } from "../classes/fileItem";
 import { OnlyFilesViewProvider } from "../classes/onlyFilesViewProvider";
 
-import * as utils from "../classes/utilManager";
-import * as manager from "../classes/fileItemManager";
+import * as utils from "./helpers/utils";
+import * as manager from "./helpers/manager";
 
-function makeFileItem(path: string, isFile = false): FileItem {
+function initFileItem(path: string, isFile = false): FileItem {
   const uri = vscode.Uri.file(path);
   const label = path.split(/[/\\]/).pop() ?? path;
   const state = isFile
@@ -29,7 +30,7 @@ describe("OnlyFilesViewProvider (integration)", function () {
   let revealStub: sinon.SinonStub;
 
   before(async () => {
-    const ext = vscode.extensions.getExtension("maxoiduss.only-files");
+    const ext = vscode.extensions.getExtension(extension);
     if (ext) {
       api = await ext.activate();
       context = api?.ExtensionStaticService.context;
@@ -42,20 +43,16 @@ describe("OnlyFilesViewProvider (integration)", function () {
   beforeEach(() => {
     sandbox = sinon.createSandbox();
     revealStub = sandbox.stub();
-
-    // ---- Workaround for esbuild frozen exports ----
-    // Try to stub only if the property is configurable.
-    // If it fails, the test will still run (just without the stub).
     try {
-      sandbox.stub(utils, "isValidUri").resolves(true);
-    } catch (e) {
+      const isValidUri = utils.isValidUri as sinon.SinonStub;
+      isValidUri.resolves(true);
+    } catch (error) {
       console.warn("Could not stub isValidUri - continuing without stub");
     }
 
     try {
-      sandbox
-        .stub(manager, "getChildrenNames")
-        .callsFake(async (itemOr: any) => {
+      manager.getChildrenNames.callsFake(
+        async (itemOr: any) => {
           const path = String(itemOr?.toString?.() ?? itemOr ?? "");
           const known = [
             "/workspace/a/b",
@@ -72,10 +69,12 @@ describe("OnlyFilesViewProvider (integration)", function () {
     }
 
     provider = new OnlyFilesViewProvider(context, revealStub as any);
+    provider.clean();
   });
 
   afterEach(() => {
     if (provider) {
+      provider.clean();
       provider.dispose();
     }
     sandbox.restore();
@@ -85,10 +84,10 @@ describe("OnlyFilesViewProvider (integration)", function () {
     const parentPath = "/workspace/a";
     const childPath = "/workspace/a/b";
 
-    const childItem = makeFileItem(childPath, false);
+    const childItem = initFileItem(childPath, false);
     await provider.addFileItem(childItem);
 
-    const parentItem = makeFileItem(parentPath, false);
+    const parentItem = initFileItem(parentPath, false);
     await provider.addFileItem(parentItem);
 
     const roots = provider.roots.map((r) => r?.id);
@@ -100,8 +99,8 @@ describe("OnlyFilesViewProvider (integration)", function () {
   });
 
   it("add parent then child → child appears under parent", async () => {
-    const parentItem = makeFileItem("/workspace/x", false);
-    const childItem = makeFileItem("/workspace/x/y", false);
+    const parentItem = initFileItem("/workspace/x", false);
+    const childItem = initFileItem("/workspace/x/y", false);
 
     await provider.addFileItem(parentItem);
     await provider.addFileItem(childItem);
@@ -110,45 +109,79 @@ describe("OnlyFilesViewProvider (integration)", function () {
     expect(children.map((c) => (c as FileItem).id)).to.include(childItem.id);
   });
 
-  it("remove parent → parent not root; children handled via hidden", async () => {
-    const parentItem = makeFileItem("/workspace/p", false);
-    const c1 = makeFileItem("/workspace/p/c1", false);
-    const c2 = makeFileItem("/workspace/p/c2", false);
-
+  it("remove parent → parent not root; children removed also", async () => {
+    const parentItem = initFileItem("/workspace/p", false);
+    const c1 = initFileItem("/workspace/p/c1", false);
+    const c2 = initFileItem("/workspace/p/c2", false);
     await provider.addFileItem(parentItem);
     await provider.addFileItem(c1);
     await provider.addFileItem(c2);
 
-    provider.removeFileItem(parentItem);
+    let children = await provider.getChildren();
+    expect(children.length).to.be.greaterThan(0, "No children shown.");
+
+    children = await provider.getChildren(parentItem);
+    expect(children.length).to.be.equal(2, "Parent doesn't have both children");
+    
+    provider.removeFileItem(parentItem, false);
 
     const roots = provider.roots.map((r) => r?.id);
-    expect(roots).to.not.include(parentItem.id);
+    expect(roots).to.not.include(parentItem.id, "Parent hasn't been removed.");
 
-    const hidden = [...provider.hidden];
-    expect(
-      hidden.includes(parentItem.id) ||
-        hidden.includes(c1.id) ||
-        hidden.includes(c2.id)
-    ).to.equal(true);
+    const inRoots = roots.includes(c1.id) || roots.includes(c2.id);
+    expect(inRoots).to.equal(false);
+  });
+
+  it("remove child → appears in hidden; remove parent", async () => {
+    const parentItem = initFileItem("/workspace/p", false);
+    const c1 = initFileItem("/workspace/p/c1", false);
+    await provider.addFileItem(parentItem);
+    await provider.addFileItem(c1);
+
+    let children = await provider.getChildren();
+    expect(children.length).to.be.greaterThan(0, "No children shown.");
+
+    children = await provider.getChildren(parentItem);
+    expect(children.length).to.be.equal(1, "Child hasn't been added.");
+
+    provider.removeFileItem(c1);
+
+    children = await provider.getChildren(parentItem);
+    expect(children.length).to.be.equal(0, "Child hasn't been removed.");
+
+    const hidden = provider.hidden;
+    expect(hidden.size).to.be.equal(1, "Child isn't hidden");
+    expect(hidden.has(c1.id)).to.be.equal(true);
+
+    provider.removeFileItem(parentItem, false);
+
+    children = await provider.getChildren();
+    children = children.filter((child) => !(child instanceof PlaceholderItem));
+    expect(children.length).to.be.equal(0, "Child hasn't been removed.");
+
+    const roots = provider.roots.map((r) => r?.id);
+    expect(roots.length).to.be.equal(0, "Elements haven't been removed.");
+    expect(hidden.size).to.be.equal(0, "Hidden is not empty after removal.");
   });
 
   it("refresh fires onDidChangeTreeData", async () => {
-    const parentItem = makeFileItem("/workspace/a", false);
+    const parentItem = initFileItem("/workspace/a", false);
     await provider.addFileItem(parentItem);
 
     const fired: (FileItem | PlaceholderItem | undefined | null)[] = [];
     const sub = provider.onDidChangeTreeData((e) => fired.push(e as any));
 
     await provider.refreshOn(parentItem);
+    await utils.sleep(250);
     sub.dispose();
 
     expect(fired.length).to.be.greaterThan(0);
   });
 
   it("getChildren filters hidden children", async () => {
-    const parentItem = makeFileItem("/workspace/f", false);
-    const visible = makeFileItem("/workspace/f/v", false);
-    const hiddenItem = makeFileItem("/workspace/f/h", false);
+    const parentItem = initFileItem("/workspace/f", false);
+    const visible = initFileItem("/workspace/f/v", false);
+    const hiddenItem = initFileItem("/workspace/f/h", false);
 
     await provider.addFileItem(parentItem);
     await provider.addFileItem(visible);

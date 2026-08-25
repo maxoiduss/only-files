@@ -1,5 +1,6 @@
 const { glob } = require("glob");
 const esbuild = require('esbuild');
+const path = require('path');
 const fs = require('fs');
 
 const outDir = 'dist';
@@ -9,6 +10,45 @@ const isTests = process.argv.includes('--tests');
 const isWatch = process.argv.includes('--watch');
 const isWeb   = process.argv.includes('--web')
              || process.env.BUILD_TARGET === 'web';
+
+const testStubsImportMap = {
+  'utilManager': './src/tests/helpers/utils.ts',
+  'fileItemManager': './src/tests/helpers/manager.ts'
+};
+
+const aliasImportPlugin = {
+  name: 'alias-import-map',
+  setup(build) {
+    const { basenameToMock, mockAbsolutePaths } = (() => {
+      const basenameToMock = new Map();
+      const mockAbsolutePaths = new Set();
+
+      for (const [origRel, mockRel] of Object.entries(testStubsImportMap)) {
+        const basename = path.basename(origRel, path.extname(origRel));
+        const mockAbs = path.resolve(__dirname, mockRel);
+        basenameToMock.set(basename, mockAbs);
+        mockAbsolutePaths.add(mockAbs);
+      }
+      return { basenameToMock, mockAbsolutePaths };
+    })();
+
+    const filter = new RegExp(
+      `(${[...basenameToMock.keys()].join('|')})(\\.ts|\\.js)?$`
+    );
+
+    build.onResolve({ filter }, (args) => {
+      if (args.importer && mockAbsolutePaths.has(args.importer)) {
+        return;
+      }
+
+      const base = path.basename(args.path, path.extname(args.path));
+      const mockPath = basenameToMock.get(base);
+      if (mockPath) {
+        return { path: mockPath };
+      }
+    });
+  },
+};
 
 const esbuildProblemMatcherPlugin = {
   name: 'esbuild-problem-matcher',
@@ -53,10 +93,6 @@ const sharedOptions = {
     '@vscode/test-electron',
     '@vscode/test-cli'
   ],
-  plugins: [
-    metaPlugin,
-    esbuildProblemMatcherPlugin
-  ],
   metafile: true,                       /// generate metadata for analysis
   conditions: isWeb ? [                 /// ensure node-specific code is used
     'browser'
@@ -76,6 +112,10 @@ const buildOptions = async () => {
     'module',
     'main'
   ] : ['main'],
+  plugins: [
+    metaPlugin,
+    esbuildProblemMatcherPlugin
+  ],
   entryPoints: [
     'src/extension.ts'
   ],
@@ -92,7 +132,12 @@ const testsOptions = async () => {
   target: "es2022",
   outdir: "dist/tests",
   mainFields: ['main'],
-  banner: {
+  plugins: [
+    metaPlugin,
+    aliasImportPlugin,                  /// replace original funcs by mocked
+    esbuildProblemMatcherPlugin
+  ],
+  banner: {                             /// inject vscode variable globally
     js: `
       var vscode = require("vscode");
       globalThis.vscode = vscode;
@@ -104,7 +149,8 @@ const run = () => isTests ? testsOptions() : buildOptions();
 const see = `${isWeb ? 'WEB' : 'DESKTOP'}`;
 
 if (isWatch) {
-  run().then((options) => esbuild.context(options))
+  run()
+    .then((options) => esbuild.context(options))
     .then((context) => {
       console.log(
         `[esbuild] Watching for ${see} changes...`);
@@ -112,7 +158,8 @@ if (isWatch) {
     })
     .catch((err) => { console.error(err); process.exit(1); });
 } else {
-  run().then((options) => esbuild.build(options))
+  run()
+    .then((options) => esbuild.build(options))
     .then(() => {
       console.log(
         `[esbuild] ${see} single build complete.`);

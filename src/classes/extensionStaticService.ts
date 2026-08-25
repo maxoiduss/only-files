@@ -21,6 +21,8 @@ export class ExtensionStaticService {
   private static readonly disposables: vscode.Disposable[] = [];
 
   public static readonly id: number = Date.now();
+
+  public static readonly normalize: boolean = true             as const;
   public static readonly fsThrottling: number = 180            as const;
   public static readonly fsExclusion: string  = "**/.git/**"   as const;
   public static readonly resourcesFolder: string = 'resources' as const;
@@ -49,7 +51,7 @@ export class ExtensionStaticService {
 
   public static cacheRemoval: (id: string) => void;
 
-  public static withId = (id: unknown) => `@ext:${id}`;
+  public static withId = (id: unknown) => `@ext:${id}` as const;
 
   public static updateTolerances(event?: vscode.ConfigurationChangeEvent) {
     names.clickTolerance ??=`${configuration()}.${clickToleranceProperty()}`;

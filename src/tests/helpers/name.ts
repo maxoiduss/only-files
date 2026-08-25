@@ -1,0 +1,1 @@
+export const extension: string = "maxoiduss.only-files" as const;
