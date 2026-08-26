@@ -1,1 +1,1 @@
-export const extension: string = "maxoiduss.only-files" as const;
+export const extension = "maxoiduss.only-files";

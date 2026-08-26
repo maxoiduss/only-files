@@ -847,14 +847,14 @@
     "pretest": "npm run compile && npm run lint",
     "test": "npm run pretest && npm run tstest",
     "compile": "tsc -p ./",
-    "builddesk": "node ./esbuild.config.js --watch",
-    "buildweb": "node ./esbuild.config.js --watch --web",
-    "buildtest": "node ./esbuild.config.js --tests",
+    "builddesk": "node --env-file=./vars/.env ./esbuild.config.js --watch",
+    "buildweb": "node --env-file=./vars/.env ./esbuild.config.js --watch --web",
+    "buildtest": "node --env-file=./vars/.env.test ./esbuild.config.js --tests",
     "package": "vsce package",
     "onlybuild": "node ./esbuild.config.js",
     "check": "tsc -p ./ --noEmit && node scripts/check.js",
     "lint": "eslint src && eslint scripts && tsc -p tsconfig.json --noEmit",
-    "unittest": "node ./src/tests/runTest.ts",
+    "unittest": "node --env-file=./vars/.env.test ./src/tests/units/run.mts",
     "integrationtest": "vscode-test"
   },
   "devDependencies": {

@@ -2,8 +2,9 @@ import { Brand, ViewX } from "../types/vscodes";
 import { getRegistratorCommands } from "./commandRegistrator";
 import { LogService } from "./logService";
 
-const resolver  = "only-files"     as const;
-const container = "files-explorer" as const;
+const resolver  = "only-files"       as const;
+const resolved  = "ALREADY RESOLVED" as const;
+const container = "files-explorer"   as const;
 
 const branch = "redesign" as const;
 const link183: string =
@@ -77,9 +78,13 @@ export class ExtensionBrandResolver {
 
   private initialized: boolean = false;
 
+  public get tag(): string {
+    return this.initialized ? resolved : "NOT INITIALIZED" as const;
+  }
+
   constructor() {
     if (ExtensionBrandResolver.instance) {
-      LogService.error(`${ExtensionBrandResolver} - ALREADY RESOLVED`);
+      LogService.error(`${ExtensionBrandResolver.name} - ${resolved}`);
     }
     ExtensionBrandResolver.instance = this;
   }
@@ -402,7 +407,7 @@ export class ExtensionBrandResolver {
       treeview2 = temp;
     }
 
-    if (!this.initialized) { throw new Error("NOT INITIALIZED"); }
+    if (!this.initialized) { throw new Error(this.tag); }
 
     const self = ExtensionBrandResolver as any;
     self.command = command;

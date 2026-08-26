@@ -1,4 +1,5 @@
 import * as vscodes from "../types/vscodes";
+import { ExtensionStaticService } from "./extensionStaticService";
 import { getKeyByValue } from "./utilManager";
 
 interface Log {
@@ -9,7 +10,8 @@ interface Log {
 
 type TypeLog = vscodes.EnumLike<typeof TypeLog>;
 
-const notifyEvery: number = 1;
+const notifyEvery: number = ExtensionStaticService.getNotifyEvery();
+
 const logsLimit: number = 100;
 const joiner: string = "\n";
 const label: string = "only-files";

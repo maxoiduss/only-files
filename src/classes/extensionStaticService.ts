@@ -45,6 +45,8 @@ export class ExtensionStaticService {
 
   public static process =
     (typeof process !== 'undefined' && process.platform) ? process : {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      env: { NOTIFY_EVERY: "10" },
       platform: "web",
       cwd: () => "/"
     };
@@ -52,6 +54,11 @@ export class ExtensionStaticService {
   public static cacheRemoval: (id: string) => void;
 
   public static withId = (id: unknown) => `@ext:${id}` as const;
+
+  public static readonly getNotifyEvery = (): number => {
+    return ExtensionStaticService.process.env.NOTIFY_EVERY ?
+      Number(ExtensionStaticService.process.env.NOTIFY_EVERY) : 1;
+  };
 
   public static updateTolerances(event?: vscode.ConfigurationChangeEvent) {
     names.clickTolerance ??=`${configuration()}.${clickToleranceProperty()}`;

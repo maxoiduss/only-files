@@ -7,13 +7,13 @@ const dirname = path.dirname(filename);
 
 async function main(): Promise<void> {
   try {
-    const extensionDevelopmentPath = path.resolve(dirname, '..', '..');
-    const extensionTestsPath = path.resolve(dirname, 'units', 'index.ts');
+    const extensionDevelopmentPath = path.resolve(dirname, '..', '..', '..');
+    const extensionTestsPath = path.resolve(dirname, 'index.ts');
 
     await runTests({
       extensionDevelopmentPath,
       extensionTestsPath,
-      launchArgs: [path.resolve(dirname, '..', '..')]
+      launchArgs: [path.resolve(dirname, '..', '..', '..')]
     });
   } catch (error) {
     console.error('Failed to run extension tests.');
