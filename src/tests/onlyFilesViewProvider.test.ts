@@ -25,12 +25,13 @@ describe("OnlyFilesViewProvider (integration)", function () {
 
   let api;
   let sandbox: sinon.SinonSandbox;
+  let revealStub: sinon.SinonStub;
   let provider: OnlyFilesViewProvider;
   let context: vscode.ExtensionContext;
-  let revealStub: sinon.SinonStub;
 
   before(async () => {
     const ext = vscode.extensions.getExtension(extension);
+    expect(ext, "extension is not installed").to.not.equal(undefined);
     if (ext) {
       api = await ext.activate();
       context = api?.ExtensionStaticService.context;
@@ -77,6 +78,7 @@ describe("OnlyFilesViewProvider (integration)", function () {
       provider.clean();
       provider.dispose();
     }
+    (utils.isValidUri as sinon.SinonStub).reset();
     sandbox.restore();
   });
 
@@ -172,7 +174,7 @@ describe("OnlyFilesViewProvider (integration)", function () {
     const sub = provider.onDidChangeTreeData((e) => fired.push(e as any));
 
     await provider.refreshOn(parentItem);
-    await utils.sleep(250);
+    await utils.sleep(200);
     sub.dispose();
 
     expect(fired.length).to.be.greaterThan(0);
