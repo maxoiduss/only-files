@@ -1,7 +1,7 @@
 # Only Files
 ## _Use only files that you really need!_ 
 
-Avoid wasting time looking for a file among a large number of files or directories. Only Files helps you to select only the ones you need.
+Wasting much time while looking for a file or folder among a plenty of files or directories? Only Files helps you to operate with only the ones you need right now.
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/FromThisToThis.png" />
 
