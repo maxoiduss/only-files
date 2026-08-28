@@ -137,6 +137,9 @@ export class ExtensionBrandResolver {
     brand.isIgnored = `${name}:isIgnored`;
     brand.isSorted = `${name}:isSorted`;
     brand.isPlain = `${name}:isPlain`;
+    brand.extension = {
+      open: "extension.open"
+    };
     brand.actions = {
       find: "actions.find"
     };
@@ -164,8 +167,7 @@ export class ExtensionBrandResolver {
         openGlobalKeybindings: "workbench.action.openGlobalKeybindings",
         closeFolder: "workbench.action.closeFolder",
         closeActiveEditor: "workbench.action.closeActiveEditor",
-        focusActiveEditorGroup: "workbench.action.focusActiveEditorGroup",
-        
+        focusActiveEditorGroup: "workbench.action.focusActiveEditorGroup"
       },
       view: {
         extension: {

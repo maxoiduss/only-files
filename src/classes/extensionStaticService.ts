@@ -46,7 +46,7 @@ export class ExtensionStaticService {
   public static process =
     (typeof process !== 'undefined' && process.platform) ? process : {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      env: { NOTIFY_EVERY: "10" },
+      env: { NOTIFY_EVERY: "50" },
       platform: "web",
       cwd: () => "/"
     };

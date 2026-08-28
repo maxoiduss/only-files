@@ -6,13 +6,14 @@ node_modules/**
 scripts/**
 src/**
 out/**
+vars/**
 **/*.map
-**/*.mjs
 **/*.ts
 **/*.vsix
 **/esbuild.config.*
 **/eslint.config.*
 **/tsconfig.json
+**/.vscode-test.*
 .gitignore
 .yarnrc
 icon.png
