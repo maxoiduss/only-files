@@ -1,22 +1,23 @@
 # Only Files 📂💗
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/banner.png" />
 
-### 🗂️ _Use only files that you really need!_ 🗂️
+### 🗂️ _Use only files that you really need!_
 ##
 #### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/FromThisToThis.png" />
 
->#### ***Only Files** focus you only on the files and folders you add to the view preserving the original files hierarchy, it reflects to the hierarchy changes and file manipulations and supports drag-n-drop.*
->#### *It is the best choice if you want to have a clean production environment look and strive to save the space to interact with in VS Code.*
+>#### ***Only Files** keeps your focus strictly on the files and folders you add to the view while preserving their original hierarchy. It automatically updates when you change the structure or manipulate files and it fully supports drag-and-drop.*
+>#### *It is the perfect choice if you want a clean productive environment that saves valuable screen space in VS Code.*
 
 ## What the extension can do?
 ### Only Files has **3** views you can manage:
-  - #### **Folder** View - the tree-view duplicates the Explorer view with enchanced abilities and short context menu. Using it can make navigation much easer.
-  - #### **Only** View - the tree-view shows only the items you added to it. It supports several features making it an advanced tool to work with projects.
-  - #### **Preview** View - the webview where you can load the content of *html*, *pdf*, *txt* and *md* files to preview it. Supports zooming and drag-n-drop.
+  - #### **Folder** View: this *treeview* replicates the standard Explorer view but adds enhanced capabilities and a streamlined short context menu, also making project navigation much easier.
+  - #### **Only** View: this *treeview* displays only the items you manually add to it. So it behaves like a container. It includes advanced features and turns it into a comfortable tool for managing your projects.
+  - #### **Preview** View: a *webview* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-and-drop.
 
-## How does it work?
+## Key Features
+### Folder View
 - Install the extension
 - Open one or more folders in your workspace
 - Open the Only Files Explorer

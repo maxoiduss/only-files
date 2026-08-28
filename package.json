@@ -781,56 +781,56 @@
       },
       {
         "command": "only-files.refreshFiles",
+        "key": "shift+space a",
+        "mac": "shift+space a",
+        "when": "true"
+      },
+      {
+        "command": "only-files.refreshOnlyFiles",
         "key": "shift+space z",
         "mac": "shift+space z",
         "when": "true"
       },
       {
-        "command": "only-files.refreshOnlyFiles",
-        "key": "shift+space x",
-        "mac": "shift+space x",
-        "when": "true"
-      },
-      {
         "command": "only-files.switch",
-        "key": "shift+z",
-        "mac": "shift+z",
+        "key": "shift+space shift+space",
+        "mac": "shift+space shift+space",
         "when": "!only-files:isPlain"
       },
       {
         "command": "only-files.switchback",
-        "key": "shift+z",
-        "mac": "shift+z",
+        "key": "shift+space shift+space",
+        "mac": "shift+space shift+space",
         "when": "only-files:isPlain"
       },
       {
         "command": "only-files.addItemFromExplorer",
-        "key": "ctrl+space c",
-        "mac": "ctrl+space c",
+        "key": "shift+space c",
+        "mac": "shift+space c",
         "when": "focusedView == 'workbench.explorer.fileView'"
       },
       {
         "command": "only-files.addItemFromTabMenu",
-        "key": "ctrl+space c",
-        "mac": "ctrl+space c",
+        "key": "shift+space c",
+        "mac": "shift+space c",
         "when": "editorFocus == true && resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "only-files.removeItemFromTabMenu",
-        "key": "ctrl+space x",
-        "mac": "ctrl+space x",
+        "key": "shift+space x",
+        "mac": "shift+space x",
         "when": "editorFocus == true && resourceScheme && resourceScheme != untitled"
       },
       {
         "command": "only-files.addItemFromCommand",
-        "key": "ctrl+space c",
-        "mac": "ctrl+space c",
+        "key": "shift+space c",
+        "mac": "shift+space c",
         "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != empty && viewItem != root && viewItem != vac"
       },
       {
         "command": "only-files.removeItemFromCommand",
-        "key": "ctrl+space x",
-        "mac": "ctrl+space x",
+        "key": "shift+space x",
+        "mac": "shift+space x",
         "when": "(focusedView == filesView || focusedView == onlyFilesView) && viewItem != empty && viewItem != root && viewItem != vac"
       },
       {
