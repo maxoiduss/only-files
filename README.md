@@ -1,5 +1,5 @@
 # Only Files
-## _Use only the files you need!_ 🤠📁
+## _Use only files that you really need!_ 
 
 Avoid wasting time looking for a file among a large number of files or directories. Only Files helps you to select only the ones you need.
 
@@ -8,24 +8,27 @@ Avoid wasting time looking for a file among a large number of files or directori
 ## How does it work?
 - Install the extension
 - Open one or more folders in your workspace
-- Open the Only File Explorer
-- Two views are displayed: Files and Only Files
-  - `Files` displays all your files from workspace
-  - `Only Files` displays the files you selected to be displayed
+- Open the Only Files Explorer
+- Three views are available:
+  - `Files` displays the folders and files discovered in your workspace
+  - `Only Files` displays the files and folders you selected for quick access
+  - `Preview` displays the selected file when its format is supported
 - Add files to Only Files (review <a href="#addFiles">Add files section</a>):
   - In your explorer, right click on item and click on 'Add to Only Files'
-  - In Files view, click on show icon for add the file to Only Files view
-  - In tab, right click on item tab and click on 'Add to Only Files'
-  - Use the command `"cmd"+"y"`
-- In Only Files, you can open the files. If you want to remove from the view click on hide icon
+- In the `Files` view, click the show icon to add the file to `Only Files`
+- In an editor tab, right click the item and click on 'Add to Only Files'
+- Use the add shortcut: `Ctrl+Space`, then `C` (`Ctrl+Space`, then `C` on macOS too)
+- Open a file from `Only Files` to preview it or continue editing it
+- Remove an item from the view with the hide icon or `Ctrl+Space`, then `X`; the file is not deleted
 - ✨ Enjoy your files ✨
 
 ## Common terms
 
 - **Workspace**: The folder or set of folders currently open in VS Code.
 - **Explorer**: The VS Code area that shows the folders and files in your workspace.
-- **Files view**: The Only Files view that displays the files available in your workspace.
+- **Files view**: The tree view that displays folders and files available in your workspace.
 - **Only Files view**: The focused list of files you selected for quick access.
+- **Preview view**: The webview used to display a preview of the selected supported file.
 - **Tab**: An open editor tab in VS Code.
 - **Add**: Put a file into the Only Files view without moving it on disk.
 - **Remove**: Take a file out of the Only Files view without deleting it.
@@ -34,15 +37,32 @@ Avoid wasting time looking for a file among a large number of files or directori
 ## Demo
 
 ```mermaid
-flowchart LR
-  Sleep[Sleep] --> Wake{Awake?}
-  Wake -->|No| Sleep
-  Wake -->|Hungry| Snack[Get treat]
-  Wake -->|Not in in Sun?| Move[Move to sun]
-  Wake -->|Human is typing| Keyboard[Sleep on keyboard]
-  Snack --> Sleep
-  Move --> Sleep
-  Keyboard --> Sleep
+flowchart TD
+  Start([Install Only Files]) --> Workspace[Open one or more workspace folders]
+  Workspace --> Explorer[Open the Only Files Explorer]
+  Explorer --> FilesView[Files view<br/>Browse workspace folders and files]
+  Explorer --> OnlyView[Only Files view<br/>Browse selected items]
+  Explorer --> PreviewView[Preview view<br/>View supported files]
+
+  FilesView --> Select[Select a file or folder]
+  Select --> Add[Add to Only Files]
+  Tab[Open editor tab] --> AddFromTab[Add active tab to Only Files]
+  Command[Run Add shortcut<br/>Ctrl+Space, C] --> Add
+  AddFromTab --> Add
+  Add --> OnlyView
+
+  OnlyView --> Open[Open a selected file]
+  Open --> Edit[Edit in the VS Code editor]
+  Open --> Preview[Show preview]
+  Preview --> PreviewView
+
+  OnlyView --> Remove[Remove from Only Files]
+  Remove --> Keep[File remains on disk]
+
+  Workspace --> Changes[Workspace changes]
+  Changes --> Sync[Files and Only Files refresh automatically]
+  Sync --> FilesView
+  Sync --> OnlyView
 ```
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/example.gif" />
@@ -68,11 +88,40 @@ Apart of using the icons, you have many options for add or remove files from Onl
 
 - Use commands:
 
-  - Add: `"cmd"+"y"`
+  - Add from the Explorer, an editor tab, or a selected tree item:
+    `Ctrl+Space`, then `C` (macOS: `Ctrl+Space`, then `C`)
+  - Remove from an editor tab or selected tree item:
+    `Ctrl+Space`, then `X` (macOS: `Ctrl+Space`, then `X`)
+  - Preview the selected file or active editor:
+    `Shift+Space`, then `V`
+  - Refresh the `Files` view: `Shift+Space`, then `Z`
+  - Refresh the `Only Files` view: `Shift+Space`, then `X`
+  - Switch between classic and plain views: `Shift+Z`
 
-  - Remove: `"cmd"+"alt"+"y"`
+## Keyboard shortcuts
 
-All changes made in your workspace will be reflected in `Files` and `OnlyFiles` views in real time 🚀
+The extension uses the following default shortcuts. `Ctrl` is mapped to `Cmd` on macOS
+where configured in `package.json`; the add/remove chords intentionally use `Ctrl`
+on both platforms.
+
+| Action | Windows/Linux | macOS |
+| --- | --- | --- |
+| Rename selected item | `F2` | `F2` |
+| Rename active tab | `Shift+F2` | `Shift+F2` |
+| Delete selected item | `Delete` | `Delete` |
+| Permanently delete selected item | `Shift+Delete` | `Shift+Delete` |
+| Copy selected item | `Ctrl+C` | `Cmd+C` |
+| Cut selected item | `Ctrl+X` | `Cmd+X` |
+| Paste into a view | `Ctrl+V` | `Cmd+V` |
+| Copy file path | `Ctrl+Shift+C` | `Cmd+Shift+C` |
+| Add item | `Ctrl+Space`, then `C` | `Ctrl+Space`, then `C` |
+| Remove item | `Ctrl+Space`, then `X` | `Ctrl+Space`, then `X` |
+| Preview item | `Shift+Space`, then `V` | `Shift+Space`, then `V` |
+| Refresh `Files` | `Shift+Space`, then `Z` | `Shift+Space`, then `Z` |
+| Refresh `Only Files` | `Shift+Space`, then `X` | `Shift+Space`, then `X` |
+| Switch classic/plain mode | `Shift+Z` | `Shift+Z` |
+
+All changes made in your workspace are reflected in the `Files` and `Only Files` views in real time 🚀
 ## License
 
 MIT
