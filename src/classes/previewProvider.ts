@@ -17,8 +17,10 @@ import {
   resetStateCommand
 } from "./previewProviderHelper";
 
-const empty = ''              as const;
-const visibilityTimeout = 100 as const;
+const empty: string = ''                 as const;
+const visibilityTimeout: number = 100    as const;
+const notificateTimeout: number = 15000  as const;
+const name: vscodes.ViewX = "Only Files" as const;
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const PreviewType = {
   pdf:   "pdf",
@@ -28,6 +30,7 @@ const PreviewType = {
   error: "error"    } as const;
 
 const identify  = ExtensionStaticService.withId;
+
 const getPreviewTypeBy: Record<string, PreviewType> = {
   pdf:   PreviewType.pdf,
   htm:   PreviewType.html,
@@ -174,12 +177,14 @@ export class PreviewProvider implements
     const ok = "Ok";
     const pathe = getNicePath(this.title);
     const showSettings = hasNoName(pathe);
+    const timer = Date.now();
     let result: string | undefined;
 
     if (typeof this.title === "string") {
+
       result = showSettings ?
         await vscode.window.showInformationMessage(
-          "Open extension settings?", ok, "No")
+          `Open ${name} settings?`, ok, "No")
       : await vscode.window.showInformationMessage(
           `File name: ${pathe}`, ok, copy, tip, 
       );
@@ -189,9 +194,14 @@ export class PreviewProvider implements
       await clipboard.writeText(pathe); }
     else {
       if (showSettings && result === ok) {
+        const showExtensions = (Date.now() - timer) > notificateTimeout;
         await vscode.commands.executeCommand(
-          brand.workbench.action.openSettings,
-          identify(this.context?.extension?.id)
+          showExtensions ?
+            brand.extension.open
+          : brand.workbench.action.openSettings,
+          showExtensions ?
+            this.context?.extension?.id
+          : identify(this.context?.extension?.id)
         );
 
         return;

@@ -95,6 +95,9 @@ export interface Brand {
   isIgnored: string;
   isSorted: string;
   isPlain: string;
+  extension: {
+    open: string;
+  };
   actions: {
     find: string;
   };
