@@ -1,11 +1,20 @@
-# Only Files
+# Only Files 📂💗
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/banner.png" />
 
-### _Use only files that you really need!_
+### 🗂️ _Use only files that you really need!_ 🗂️
 ##
-Wasting too much time looking for a file or folder among a ton of files and directories? Only Files helps you work with only the ones you need right now.
+#### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/FromThisToThis.png" />
+
+>#### ***Only Files** focus you only on the files and folders you add to the view preserving the original files hierarchy, it reflects to the hierarchy changes and file manipulations and supports drag-n-drop.*
+>#### *It is the best choice if you want to have a clean production environment look and strive to save the space to interact with in VS Code.*
+
+## What the extension can do?
+### Only Files has **3** views you can manage:
+  - #### **Folder** View - the tree-view duplicates the Explorer view with enchanced abilities and short context menu. Using it can make navigation much easer.
+  - #### **Only** View - the tree-view shows only the items you added to it. It supports several features making it an advanced tool to work with projects.
+  - #### **Preview** View - the webview where you can load the content of *html*, *pdf*, *txt* and *md* files to preview it. Supports zooming and drag-n-drop.
 
 ## How does it work?
 - Install the extension
@@ -23,18 +32,6 @@ Wasting too much time looking for a file or folder among a ton of files and dire
 - Open a file from `Only Files` to preview it or continue editing it
 - Remove an item from the view with the hide icon or `Ctrl+Space`, then `X`; the file is not deleted
 - ✨ Enjoy your files ✨
-
-## Common terms
-
-- **Workspace**: The folder or set of folders currently open in VS Code.
-- **Explorer**: The VS Code area that shows the folders and files in your workspace.
-- **Files view**: The tree view that displays folders and files available in your workspace.
-- **Only Files view**: The focused list of files you selected for quick access.
-- **Preview view**: The webview used to display a preview of the selected supported file.
-- **Tab**: An open editor tab in VS Code.
-- **Add**: Put a file into the Only Files view without moving it on disk.
-- **Remove**: Take a file out of the Only Files view without deleting it.
-- **Command**: An action that can be run from the Command Palette or a keyboard shortcut.
 
 ## Demo
 
