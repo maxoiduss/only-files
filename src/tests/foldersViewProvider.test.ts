@@ -1,14 +1,13 @@
 import * as vscode from "vscode";
 import * as sinon from "sinon";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { extension } from "./helpers/name";
 import { FileItem } from "../classes/fileItem";
 import { FoldersViewProvider } from "../classes/foldersViewProvider";
-import { ExtensionStaticService } from "../classes/extensionStaticService";
 
 import * as utils from "./helpers/utils";
 
-function initFileItem(path: string, isFile = false): FileItem {
+const initFileItem = (path: string, isFile = false): FileItem => {
   return new FileItem(
     path.split(/[/\\]/).pop() ?? path,
     isFile
@@ -22,7 +21,12 @@ function initFileItem(path: string, isFile = false): FileItem {
 describe("FoldersViewProvider (integration)", function () {
   this.timeout(20000);
 
-  let api;
+  let api: {
+    ExtensionStaticService: {
+      context: vscode.ExtensionContext;
+      plainMode: boolean;
+    };
+  };
   let sandbox: sinon.SinonSandbox;
   let revealStub: sinon.SinonStub;
   let provider: FoldersViewProvider;
@@ -30,10 +34,11 @@ describe("FoldersViewProvider (integration)", function () {
 
   before(async () => {
     const ext = vscode.extensions.getExtension(extension);
-    if (ext) {
-      api = await ext.activate();
-      context = api?.ExtensionStaticService.context;
-    }
+    assert.isDefined(ext, "extension is not installed");
+    api = await ext.activate() as typeof api;
+    assert.isDefined(api, "extension does not provide api");
+
+    context = api.ExtensionStaticService.context;
     if (!context) {
       console.warn("context is still undefined");
     }
@@ -44,11 +49,11 @@ describe("FoldersViewProvider (integration)", function () {
     sandbox = sinon.createSandbox();
     (utils.isValidUri as sinon.SinonStub).resolves(true);
     provider = new FoldersViewProvider(context, revealStub);
-    ExtensionStaticService.plainMode = false;
+    api.ExtensionStaticService.plainMode = false;
   });
 
   afterEach(() => {
-    ExtensionStaticService.plainMode = false;
+    api.ExtensionStaticService.plainMode = false;
     provider.dispose();
     (utils.isValidUri as sinon.SinonStub).reset();
     sandbox.restore();

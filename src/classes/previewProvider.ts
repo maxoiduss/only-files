@@ -115,6 +115,10 @@ export class PreviewProvider implements
     context.state;
   }
 
+  public getView(): WebviewView | undefined {
+    return this.view;
+  }
+
   public canBeShownAsWebView(): boolean {
     return this.view !== undefined;
   }

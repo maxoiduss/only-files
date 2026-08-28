@@ -12,8 +12,10 @@ export function activate(context: vscode.ExtensionContext) {
   const onlyFiles = new OnlyFiles(context);
   onlyFiles.subscribe();
 
-  return {// eslint-disable-next-line @typescript-eslint/naming-convention
-    ExtensionBrandResolver, ExtensionStaticService
+  return { // eslint-disable-next-line @typescript-eslint/naming-convention
+    ExtensionBrandResolver, ExtensionStaticService,
+           // eslint-disable-next-line @typescript-eslint/naming-convention
+    PreviewProvider: onlyFiles.getPreviewProvider()
   };
 }
 

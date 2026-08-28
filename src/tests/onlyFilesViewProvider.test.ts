@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import * as sinon from "sinon";
-import { expect } from "chai";
+import { assert, expect } from "chai";
 import { extension } from "./helpers/name";
 import { FileItem, PlaceholderItem } from "../classes/fileItem";
 import { OnlyFilesViewProvider } from "../classes/onlyFilesViewProvider";
@@ -8,22 +8,23 @@ import { OnlyFilesViewProvider } from "../classes/onlyFilesViewProvider";
 import * as utils from "./helpers/utils";
 import * as manager from "./helpers/manager";
 
-function initFileItem(path: string, isFile = false): FileItem {
-  const uri = vscode.Uri.file(path);
-  const label = path.split(/[/\\]/).pop() ?? path;
-  const state = isFile
-    ? vscode.TreeItemCollapsibleState.None
-    : vscode.TreeItemCollapsibleState.Collapsed;
-  const item = new FileItem(label, state, isFile, uri);
-  item.relativePath = path.replace(/\\/g, "/");
-  item.id = item.relativePath;
-  return item;
-}
+const initFileItem = (path: string, isFile = false): FileItem => {
+  return new FileItem(
+    path.split(/[/\\]/).pop() ?? path,
+    isFile
+      ? vscode.TreeItemCollapsibleState.None
+      : vscode.TreeItemCollapsibleState.Collapsed,
+    isFile,
+    vscode.Uri.file(path)
+  );
+};
 
 describe("OnlyFilesViewProvider (integration)", function () {
   this.timeout(20000);
 
-  let api;
+  let api: {
+      ExtensionStaticService: { context: vscode.ExtensionContext };
+    };
   let sandbox: sinon.SinonSandbox;
   let revealStub: sinon.SinonStub;
   let provider: OnlyFilesViewProvider;
@@ -31,11 +32,11 @@ describe("OnlyFilesViewProvider (integration)", function () {
 
   before(async () => {
     const ext = vscode.extensions.getExtension(extension);
-    expect(ext, "extension is not installed").to.not.equal(undefined);
-    if (ext) {
-      api = await ext.activate();
-      context = api?.ExtensionStaticService.context;
-    }
+    assert.isDefined(ext, "extension is not installed");
+    api = await ext.activate() as typeof api;
+    assert.isDefined(api, "extension does not provide api");
+    
+    context = api.ExtensionStaticService.context;
     if (!context) {
       console.warn("context is still undefined");
     }

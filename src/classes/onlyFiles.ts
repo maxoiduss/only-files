@@ -171,6 +171,10 @@ export class OnlyFiles {
     this.subscribeCloseFolder();
   }
 
+  public getPreviewProvider(): PreviewProvider {
+    return this.previewProvider;
+  }
+
   private renameTreeViews() {
     if (this.foldersTreeView.title || this.onlyFilesTreeView.title) {
       return; }
