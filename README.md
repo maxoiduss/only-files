@@ -142,6 +142,19 @@ flowchart TD
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/allin.gif" />
 
 ## 📑Menu
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td>
+      <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/menu1.png" />
+    </td>
+    <td>
+      <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/menu2.png" />
+    </td>
+    <td>
+      <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/menu3.png" />
+    </td>
+  </tr>
+</table>
 
 ## All Keyboard Shortcuts
 #### The extension uses the following default shortcuts.
