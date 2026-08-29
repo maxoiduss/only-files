@@ -17,9 +17,10 @@ vars/**
 .gitignore
 .yarnrc
 icon.png
-resources/addFileFromExplorer.png
+resources/allin.gif
 resources/banner.png
-resources/example.gif
 resources/difference.png
-resources/menu.png
-resources/multipleFiles.png
+resources/folders.gif
+resources/menu*
+resources/only.gif
+resources/preview.gif
