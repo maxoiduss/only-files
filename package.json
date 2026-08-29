@@ -13,7 +13,21 @@
     "vscode": "^1.95.0"
   },
   "categories": [
+    "Visualization",
     "Other"
+  ],
+  "keywords": [
+    "Explorer",
+    "Files",
+    "Folders",
+    "Fullpath",
+    "Path",
+    "Select",
+    "Focus",
+    "Focused",
+    "Only",
+    "Preview",
+    "PDF"
   ],
   "activationEvents": [
     "onStartupFinished",

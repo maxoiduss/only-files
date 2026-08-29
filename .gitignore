@@ -1,8 +1,10 @@
+.git/
+.github/**
 out/
 dist/
 node_modules/
-.vscode-test/
+/.vscode-test/
 *.vsix
 .DS_Store
 icon.png
-/.vscode-test-web
+/.vscode-test-web/

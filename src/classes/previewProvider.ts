@@ -19,7 +19,7 @@ import {
 
 const empty: string = ''                 as const;
 const visibilityTimeout: number = 100    as const;
-const notificateTimeout: number = 15000  as const;
+const notificateTimeout: number = 12000  as const;
 const name: vscodes.ViewX = "Only Files" as const;
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const PreviewType = {

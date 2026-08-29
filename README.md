@@ -1,22 +1,24 @@
 # Only Files 📂💗
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/banner.png" />
 
-### 🗂️ _Use only files that you really need!_
+### 🚀 _Use only files that you really need!_
+
+![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.png)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave) ![github](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github&link=https%3A%2F%2Fgithub.com%2Fmaxoiduss%2Fonly-files)
 ##
 #### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/FromThisToThis.png" />
 
->#### ***Only Files** keeps your focus strictly on the files and folders you add to the view while preserving their original hierarchy. It automatically updates when you change the structure or manipulate files and it fully supports drag-and-drop.*
->#### *It is the perfect choice if you want a clean productive environment that saves valuable screen space in VS Code.*
+>#### ***Only Files** keeps your focus strictly on the files and folders you add to the view while preserving their original hierarchy. It automatically updates when you change the structure or manipulate files and it fully supports drag-n-drop.*
+>#### 🎯 *It is the perfect choice if you want a clean productive environment that saves valuable screen space in VS Code.*
 
 ## What the extension can do?
 ### Only Files has **3** views you can manage:
   - #### **Folder** View: this *treeview* replicates the standard Explorer view but adds enhanced capabilities and a streamlined short context menu, also making project navigation much easier.
   - #### **Only** View: this *treeview* displays only the items you manually add to it. So it behaves like a container. It includes advanced features and turns it into a comfortable tool for managing your projects.
-  - #### **Preview** View: a *webview* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-and-drop.
+  - #### **Preview** View: a *webview* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-n-drop.
 
-## Key Features
+## ✨Key Features
 ### Folder View
 - Install the extension
 - Open one or more folders in your workspace
@@ -29,9 +31,9 @@
   - In your explorer, right click on item and click on 'Add to Only Files'
 - In the `Files` view, click the show icon to add the file to `Only Files`
 - In an editor tab, right click the item and click on 'Add to Only Files'
-- Use the add shortcut: `Ctrl+Space`, then `C` (`Ctrl+Space`, then `C` on macOS too)
+- Use the add shortcut: `Shift+Space`, then `C` (`Shift+Space`, then `C` on macOS too)
 - Open a file from `Only Files` to preview it or continue editing it
-- Remove an item from the view with the hide icon or `Ctrl+Space`, then `X`; the file is not deleted
+- Remove an item from the view with the hide icon or `Shift+Space`, then `X`; the file is not deleted
 - ✨ Enjoy your files ✨
 
 ## Demo
@@ -47,7 +49,7 @@ flowchart TD
   FilesView --> Select[Select a file or folder]
   Select --> Add[Add to Only Files]
   Tab[Open editor tab] --> AddFromTab[Add active tab to Only Files]
-  Command[Run Add shortcut<br/>Ctrl+Space, C] --> Add
+  Command[Run Add shortcut<br/>Shift+Space, C] --> Add
   AddFromTab --> Add
   Add --> OnlyView
 
@@ -89,14 +91,14 @@ Apart of using the icons, you have many options for add or remove files from Onl
 - Use commands:
 
   - Add from the Explorer, an editor tab, or a selected tree item:
-    `Ctrl+Space`, then `C` (macOS: `Ctrl+Space`, then `C`)
+    `Shift+Space`, then `C` (macOS: `Shift+Space`, then `C`)
   - Remove from an editor tab or selected tree item:
-    `Ctrl+Space`, then `X` (macOS: `Ctrl+Space`, then `X`)
+    `Shift+Space`, then `X` (macOS: `Shift+Space`, then `X`)
   - Preview the selected file or active editor:
     `Shift+Space`, then `V`
   - Refresh the `Files` view: `Shift+Space`, then `Z`
   - Refresh the `Only Files` view: `Shift+Space`, then `X`
-  - Switch between classic and plain views: `Shift+Z`
+  - Switch between classic and plain views: `Shift+Space` twice
 
 ## Keyboard shortcuts
 
@@ -114,12 +116,12 @@ on both platforms.
 | Cut selected item | `Ctrl+X` | `Cmd+X` |
 | Paste into a view | `Ctrl+V` | `Cmd+V` |
 | Copy file path | `Ctrl+Shift+C` | `Cmd+Shift+C` |
-| Add item | `Ctrl+Space`, then `C` | `Ctrl+Space`, then `C` |
-| Remove item | `Ctrl+Space`, then `X` | `Ctrl+Space`, then `X` |
+| Add item | `Shift+Space`, then `C` | `Shift+Space`, then `C` |
+| Remove item | `Shift+Space`, then `X` | `Shift+Space`, then `X` |
 | Preview item | `Shift+Space`, then `V` | `Shift+Space`, then `V` |
-| Refresh `Files` | `Shift+Space`, then `Z` | `Shift+Space`, then `Z` |
-| Refresh `Only Files` | `Shift+Space`, then `X` | `Shift+Space`, then `X` |
-| Switch classic/plain mode | `Shift+Z` | `Shift+Z` |
+| Refresh `Files` | `Shift+Space`, then `A` | `Shift+Space`, then `A` |
+| Refresh `Only Files` | `Shift+Space`, then `Z` | `Shift+Space`, then `Z` |
+| Switch classic/plain mode | `Shift+Space` twice | `Shift+Space` twice |
 
 All changes made in your workspace are reflected in the `Files` and `Only Files` views in real time 🚀
 ## License
