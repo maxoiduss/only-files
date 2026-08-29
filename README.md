@@ -9,6 +9,7 @@
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/difference.png" />
 
+##
 >#### ***Only Files** keeps your focus strictly on the files and folders you add to the view while preserving their original hierarchy. It automatically updates when you change the structure or manipulate files and it fully supports drag-n-drop.*
 >#### 🎯 *It is the perfect choice if you want a clean productive environment that saves valuable screen space in VS Code.*
 
@@ -138,30 +139,13 @@ flowchart TD
 ```
 
 ### All-in-one
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/example.gif" />
+<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/allin.gif" />
 
-## Views
-
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/package-explorer.png" />
-
-## <p id="addFiles">Add files</p>
-Apart of using the icons, you have many options for add or remove files from Only Files View:
-
-- Add files from Explorer
-
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/addFileFromExplorer.png"/>
-
-- Select multiple files and select the menu (You can click on one icon too):
-
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/multipleFiles.png" width="50%" height="50%"/>
-
-- From tab menu:
-
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/menu.png" width="50%" height="50%"/>
+## 📑Menu
 
 ## All Keyboard Shortcuts
 #### The extension uses the following default shortcuts.
-`Ctrl` is mapped to `Cmd` on macOS. **send(add)**/**remove** chords intentionally use `Shift` on both platforms.
+`Ctrl` is mapped to `Cmd` on macOS. **Send(Add)**/**Remove** chords intentionally use `Shift` on both platforms.
 
 | Action | Windows/Linux | macOS |
 | --- | --- | --- |
