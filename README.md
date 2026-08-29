@@ -7,7 +7,7 @@
 ##
 #### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/FromThisToThis.png" />
+<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/difference.png" />
 
 >#### ***Only Files** keeps your focus strictly on the files and folders you add to the view while preserving their original hierarchy. It automatically updates when you change the structure or manipulate files and it fully supports drag-n-drop.*
 >#### 🎯 *It is the perfect choice if you want a clean productive environment that saves valuable screen space in VS Code.*
@@ -19,22 +19,18 @@
   - #### **Preview** View: a *webview* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-n-drop.
 
 ## ✨Key Features
-### Folder View
-- Install the extension
-- Open one or more folders in your workspace
-- Open the Only Files Explorer
-- Three views are available:
-  - `Files` displays the folders and files discovered in your workspace
-  - `Only Files` displays the files and folders you selected for quick access
-  - `Preview` displays the selected file when its format is supported
-- Add files to Only Files (review <a href="#addFiles">Add files section</a>):
-  - In your explorer, right click on item and click on 'Add to Only Files'
-- In the `Files` view, click the show icon to add the file to `Only Files`
-- In an editor tab, right click the item and click on 'Add to Only Files'
-- Use the add shortcut: `Shift+Space`, then `C` (`Shift+Space`, then `C` on macOS too)
-- Open a file from `Only Files` to preview it or continue editing it
-- Remove an item from the view with the hide icon or `Shift+Space`, then `X`; the file is not deleted
-- ✨ Enjoy your files ✨
+### Folder View  
+<table>
+  <tr>
+    <td>
+      This is your description text on the left. It looks like standard paragraphs.
+    </td>
+    <td>
+      <img src="https://placeholder.com" alt="Your Image">
+    </td>
+  </tr>
+</table>
+
 
 ## Demo
 
