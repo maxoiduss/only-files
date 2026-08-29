@@ -19,21 +19,95 @@
   - #### **Preview** View: a *webview* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-n-drop.
 
 ## ✨Key Features
-### Folder View  
-<table>
+### `Folder View`  (**FILES**)
+<table width="100%" cellpadding="0" cellspacing="0">
   <tr>
-    <td>
-      This is your description text on the left. It looks like standard paragraphs.
+    <td width="40%" valign="top">
+    🔸Switching <u>ON</u> <b><i>use ignore-files</i></b> hides the folders and files listed in your chosen ignore-file.
     </td>
-    <td>
-      <img src="https://placeholder.com" alt="Your Image">
+    <td valign="top" rowspan="3">
+      <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/folders.gif">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+    🔸Switching <u>ON</u> <b><i>plain view</i></b> shows all folder and file names as paths relative to the workspace folder. Once <u>ON</u> you can <b><i>uncollapse</i></b> any folder.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+    🔸<b><i>Uncollapsing all to plain view</i></b> switches <u>ON</u> <b><i>plain view</i></b>, displaying all files decoupled from their folders.
     </td>
   </tr>
 </table>
 
+### `Only Files View`  (**ONLY**)
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="34%" valign="top">
+    🔹Drag-n-drop or inline <b><i>Send to Only Files</i></b> sends an item or selected items with its content to this view from anywhere.
+    </td>
+    <td valign="top" rowspan="3">
+      <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/only.gif">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+    🔹Drag-n-drop from this view or inline <b><i>Remove from Only Files</i></b> removes the item with its content from the view.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+    🔹<b><i>Marked</i></b> items can be used anytime you want to collect them here.
+    </td>
+  </tr>
+</table>
 
-## Demo
+### `Preview View`
+<table width="100%" cellpadding="0" cellspacing="0">
+  <tr>
+    <td width="36%" valign="top">
+    <font size="1">♦️ </font>Drag-n-drop-with-Shift or inline <b><i>Preivew in Only Files</i></b> sends an item from <b><i>Only Files View</i></b> to be previewed.
+    </td>
+    <td valign="top" rowspan="3">
+      <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/preview.gif">
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+    <font size="1">♦️ </font><b><i>Preivew in Only Files</i></b> context menu item does the same from anywhere. The view keeps it state.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+    <font size="1">♦️ </font>Holding Ctrl by using scroll changes zoom, holding Shift - scrolls horizontally. Context menu shows file name and options.
+    </td>
+  </tr>
+</table>
 
+### **Specs**
+- #### All Built-in Explorer-like feautures, e.g. *rename*, *copy*, *delete*, *cut*, *paste* are supported in both treeviews.
+
+- #### Rename file from the opened tab is supported.
+
+- #### Context menu call on an empty Preview View suggests to open settings.
+
+- #### Use commands:
+
+  - Rename file/folder: `F2`
+  - Rename opened file: `Shift+F2`
+  - Send/Add from the Explorer, an editor tab, or a selected tree item:
+    `Shift+Space`, then `C` (macOS: `Shift+Space`, then `C`)
+  - Remove from an editor tab or selected tree item:
+    `Shift+Space`, then `X` (macOS: `Shift+Space`, then `X`)
+  - Preview the selected file or active editor:
+    `Shift+Space`, then `V`
+  - Refresh the `Files` view: `Shift+Space`, then `A`
+  - Refresh the `Only Files` view: `Shift+Space`, then `Z`
+  - Switch between classic and plain views: `Shift+Space` twice
+
+## 📽️Demo
+### How to use
 ```mermaid
 flowchart TD
   Start([Install Only Files]) --> Workspace[Open one or more workspace folders]
@@ -63,6 +137,7 @@ flowchart TD
   Sync --> OnlyView
 ```
 
+### All-in-one
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/example.gif" />
 
 ## Views
@@ -84,23 +159,9 @@ Apart of using the icons, you have many options for add or remove files from Onl
 
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/menu.png" width="50%" height="50%"/>
 
-- Use commands:
-
-  - Add from the Explorer, an editor tab, or a selected tree item:
-    `Shift+Space`, then `C` (macOS: `Shift+Space`, then `C`)
-  - Remove from an editor tab or selected tree item:
-    `Shift+Space`, then `X` (macOS: `Shift+Space`, then `X`)
-  - Preview the selected file or active editor:
-    `Shift+Space`, then `V`
-  - Refresh the `Files` view: `Shift+Space`, then `Z`
-  - Refresh the `Only Files` view: `Shift+Space`, then `X`
-  - Switch between classic and plain views: `Shift+Space` twice
-
-## Keyboard shortcuts
-
-The extension uses the following default shortcuts. `Ctrl` is mapped to `Cmd` on macOS
-where configured in `package.json`; the add/remove chords intentionally use `Ctrl`
-on both platforms.
+## All Keyboard Shortcuts
+#### The extension uses the following default shortcuts.
+`Ctrl` is mapped to `Cmd` on macOS. **send(add)**/**remove** chords intentionally use `Shift` on both platforms.
 
 | Action | Windows/Linux | macOS |
 | --- | --- | --- |
@@ -112,7 +173,7 @@ on both platforms.
 | Cut selected item | `Ctrl+X` | `Cmd+X` |
 | Paste into a view | `Ctrl+V` | `Cmd+V` |
 | Copy file path | `Ctrl+Shift+C` | `Cmd+Shift+C` |
-| Add item | `Shift+Space`, then `C` | `Shift+Space`, then `C` |
+| Send item | `Shift+Space`, then `C` | `Shift+Space`, then `C` |
 | Remove item | `Shift+Space`, then `X` | `Shift+Space`, then `X` |
 | Preview item | `Shift+Space`, then `V` | `Shift+Space`, then `V` |
 | Refresh `Files` | `Shift+Space`, then `A` | `Shift+Space`, then `A` |
