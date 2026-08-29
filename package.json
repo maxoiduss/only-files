@@ -104,19 +104,19 @@
         {
           "id": "files-explorer",
           "title": "Files",
-          "icon": "resources/folder.png",
+          "icon": "resources/holder.png",
           "order": 3
         },
         {
           "id": "only-files-explorer",
           "title": "Only",
-          "icon": "resources/folder.png",
+          "icon": "resources/holder.png",
           "order": 2
         },
         {
           "id": "pre-view-explorer",
           "title": "Preview",
-          "icon": "resources/folder.png",
+          "icon": "resources/holder.png",
           "order": 1
         }
       ]
