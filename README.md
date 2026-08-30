@@ -238,7 +238,7 @@ flowchart TD
     <td valign="top">
       Theme used in the examples: <b><a href="https://github.com/maxoiduss/dark-synthwave-84">Dark SynthWave</a></b>
     </td>
-    <td valign="top">
+    <td valign="bottom">
       <a href="https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave">
         <img style="max-width: none; width: auto; height: auto;" src="https://images.weserv.nl/?url=https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.svg&output=png&style=for-the-badge" alt="v1.1.4">
       </a>
