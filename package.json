@@ -29,6 +29,9 @@
     "Preview",
     "PDF"
   ],
+  "capabilities": {
+    "virtualWorkspaces": true
+  },
   "activationEvents": [
     "onStartupFinished",
     "onWebviewView:pre-view"

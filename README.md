@@ -3,26 +3,26 @@
 
 ### 🚀 _Use only files that you really need!_
 
-![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.png)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave) ![github](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github&link=https%3A%2F%2Fgithub.com%2Fmaxoiduss%2Fonly-files)
+![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://vsmarketplacebadges.dev/version-short/maxoiduss.only-files.png)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave) ![github](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github&link=https%3A%2F%2Fgithub.com%2Fmaxoiduss%2Fonly-files)
 ##
 #### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/difference.png" />
+![](https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/difference.png)
 
 ##
 >#### ***Only Files** keeps your focus strictly on the files and folders you add to the view while preserving their original hierarchy. It automatically updates when you change the structure or manipulate files and it fully supports drag-n-drop.*
 >#### 🎯 *It is the perfect choice if you want a clean productive environment that saves valuable screen space in VS Code.*
 
 ## What the extension can do?
-### Only Files has **3** views you can manage:
-  - #### **Folder** View: this *treeview* replicates the standard Explorer view but adds enhanced capabilities and a streamlined short context menu, also making project navigation much easier.
-  - #### **Only** View: this *treeview* displays only the items you manually add to it. So it behaves like a container. It includes advanced features and turns it into a comfortable tool for managing your projects.
-  - #### **Preview** View: a *webview* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-n-drop.
+### Only Files - **3** views you can manage:
+  - #### **<a href="#folder-view--files">Folder View</a>**: this *[treeview](https://code.visualstudio.com/api/extension-guides/tree-view)* replicates the standard Explorer view but adds enhanced capabilities and a streamlined short context menu, also making project navigation much easier.
+  - #### **<a href="#only-files-view--only">Only Files View</a>**: this *[treeview](https://code.visualstudio.com/api/extension-guides/webview)* displays only the items you manually add to it. So it behaves like a container. It includes advanced features and turns it into a comfortable tool for managing your projects.
+  - #### **<a href="#preview-view">Preview View</a>**: a *[webview](https://code.visualstudio.com/api/extension-guides/webview)* that lets you load and preview HTML, PDF, TXT, LOG and MD files. It fully supports zooming and drag-n-drop.
 
 ## ✨Key Features
 ### `Folder View`  (**FILES**)
 <table width="100%" cellpadding="0" cellspacing="0">
-  <tr>
+  <tr id="ignore_files_table">
     <td width="40%" valign="top">
     🔸Switching <u>ON</u> <b><i>use ignore-files</i></b> hides the folders and files listed in your chosen ignore-file.
     </td>
@@ -30,12 +30,12 @@
       <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/folders.gif">
     </td>
   </tr>
-  <tr>
+  <tr id="plain_view_table">
     <td valign="top">
     🔸Switching <u>ON</u> <b><i>plain view</i></b> shows all folder and file names as paths relative to the workspace folder. Once <u>ON</u> you can <b><i>uncollapse</i></b> any folder.
     </td>
   </tr>
-  <tr>
+  <tr id="uncollapse_all_table">
     <td valign="top">
     🔸<b><i>Uncollapsing all to plain view</i></b> switches <u>ON</u> <b><i>plain view</i></b>, displaying all files decoupled from their folders.
     </td>
@@ -57,7 +57,7 @@
     🔹Drag-n-drop from this view or inline <b><i>Remove from Only Files</i></b> removes the item with its content from the view.
     </td>
   </tr>
-  <tr>
+  <tr id="marked_items_table">
     <td valign="top">
     🔹<b><i>Marked</i></b> items can be used anytime you want to collect them here.
     </td>
@@ -76,7 +76,7 @@
   </tr>
   <tr>
     <td valign="top">
-    <font size="1">♦️ </font><b><i>Preivew in Only Files</i></b> context menu item does the same from anywhere. The view keeps it state.
+    <font size="1">♦️ </font><b><i>Preivew in Only Files</i></b> context menu item does the same from anywhere. The view preserves its state.
     </td>
   </tr>
   <tr>
@@ -89,11 +89,19 @@
 ### **Specs**
 - #### All Built-in Explorer-like feautures, e.g. *rename*, *copy*, *delete*, *cut*, *paste* are supported in both treeviews.
 
+- #### All changes made in your workspace are reflected in the `Folder` and `Only Files` views in real time.
+
 - #### Rename file from the opened tab is supported.
 
-- #### Context menu call on an empty Preview View suggests to open settings.
+- #### Context menu call on an empty `Preview` suggests to open its settings.
 
-- #### Use commands:
+- #### Context menu call on a non-empty `Preview` suggests to open *Tip*.
+
+- #### *Tip* suggests to open *hot keys* and *all commands*.
+
+- #### The item changes its label color during renaming.
+
+- #### Use 🤖 [commands](#keyboard-shortcuts):
 
   - Rename file/folder: `F2`
   - Rename opened file: `Shift+F2`
@@ -106,6 +114,8 @@
   - Refresh the `Files` view: `Shift+Space`, then `A`
   - Refresh the `Only Files` view: `Shift+Space`, then `Z`
   - Switch between classic and plain views: `Shift+Space` twice
+
+<br>
 
 ## 📽️Demo
 ### How to use
@@ -138,8 +148,10 @@ flowchart TD
   Sync --> OnlyView
 ```
 
-### All-in-one
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/allin.gif" />
+### All in one
+![](https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/allin.gif)
+
+<br>
 
 ## 📑Menu
 <table width="100%" cellpadding="0" cellspacing="0">
@@ -156,9 +168,27 @@ flowchart TD
   </tr>
 </table>
 
-## All Keyboard Shortcuts
+### Notes
+- #### The <u>currently active view</u> displays a green magnifier icon &nbsp;</span><img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/dark/searchListActiveDark.svg&output=png&w=40" width="18px" /><p> (indicating which treeview is controlling the file system at the moment)
+- #### Magnifier icon button is used for a *list search*.
+- #### [Uncollapsed folders](#plain_view_table) have background tint and they cannot be added to `Only Files View`.
+- #### Uncollapsing every folder in the `Folder View` gives you the same [effect](#plain_view_table) as [*Uncollapse All to Plain*](#uncollapse_all_table) has.
+- #### Since [*Uncollapse All to Plain*](#uncollapse_all_table) and __*Reveal References*__ are highly time-consuming tasks the extension suggests to specify a [gitignore](https://git-scm.com/docs/gitignore) file to exclude irrelevant folders from the target operative scope if needed.
+- #### __*Show All Possible Files*__ resets all top-level folders in the `Only Files View` to the state like they were freshly added.
+- #### __*Show only This One*__ removes the top-level folder of a target item from `Only Files View` and add exactly that item to this view.
+- #### An item removed from the `Only Files View` is highlighted in orange if its parent folder is still present. This can be disabled in settings.
+- #### __*Refreshing*__ `Only Files View` toggles the sorting order: green colored icon indicates that items are sorted by their base names instead of their file paths; refreshing again restores the original order and reloads displayed items from the file system; it also switches to [*plain view*](#plain_view_table) if it is <u>ON</u>.
+- #### The extension provides a fallback system for file operations: if VS Code cannot complete an [operation](https://code.visualstudio.com/api/references/vscode-api#WorkspaceEdit), the extension tries to achieve the goal in a more [aggresive way](https://code.visualstudio.com/api/references/vscode-api#workspace.fs) and warns the user.
+- #### *Single click* selects the item, *fast double click* opens; *slow double click* opens autopick item rename dialog.
+- #### Via the settings the user can manage the built-in autopick dialog time, click and rename time; the user can enable/disable showing empty or uncollapsed folders.
+- #### The user can change default Postfix in the file name used by __*Duplicate*__.
+
+<br>
+
+## ⚡Keyboard Shortcuts
+#### Be sure to explore all the [commands](https://code.visualstudio.com/api/extension-guides/command) and [shortcuts](#tip-suggests-to-open-hot-keys-and-all-commands) available to you!
 #### The extension uses the following default shortcuts.
-`Ctrl` is mapped to `Cmd` on macOS. **Send(Add)**/**Remove** chords intentionally use `Shift` on both platforms.
+`Ctrl` is mapped to `Cmd` on macOS. **Send(Add)**/**Remove** chords intentionally use `Shift+Space` on both platforms.
 
 | Action | Windows/Linux | macOS |
 | --- | --- | --- |
@@ -174,10 +204,48 @@ flowchart TD
 | Remove item | `Shift+Space`, then `X` | `Shift+Space`, then `X` |
 | Preview item | `Shift+Space`, then `V` | `Shift+Space`, then `V` |
 | Refresh `Files` | `Shift+Space`, then `A` | `Shift+Space`, then `A` |
-| Refresh `Only Files` | `Shift+Space`, then `Z` | `Shift+Space`, then `Z` |
+| Refresh `Only` | `Shift+Space`, then `Z` | `Shift+Space`, then `Z` |
 | Switch classic/plain mode | `Shift+Space` twice | `Shift+Space` twice |
 
-All changes made in your workspace are reflected in the `Files` and `Only Files` views in real time 🚀
+<br>
+
+## Contribution
+>### Contributions are welcome! 🙏 Feel free to take part in the extension evolving, ask question, open issue and discuss.
+### Whether you are fixing a bug, adding a feature, or improving documentation, here is how you can get involved:
+
+### 1. Reporting Bugs & Feature Requests
+- Check the **Issues** tab to see if your topic is already being discussed.
+- If not, open a new issue. Please include clear steps to reproduce bugs, or a detailed description for new features.
+
+### 2. Making Changes
+1. **Fork** the repository.
+2. Create a new branch for your feature or fix: `git checkout -b feature/your-feature-name`.
+3. Make your changes and commit them with clear messages.
+4. Ensure your code follows the existing project style and that all tests pass if possible.
+
+### 3. Submitting a Pull Request
+- Open a **Pull Request (PR)** against the `main` branch.
+- Describe your changes clearly in the PR description.
+- Wait for review! I will look over your code and suggest changes if needed.
+
+#### <u>Thank you for helping make this project better!</u>
+
+<br>
+
+## Misc
+<table cellpadding="0" cellspacing="0">
+  <tr>
+    <td valign="top">
+    Theme used in the examples: <b><a href="https://github.com/maxoiduss/dark-synthwave-84">Dark SynthWave</a></b>
+    </td>
+    <td valign="top">
+    <a href="https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave">
+      <img src="https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.png" alt="Version">
+    </a>
+    </td>
+  </tr>
+</table>
+
 ## License
 
-MIT
+&nbsp;&nbsp;&nbsp;[MIT](https://raw.githubusercontent.com/maxoiduss/only-files/main/LICENSE.md)
