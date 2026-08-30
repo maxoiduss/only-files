@@ -68,7 +68,7 @@
 <table width="100%" cellpadding="0" cellspacing="0">
   <tr>
     <td width="36%" valign="top">
-    <font size="1">♦️ </font>Drag-n-drop-with-Shift or inline <b><i>Preivew in Only Files</i></b> sends an item from <b><i>Only Files View</i></b> to be previewed.
+    &nbsp;⬥ Drag-n-drop-with-Shift or inline <b><i>Preivew in Only Files</i></b> sends an item from <b><i>Only Files View</i></b> to be previewed.
     </td>
     <td valign="top" rowspan="3">
       <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/preview.gif">
@@ -76,12 +76,12 @@
   </tr>
   <tr>
     <td valign="top">
-    <font size="1">♦️ </font><b><i>Preivew in Only Files</i></b> context menu item does the same from anywhere. The view preserves its state.
+    &nbsp;⬥ <b><i>Preivew in Only Files</i></b> context menu item does the same from anywhere. The view preserves its state.
     </td>
   </tr>
   <tr>
     <td valign="top">
-    <font size="1">♦️ </font>Holding Ctrl by using scroll changes zoom, holding Shift - scrolls horizontally. Context menu shows file name and options.
+    &nbsp;⬥ Holding <b>Ctrl</b> by using scroll changes zoom, holding <b>Shift</b> - scrolls horizontally. Context menu shows file name and options.
     </td>
   </tr>
 </table>
