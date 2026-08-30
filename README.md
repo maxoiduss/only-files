@@ -119,6 +119,8 @@
 ## 📽️Demo
 ### How to use
 
+<details><summary><u>Workflow</u></summary>
+
 ```mermaid
 flowchart TD
   Start([Install Only Files]) --> Workspace[Open one or more workspace folders]
@@ -147,6 +149,7 @@ flowchart TD
   Sync --> FilesView
   Sync --> OnlyView
 ```
+</details>
 
 ### All in one
 ![](https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/allin.gif)
