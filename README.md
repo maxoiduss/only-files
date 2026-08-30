@@ -1,10 +1,9 @@
 # Only Files 📂💗
-<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/banner.png" />
+<img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/banner.png" alt="TO INFINITY AND BEYOND"/>
+<h3 style="margin-top: 0.1em; margin-bottom: 0.4em;"><em>Use only files that you really need!</em></h3>
 
-### 🚀 _Use only files that you really need!_
+## ![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://images.weserv.nl/?url=https://vsmarketplacebadges.dev/version-short/maxoiduss.only-files.svg&output=png&style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.only-files) [![GitHub](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github)](https://github.com/maxoiduss/only-files)
 
-![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://vsmarketplacebadges.dev/version-short/maxoiduss.only-files.png)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave) ![github](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github&link=https%3A%2F%2Fgithub.com%2Fmaxoiduss%2Fonly-files)
-##
 #### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
 ![](https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/difference.png)
@@ -119,6 +118,7 @@
 
 ## 📽️Demo
 ### How to use
+
 ```mermaid
 flowchart TD
   Start([Install Only Files]) --> Workspace[Open one or more workspace folders]
@@ -236,12 +236,12 @@ flowchart TD
 <table cellpadding="0" cellspacing="0">
   <tr>
     <td valign="top">
-    Theme used in the examples: <b><a href="https://github.com/maxoiduss/dark-synthwave-84">Dark SynthWave</a></b>
+      Theme used in the examples: <b><a href="https://github.com/maxoiduss/dark-synthwave-84">Dark SynthWave</a></b>
     </td>
     <td valign="top">
-    <a href="https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave">
-      <img src="https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.png" alt="Version">
-    </a>
+      <a href="https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave">
+        <img style="max-width: none; width: auto; height: auto;" src="https://images.weserv.nl/?url=https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.svg&output=png&style=for-the-badge" alt="v1.1.4">
+      </a>
     </td>
   </tr>
 </table>
