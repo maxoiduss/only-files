@@ -246,6 +246,8 @@ flowchart TD
   </tr>
 </table>
 
-## License
+## Changelog
+&nbsp;&nbsp;&nbsp;[LOG](CHANGELOG.md)
 
-&nbsp;&nbsp;&nbsp;[MIT](https://raw.githubusercontent.com/maxoiduss/only-files/main/LICENSE.md)
+## License
+&nbsp;&nbsp;&nbsp;[MIT](LICENSE.md)
