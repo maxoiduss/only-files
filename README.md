@@ -2,7 +2,7 @@
 <img src="https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/banner.png" alt="TO INFINITY AND BEYOND"/>
 <h3 style="margin-top: 0.1em; margin-bottom: 0.4em;"><em>Use only files that you really need!</em></h3>
 
-## ![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://images.weserv.nl/?url=https://vsmarketplacebadges.dev/version-short/maxoiduss.only-files.svg&output=png&style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.only-files) [![GitHub](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github)](https://github.com/maxoiduss/only-files)
+## ![vscode](https://img.shields.io/badge/VS%20Code-1.95+-blue) [![Version](https://vsmarketplacebadges.dev/version-short/maxoiduss.only-files.png)](https://marketplace.visualstudio.com/items?itemName=maxoiduss.only-files) [![GitHub](https://img.shields.io/badge/github-only--files-purple?style=flat&logo=github)](https://github.com/maxoiduss/only-files)
 
 #### Wasting too much time looking for a file or folder among a ton of files and directories? **Only Files** helps you work with only the ones you need right now.
 
@@ -92,13 +92,13 @@
 
 - #### Rename file from the opened tab is supported.
 
+- #### The item changes its label color during renaming.
+
 - #### Context menu call on an empty `Preview` suggests to open its settings.
 
 - #### Context menu call on a non-empty `Preview` suggests to open *Tip*.
 
 - #### *Tip* suggests to open *hot keys* and *all commands*.
-
-- #### The item changes its label color during renaming.
 
 - #### Use 🤖 [commands](#keyboard-shortcuts):
 
@@ -172,7 +172,7 @@ flowchart TD
 </table>
 
 ### Notes
-- #### The <u>currently active view</u> displays a green magnifier icon &nbsp;</span><img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/dark/searchListActiveDark.svg&output=png&w=40" width="18px" /><p> (indicating which treeview is controlling the file system at the moment)
+- #### The <u>currently active view</u> displays a green magnifier icon &nbsp;<img src="https://wsrv.nl/?url=https://raw.githubusercontent.com/maxoiduss/only-files/main/resources/dark/searchListActiveDark.svg&output=png&w=40" width="18px" /><p> (indicating which treeview is controlling the file system at the moment)
 - #### Magnifier icon button is used for a *list search*.
 - #### [Uncollapsed folders](#plain_view_table) have background tint and they cannot be added to `Only Files View`.
 - #### Uncollapsing every folder in the `Folder View` gives you the same [effect](#plain_view_table) as [*Uncollapse All to Plain*](#uncollapse_all_table) has.
@@ -243,7 +243,7 @@ flowchart TD
     </td>
     <td valign="bottom">
       <a href="https://marketplace.visualstudio.com/items?itemName=maxoiduss.dark-synthwave">
-        <img style="max-width: none; width: auto; height: auto;" src="https://images.weserv.nl/?url=https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.svg&output=png&style=for-the-badge" alt="v1.1.4">
+        <img style="max-width: none; width: auto; height: auto;" src="https://vsmarketplacebadges.dev/version-short/maxoiduss.dark-synthwave.png" alt="v1.1.4">
       </a>
     </td>
   </tr>
