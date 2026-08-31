@@ -2,7 +2,7 @@
   "name": "only-files",
   "displayName": "Only Files",
   "description": "Select and work only with the files you will use",
-  "version": "1.1.5",
+  "version": "1.1.6",
   "publisher": "maxoiduss",
   "icon": "resources/icon.png",
   "repository": {
