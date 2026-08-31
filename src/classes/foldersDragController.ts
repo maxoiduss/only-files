@@ -48,12 +48,12 @@ export class FoldersDragController
       || i.contextValue === root))     { return; }
 
     const dataAll = new vscode.DataTransferItem(
-      source.map((f) => f.resourceUri?.path).join(';')
+      source.map((f) => f.resourceUri?.toString()).join(';')
     );
     const dataFirst = new vscode.DataTransferItem(
       source.length > 0 ?
         source[0].resourceUri ? 
-          source[0].resourceUri.path
+          source[0].resourceUri.toString()
         : empty : empty
     );
     dataTransfer.set(_.MIME, dataAll);

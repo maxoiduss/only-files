@@ -2,6 +2,9 @@
 
 ## Release Notes
 
+## [1.1.5]
+- Fixed Drag-n-drop open-in-editor functionality: rid of vscode.Uri.path
+
 ## [1.1.4]
 - Updated README
 
